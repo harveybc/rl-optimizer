@@ -1,3 +1,4 @@
+# TODO Modificar para usar DQN para evaluar con modelos de ANN convertidos a DCN
 # This agent uses the forex_env_v2 that uses continuous and binary controls
 from __future__ import print_function
 from copy import deepcopy
