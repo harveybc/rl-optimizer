@@ -25,18 +25,23 @@ config = tf.ConfigProto()
 sess = tf.Session(config=config)
 K.set_session(sess)
 
-EPISODES = 1400
-NUMVECTORS = 19
-VECTORSIZE = 48
-REPLAYFACTOR = 20
-BATCHSIZE = 1
-MEMORYSIZE= 128000 #porque hay 1400 ticks y quiero recordar last 50
-REMEMBERTHRESHOLD = 1 #  frames to skip from remember if no action or change of balance is made
-STOPLOSS = 50000
-TAKEPROFIT = 50000
-CAPITAL = 10000
-REPMAXPROFIT = 1 # number of times an action/state is recorded for replay
-MOVINGAVERAGE = 20
+EPISODES = 1400     # number of episodes per evaluation
+NUMVECTORS = 19     # number of features
+VECTORSIZE = 48     # window size (ticks per feature)
+REPLAYFACTOR = 20   # number of ticks to skip between replays
+BATCHSIZE = 1       # number of samples per replay
+MEMORYSIZE= 128000  # porque hay 1400 ticks y quiero recordar last 50
+REMEMBERTHRESHOLD=1 # frames to skip from remember if no action or change of balance is made
+STOPLOSS = 50000    # stop loss for all orders
+TAKEPROFIT = 50000  # take profit for all orders
+CAPITAL = 10000     # starting capital
+REPMAXPROFIT = 1    # number of times an action/state is recorded for replay
+MOVINGAVERAGE = 20  # number of past ticks to use as performance score average
+GAMMA = 0.95        # discount rate used in replay
+EPSILON = 1.0       # initial exploration rate (does random action until minimum)
+EPSILON_MIN = 0.005 # minimum exploration rate
+EPSILON_DECAY = 0.93   # exploration rate decay factor  
+LEARNING_RATE = 0.0001 # learning rate for the selected optimizer (sgd with momentum)
 
 # TODO: usar prioritized replay?
 
@@ -46,13 +51,13 @@ class DQNAgent:
         self.action_size = action_size
         self.memory = deque(maxlen=MEMORYSIZE)
         self.points_log = deque(maxlen=MOVINGAVERAGE)
-        self.gamma = 0.95    # discount rate
-        self.epsilon = 1.0  # exploration rate
-        self.epsilon_min = 0.005
-        self.epsilon_decay = 0.93
-        self.learning_rate = 0.0001
-        self.num_vectors=NUMVECTORS # number of features
-        self.vector_size=VECTORSIZE # number of ticks
+        self.gamma = GAMMA      # discount rate used in replay
+        self.epsilon = EPSILON  # exploration rate
+        self.epsilon_min = EPSILON_MIN
+        self.epsilon_decay = EPSILON_DECAY
+        self.learning_rate = LEARNING_RATE
+        self.num_vectors = NUMVECTORS # number of features
+        self.vector_size = VECTORSIZE # number of ticks
         
         self.model = self._build_model()
         self.model_max = self.model
@@ -228,113 +233,133 @@ class DQNAgent:
     def save(self, name):
         self.model.save_weights(name)
 
+#REPLAYFACTOR = 20      # number of ticks to skip between replays
+#BATCHSIZE = 1          # number of samples per replay
+#MEMORYSIZE= 128000     # porque hay 1400 ticks y quiero recordar last 50
+#REMEMBERTHRESHOLD = 1  # frames to skip from remember if no action or change of balance is made
+#STOPLOSS = 50000
+#TAKEPROFIT = 50000
+#CAPITAL = 10000        # starting capital
+#REPMAXPROFIT = 1    # number of times an action/state is recorded for replay
+#MOVINGAVERAGE = 20  # number of past ticks to use as performance score average
+#GAMMA = 0.95        # discount rate used in replay
+#EPSILON = 1.0       # initial exploration rate (does random action until minimum)
+#EPSILON_MIN = 0.005 # minimum exploration rate
+#EPSILON_DECAY = 0.93   # exploration rate decay factor  
+#LEARNING_RATE = 0.0001 # learning rate for the selected optimizer (sgd with momentum)
 
-if __name__ == "__main__":
-# First argument is the training dataset
-    ts_f = sys.argv[1]
-    # TODO ADICIONAR VALIDATION SET?
-    register(
-            id = 'ForexTrainingSet-v1',
-            entry_point = 'gym_forex.envs:ForexEnv3',
-            kwargs = {
-            'dataset': ts_f, 'volume':0.2, 'sl':STOPLOSS, 'tp':TAKEPROFIT, 
-            'obsticks':VECTORSIZE, 'capital':CAPITAL, 'leverage':100
-        }
-    )
-    # Make environments
-    env = gym.make('ForexTrainingSet-v1')
-    state_size = env.observation_space.shape[0]
-    action_size = env.action_space.n
-    agent = DQNAgent(state_size, action_size)
-    print("state_size = ", state_size,", action_space = ", action_size, 
-        ", replay_factor = ", REPLAYFACTOR, ", batch_size=", BATCHSIZE)
-    done = False
-    batch_size = BATCHSIZE # originalmente 32 (con 128 max 700k)
-    best_performance = -100.0
-    last_best_episode = 0 
-    # muestra si hay soporte de GPU
-    #from tensorflow.python.client import device_lib
-    #print(device_lib.list_local_devices())
-    #log_a = Log('http://localhost:8120', '1h4yvs48DCN_536_m128kbs128lr00001ed9tp1ksl2k') #OJO, capital inicial=300
-    max_variation = 0.0
-    num_repetitions = 0
-    points_max = -100.0
-    for e in range(EPISODES):
-        state = env.reset()
-        state = np.reshape(state, [agent.num_vectors,state_size])
-        state = np.expand_dims(state, axis=0)
-        time=0
-        points=0.0
+# Parameters to be obtained from the genomes as input 
+#EPISODES = 1400
+#VECTORSIZE = 48        # window size (ticks per feature)
+#NUMVECTORS = 19        # number of features 
+
+    #TODO: add parameters
+    # TODO: define how the global dqn params are encoded (not layers/connections)
+    def evaluate(self, dcn_model, ts_f):
+        ts_f = sys.argv[1]
+        # TODO ADICIONAR VALIDATION SET?
+        register(
+                id = 'ForexTrainingSet-v1',
+                entry_point = 'gym_forex.envs:ForexEnv3',
+                kwargs = {
+                'dataset': ts_f, 'volume':0.2, 'sl':STOPLOSS, 'tp':TAKEPROFIT, 
+                'obsticks':VECTORSIZE, 'capital':CAPITAL, 'leverage':100
+            }
+        )
+        # Make environments
+        env = gym.make('ForexTrainingSet-v1')
+        state_size = env.observation_space.shape[0]
+        action_size = env.action_space.n
+        agent = DQNAgent(state_size, action_size)
+        print("state_size = ", state_size,", action_space = ", action_size, 
+            ", replay_factor = ", REPLAYFACTOR, ", batch_size=", BATCHSIZE)
         done = False
-        progress = 0.0
-        balance_ant=CAPITAL
-        #print("Starting Episode = ",e, " Replaying", flush=True)
-        while not done:
-            #load data in the observation buffer(action=0 for the first 1440 observations)
-            if time>state_size:
-                action = agent.act(state)
-            else:
-                action=0
-            next_state, reward, done, info = env.step(action)            
-            next_state = np.reshape(next_state, [agent.num_vectors,state_size])
-            next_state = np.expand_dims(next_state, axis=0)
-            if time>state_size:
-                # if action  = 0 have a REMEMBERTHRESOLD prob of remembering
-                if (action>0):
-                    # update max_profit 
-                    variation = abs(info["balance"]-balance_ant)
-                    if variation > max_variation:
-                        max_variation = variation
-                    # remember additional times if profit was large
-                    if max_variation > 0.0:
-                        num_repetitions = 1+round((variation/max_variation)* REPMAXPROFIT)
-                    else: 
-                        num_repetitions = int(1)
-                    for repetition in range(int(num_repetitions)):
-                        # remember action/state for replay
-                        agent.remember(state, action, reward, next_state, done)
-                # also save if balance varies, eg. if TP or SL
-                elif (balance_ant - info["balance"])!=0.0:
-                    agent.remember(state, action, reward, next_state, done)
+        batch_size = BATCHSIZE # originalmente 32 (con 128 max 700k)
+        best_performance = -100.0
+        last_best_episode = 0 
+        # muestra si hay soporte de GPU
+        #from tensorflow.python.client import device_lib
+        #print(device_lib.list_local_devices())
+        #log_a = Log('http://localhost:8120', '1h4yvs48DCN_536_m128kbs128lr00001ed9tp1ksl2k') #OJO, capital inicial=300
+        max_variation = 0.0
+        num_repetitions = 0
+        points_max = -100.0
+        for e in range(EPISODES):
+            state = env.reset()
+            state = np.reshape(state, [agent.num_vectors,state_size])
+            state = np.expand_dims(state, axis=0)
+            time=0
+            points=0.0
+            done = False
+            progress = 0.0
+            balance_ant=CAPITAL
+            #print("Starting Episode = ",e, " Replaying", flush=True)
+            while not done:
+                #load data in the observation buffer(action=0 for the first 1440 observations)
+                if time>state_size:
+                    action = agent.act(state)
                 else:
-                    if e % REMEMBERTHRESHOLD == 0:
+                    action=0
+                next_state, reward, done, info = env.step(action)            
+                next_state = np.reshape(next_state, [agent.num_vectors,state_size])
+                next_state = np.expand_dims(next_state, axis=0)
+                if time>state_size:
+                    # if action  = 0 have a REMEMBERTHRESOLD prob of remembering
+                    if (action>0):
+                        # update max_profit 
+                        variation = abs(info["balance"]-balance_ant)
+                        if variation > max_variation:
+                            max_variation = variation
+                        # remember additional times if profit was large
+                        if max_variation > 0.0:
+                            num_repetitions = 1+round((variation/max_variation)* REPMAXPROFIT)
+                        else: 
+                            num_repetitions = int(1)
+                        for repetition in range(int(num_repetitions)):
+                            # remember action/state for replay
+                            agent.remember(state, action, reward, next_state, done)
+                    # also save if balance varies, eg. if TP or SL
+                    elif (balance_ant - info["balance"])!=0.0:
                         agent.remember(state, action, reward, next_state, done)
-                points += reward
-            state = next_state
-            time=time+1
-            balance_ant = info["balance"]
-            #print("e:{}/{},t:{},p:{},e:{:.2}-".format(e, EPISODES, time, points,agent.epsilon))
-            if done:
-                agent.update_target_model()
-                agent.points_log.append(points)
-                avg_points = agent.average_points()
-                print("Done:Ep{}/{} Bal={}, points:{}, best:{}, last:{}, average:{}".format(e, EPISODES, info["balance"],points, best_performance ,last_best_episode, avg_points))
-                # if performance decreased, loads the last model
-                #if (points>points_max):
-                #    print("max updated")
-                #    agent.update_model_max()                                     
-                #else:
-                #    print("max restored")
-                #    agent.restore_max()
-                #points_max = points   
-                break
-                                
-            if (len(agent.memory) > batch_size) and (time > state_size) and ((time)%REPLAYFACTOR==0) and (not done):
-                agent.replay(batch_size+e)
-                progress = info["tick_count"]*100/1450
-                sys.stdout.write("Episode: %d Progress: %d%%   \r" % (e, progress) )
-                sys.stdout.flush()
-                #print(".", end="",flush=True)
-        #TODO: Adicionar validation set score cada vez que se encuentre un óptimo
-        #TODO: Detener por no avanzar en ultimos n episodes 
-        #TODO: Detener por tiempo además de max episodes
-        if best_performance < points:
-            best_performance = points
-            last_best_episode = e
-            print("***********************************")
-            print("New Best Performer: Ep{}/{} Balance={}, reward: {}".format(e, EPISODES, info["balance"],points))
-            print("***********************************")
-            
-            agent.save("forexv3-ddqn.h5")
-#TODO: DESPUES DE QUE ESTÉ FUNCIONANDO CONVERTIR EN FUNCIÓN QUE RETORNA MEJOR y su performance.
+                    else:
+                        if e % REMEMBERTHRESHOLD == 0:
+                            agent.remember(state, action, reward, next_state, done)
+                    points += reward
+                state = next_state
+                time=time+1
+                balance_ant = info["balance"]
+                #print("e:{}/{},t:{},p:{},e:{:.2}-".format(e, EPISODES, time, points,agent.epsilon))
+                if done:
+                    agent.update_target_model()
+                    agent.points_log.append(points)
+                    avg_points = agent.average_points()
+                    print("Done:Ep{}/{} Bal={}, points:{}, best:{}, last:{}, average:{}".format(e, EPISODES, info["balance"],points, best_performance ,last_best_episode, avg_points))
+                    # if performance decreased, loads the last model
+                    #if (points>points_max):
+                    #    print("max updated")
+                    #    agent.update_model_max()                                     
+                    #else:
+                    #    print("max restored")
+                    #    agent.restore_max()
+                    #points_max = points   
+                    break
+
+                if (len(agent.memory) > batch_size) and (time > state_size) and ((time)%REPLAYFACTOR==0) and (not done):
+                    agent.replay(batch_size+e)
+                    progress = info["tick_count"]*100/1450
+                    sys.stdout.write("Episode: %d Progress: %d%%   \r" % (e, progress) )
+                    sys.stdout.flush()
+                    #print(".", end="",flush=True)
+            #TODO: Adicionar validation set score cada vez que se encuentre un óptimo
+            #TODO: Detener por no avanzar en ultimos n episodes 
+            #TODO: Detener por tiempo además de max episodes
+            if best_performance < points:
+                best_performance = points
+                last_best_episode = e
+                print("***********************************")
+                print("New Best Performer: Ep{}/{} Balance={}, reward: {}".format(e, EPISODES, info["balance"],points))
+                print("***********************************")
+
+                agent.save("forexv3-ddqn.h5")
+    #TODO: DESPUES DE QUE ESTÉ FUNCIONANDO CONVERTIR EN FUNCIÓN QUE RETORNA MEJOR y su performance.
         
