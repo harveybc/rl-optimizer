@@ -209,6 +209,7 @@ class DQNAgent:
     def replay(self, batch_size):
         if len(self.memory) > batch_size+2:
             minibatch = random.sample(self.memory, batch_size)
+            print("",len(self.memory))
             for state, action, reward, next_state, done in minibatch:
                 target = self.model.predict(state)
                 if done:
