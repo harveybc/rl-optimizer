@@ -207,7 +207,7 @@ class DQNAgent:
         return np.argmax(act_values[0][0])  # returns action
 
     def replay(self, batch_size):
-        if len(self.memory) > batch_size:
+        if len(self.memory) > batch_size+2:
             minibatch = random.sample(self.memory, batch_size)
             for state, action, reward, next_state, done in minibatch:
                 target = self.model.predict(state)
@@ -287,10 +287,10 @@ if __name__ == "__main__":
             next_state = np.reshape(next_state, [agent.num_vectors,state_size])
             next_state = np.expand_dims(next_state, axis=0)
             # save the first 10 states in replay memory without restrictions
-            if time>state_size and time <= state_size+batch_size:
+            if time>state_size and time <= state_size+batch_size+1:
                 agent.remember(state, action, reward, next_state, done) 
             # after 10 ticks from startin only save the same number of nops and closes
-            if time>state_size+batch_size:    
+            if time>state_size+batch_size+1:    
                 # TODO: DELAYED REWARD based on order status(-1=buy, 1=sell, 0= nop)
                 order_status = info["order_status"]
                 if order_status == prev_order_status :
