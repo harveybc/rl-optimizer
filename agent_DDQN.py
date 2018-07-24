@@ -223,6 +223,11 @@ class DQNAgent:
                 target[0][action] = reward + self.gamma * np.amax(t)
                 # target[0][action] = reward + self.gamma * t[np.argmax(a)]
             #self.model.fit(state, target, epochs=1, verbose=0, callbacks=[self.reduce_lr])
+            
+            # TODO: DELAYED REWARD
+            # if action opens an order save the observation in tmpvar DONT DO FIT
+            # if action closes an order, half reward to open and close obs, DO FIT
+            
             self.model.fit(state, target, epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
@@ -260,7 +265,7 @@ class DQNAgent:
         # TODO ADICIONAR VALIDATION SET?
         register(
                 id = 'ForexTrainingSet-v1',
-                entry_point = 'gym_forex.envs:ForexEnv3',
+                entry_point = 'gym_forex.envs:ForexEnv4',
                 kwargs = {
                 'dataset': ts_f, 'volume':0.2, 'sl':STOPLOSS, 'tp':TAKEPROFIT, 
                 'obsticks':VECTORSIZE, 'capital':CAPITAL, 'leverage':100

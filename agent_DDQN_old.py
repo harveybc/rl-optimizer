@@ -11,7 +11,6 @@ from keras import backend as K
 from keras.models import Sequential
 from keras.layers import Conv2D,Conv1D, MaxPooling2D, MaxPooling1D
 from keras.layers import Activation, Dropout, Flatten, Dense
-from keras.optimizers import SGD
 from gym.envs.registration import register
 import sys
 from keras.callbacks import TensorBoard, LearningRateScheduler, ReduceLROnPlateau
@@ -218,6 +217,8 @@ class DQNAgent:
                 target[0][action] = reward + self.gamma * np.amax(t)
                 # target[0][action] = reward + self.gamma * t[np.argmax(a)]
             #self.model.fit(state, target, epochs=1, verbose=0, callbacks=[self.reduce_lr])
+                        
+
             self.model.fit(state, target, epochs=1, verbose=0)
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
@@ -267,8 +268,12 @@ if __name__ == "__main__":
         points=0.0
         done = False
         progress = 0.0
-        balance_ant=CAPITAL
+        balance_ant = CAPITAL
+        prev_order_status = 0
+        num_closes = 1 #1 to avoid divisionby zero... for having the same number of positive and negative examples for each action, a close must have an open, boy or sell
+        num_nops = 0  # same as num_closes, counts the cases when the action = 0
         #print("Starting Episode = ",e, " Replaying", flush=True)
+        tmpvar = [0,0,0,0,0]
         while not done:
             #load data in the observation buffer(action=0 for the first 1440 observations)
             if time>state_size:
@@ -278,28 +283,57 @@ if __name__ == "__main__":
             next_state, reward, done, info = env.step(action)            
             next_state = np.reshape(next_state, [agent.num_vectors,state_size])
             next_state = np.expand_dims(next_state, axis=0)
-            if time>state_size:
+            
+            # if tick_ state_size, remember the observation, action, reward
+            if time>state_size:                
+                
+                # TODO: DELAYED REWARD based on order status(-1=buy, 1=sell, 0= nop)
+                order_status = info["order_status"]
+                if order_status == prev_order_status :
+                    # remember nop if there are less nops than closes
+                    if (1-(num_nops/num_closes)) > random():
+                        # remember state/action/reward for replay
+                        agent.remember(state, action, reward, next_state, done) 
+                        # increment number of nop action remembered
+                        num_nops = num_nops + 1
+                # if action opens an order save the observation in tmpvar DONT REMEMBER
+                if ((order_status == -1)or(order_status == -1) ) and (prev_order_status == 0):
+                    tmpvar = [state, action, reward, next_state, done]
+                # if action closes an order, half reward to open and close obs, DO REMEMBER them
+                if (order_status == 0) and (prev_order_status == -1 or prev_order_status == 1):
+                    # remember state on close
+                    agent.remember(state, action, reward/2, next_state, done) 
+                    # remember state on open
+                    agent.remember(tmpvar[0],tmpvar[1],reward/2,tmpvar[3],tmpvar[4])
+                    # increment number of closes (used to try to have the same number of positive and negative examples for each action)   
+                    num_closes = num_closes + 1
+                # update order status
+                if order_status != prev_order_status:
+                    prev_order_status = order_status
+                
+            
                 # if action  = 0 have a REMEMBERTHRESOLD prob of remembering
-                if (action>0):
-                    # update max_profit 
-                    variation = abs(info["balance"]-balance_ant)
-                    if variation > max_variation:
-                        max_variation = variation
-                    # remember additional times if profit was large
-                    if max_variation > 0.0:
-                        num_repetitions = 1+round((variation/max_variation)* REPMAXPROFIT)
-                    else: 
-                        num_repetitions = int(1)
-                    for repetition in range(int(num_repetitions)):
-                        # remember action/state for replay
-                        agent.remember(state, action, reward, next_state, done)
-                # also save if balance varies, eg. if TP or SL
-                elif (balance_ant - info["balance"])!=0.0:
-                    agent.remember(state, action, reward, next_state, done)
-                else:
-                    if e % REMEMBERTHRESHOLD == 0:
-                        agent.remember(state, action, reward, next_state, done)
+#                if (action>0):
+#                    # update max_profit 
+#                    variation = abs(info["balance"]-balance_ant)
+#                    if variation > max_variation:
+#                        max_variation = variation
+#                    # remember additional times if profit was large
+#                    if max_variation > 0.0:
+#                        num_repetitions = 1+round((variation/max_variation)* REPMAXPROFIT)
+#                    else: 
+#                        num_repetitions = int(1)
+#                    for repetition in range(int(num_repetitions)):
+#                        # remember action/state for replay
+#                        agent.remember(state, action, reward, next_state, done)
+#                # also save if balance varies, eg. if TP or SL
+#                elif (balance_ant - info["balance"])!=0.0:
+#                    agent.remember(state, action, reward, next_state, done)
+#                else:
+#                    if e % REMEMBERTHRESHOLD == 0:
+#                        agent.remember(state, action, reward, next_state, done)
                 points += reward
+            # update next_state (observation after action)
             state = next_state
             time=time+1
             balance_ant = info["balance"]
@@ -308,7 +342,7 @@ if __name__ == "__main__":
                 agent.update_target_model()
                 agent.points_log.append(points)
                 avg_points = agent.average_points()
-                print("Done:Ep{}/{} Bal={}, points:{}, best:{}, last:{}, average:{}".format(e, EPISODES, info["balance"],points, best_performance ,last_best_episode, avg_points))
+                print("Done:Ep{}/{} Bal={}, points:{}, best:{}, last:{}, average:{}, num_nops:{}, num_closes:{}".format(e, EPISODES, info["balance"],points, best_performance ,last_best_episode, avg_points, num_nops, num_closes))
                 # if performance decreased, loads the last model
                 #if (points>points_max):
                 #    print("max updated")
