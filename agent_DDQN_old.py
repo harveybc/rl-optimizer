@@ -7,6 +7,7 @@ import gym_forex
 import numpy as np
 from collections import deque
 from keras.optimizers import Adam
+from keras.optimizers import SGD
 from keras import backend as K
 from keras.models import Sequential
 from keras.layers import Conv2D,Conv1D, MaxPooling2D, MaxPooling1D
