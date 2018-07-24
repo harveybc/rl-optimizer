@@ -287,10 +287,10 @@ if __name__ == "__main__":
             next_state = np.reshape(next_state, [agent.num_vectors,state_size])
             next_state = np.expand_dims(next_state, axis=0)
             # save the first 10 states in replay memory without restrictions
-            if time>state_size and time <= state_size+10:
+            if time>state_size and time <= state_size+batch_size:
                 agent.remember(state, action, reward, next_state, done) 
             # after 10 ticks from startin only save the same number of nops and closes
-            if time>state_size+10:    
+            if time>state_size+batch_size:    
                 # TODO: DELAYED REWARD based on order status(-1=buy, 1=sell, 0= nop)
                 order_status = info["order_status"]
                 if order_status == prev_order_status :
