@@ -298,11 +298,11 @@ if __name__ == "__main__":
                 order_status = info["order_status"]
                 if order_status == prev_order_status :
                     # remember nop if there are less nops than closes
-                    if (1-(num_nops/num_closes)) > random.random():
-                        # remember state/action/reward for replay
-                        agent.remember(state, action, reward, next_state, done) 
-                        # increment number of nop action remembered
-                        num_nops = num_nops + 1
+                    #if  (1-(num_nops/num_closes)) > random.random():
+                    # remember state/action/reward for replay
+                    agent.remember(state, action, reward, next_state, done) 
+                    # increment number of nop action remembered
+                    num_nops = num_nops + 1
                 # if action opens an order save the observation in tmpvar DONT REMEMBER
                 if ((order_status == -1)or(order_status == -1) ) and (prev_order_status == 0):
                     tmpvar = [state, action, reward, next_state, done]
