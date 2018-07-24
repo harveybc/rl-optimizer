@@ -28,7 +28,8 @@ K.set_session(sess)
 EPISODES = 1400
 NUMVECTORS = 19
 VECTORSIZE = 48
-REPLAYFACTOR = 20
+# skip for replay
+REPLAYFACTOR = 2
 BATCHSIZE = 10
 MEMORYSIZE= 128000 #porque hay 1400 ticks y quiero recordar last 50
 REMEMBERTHRESHOLD = 1 #  frames to skip from remember if no action or change of balance is made
