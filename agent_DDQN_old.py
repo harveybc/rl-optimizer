@@ -298,7 +298,7 @@ if __name__ == "__main__":
                 order_status = info["order_status"]
                 if order_status == prev_order_status :
                     # remember nop if there are less nops than closes
-                    if  (1-(num_nops/(num_closes*4))) > random.random():
+                    if  (1-(num_nops/(num_closes*100))) > random.random():
                         # remember state/action/reward for replay
                         agent.remember(state, action, reward, next_state, done) 
                         # increment number of nop action remembered
