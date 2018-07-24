@@ -206,23 +206,24 @@ class DQNAgent:
         return np.argmax(act_values[0][0])  # returns action
 
     def replay(self, batch_size):
-        minibatch = random.sample(self.memory, batch_size)
-        for state, action, reward, next_state, done in minibatch:
-            target = self.model.predict(state)
-            if done:
-                target[0][action] = reward
-            else:
-                # a = self.model.predict(next_state)[0]
-                t = self.target_model.predict(next_state)[0]
-                #print("action=",action)
-                target[0][action] = reward + self.gamma * np.amax(t)
-                # target[0][action] = reward + self.gamma * t[np.argmax(a)]
-            #self.model.fit(state, target, epochs=1, verbose=0, callbacks=[self.reduce_lr])
-                        
+        if len(self.memory) > 0:
+            minibatch = random.sample(self.memory, batch_size)
+            for state, action, reward, next_state, done in minibatch:
+                target = self.model.predict(state)
+                if done:
+                    target[0][action] = reward
+                else:
+                    # a = self.model.predict(next_state)[0]
+                    t = self.target_model.predict(next_state)[0]
+                    #print("action=",action)
+                    target[0][action] = reward + self.gamma * np.amax(t)
+                    # target[0][action] = reward + self.gamma * t[np.argmax(a)]
+                #self.model.fit(state, target, epochs=1, verbose=0, callbacks=[self.reduce_lr])
 
-            self.model.fit(state, target, epochs=1, verbose=0)
-        if self.epsilon > self.epsilon_min:
-            self.epsilon *= self.epsilon_decay
+
+                self.model.fit(state, target, epochs=1, verbose=0)
+            if self.epsilon > self.epsilon_min:
+                self.epsilon *= self.epsilon_decay
 
     def load(self, name):
         self.model.load_weights(name)
