@@ -207,7 +207,7 @@ class DQNAgent:
         return np.argmax(act_values[0][0])  # returns action
 
     def replay(self, batch_size):
-        if len(self.memory) > batch_size:
+        if len(self.memory) > 0:
             minibatch = random.sample(self.memory, batch_size)
             for state, action, reward, next_state, done in minibatch:
                 target = self.model.predict(state)
@@ -289,7 +289,6 @@ if __name__ == "__main__":
             
             # if tick_ state_size, remember the observation, action, reward
             if time>state_size:                
-                agent.remember(state, action, reward, next_state, done) 
                 # TODO: DELAYED REWARD based on order status(-1=buy, 1=sell, 0= nop)
                 order_status = info["order_status"]
                 if order_status == prev_order_status :
