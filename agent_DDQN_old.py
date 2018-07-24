@@ -289,7 +289,7 @@ if __name__ == "__main__":
             
             # if tick_ state_size, remember the observation, action, reward
             if time>state_size:                
-                
+                agent.remember(state, action, reward, next_state, done) 
                 # TODO: DELAYED REWARD based on order status(-1=buy, 1=sell, 0= nop)
                 order_status = info["order_status"]
                 if order_status == prev_order_status :
