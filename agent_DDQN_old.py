@@ -290,17 +290,17 @@ if __name__ == "__main__":
             next_state = np.reshape(next_state, [agent.num_vectors,state_size])
             next_state = np.expand_dims(next_state, axis=0)
             # save the first 10 states in replay memory without restrictions
-            if time>state_size and time <= state_size+batch_size+1:
-                agent.remember(state, action, reward, next_state, done) 
+            # if time>state_size and time <= state_size+batch_size+1:
+            #    agent.remember(state, action, reward, next_state, done) 
             # after 10 ticks from startin only save the same number of nops and closes
             if time>state_size+batch_size+1:    
                 # TODO: DELAYED REWARD based on order status(-1=buy, 1=sell, 0= nop)
                 order_status = info["order_status"]
                 if order_status == prev_order_status :
                     # remember nop if there are less nops than closes
-                    #if  (1-(num_nops/num_closes)) > random.random():
-                    # remember state/action/reward for replay
-                    agent.remember(state, action, reward, next_state, done) 
+                    if  (1-(num_nops/(num_closes*4))) > random.random():
+                        # remember state/action/reward for replay
+                        agent.remember(state, action, reward, next_state, done) 
                     # increment number of nop action remembered
                     num_nops = num_nops + 1
                 # if action opens an order save the observation in tmpvar DONT REMEMBER
