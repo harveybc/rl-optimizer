@@ -30,7 +30,7 @@ NUMVECTORS = 19
 VECTORSIZE = 48
 # skip for replay
 REPLAYFACTOR = 20
-BATCHSIZE = 1
+BATCHSIZE = 10
 MEMORYSIZE= 128000 #porque hay 1400 ticks y quiero recordar last 50
 REMEMBERTHRESHOLD = 1 #  frames to skip from remember if no action or change of balance is made
 STOPLOSS = 50000
@@ -297,12 +297,14 @@ if __name__ == "__main__":
                 # TODO: DELAYED REWARD based on order status(-1=buy, 1=sell, 0= nop)
                 order_status = info["order_status"]
                 if order_status == prev_order_status :
+                    agent.remember(state, action, reward, next_state, done)
+                    num_nops = num_nops + 1
                     # remember nop if there are less nops than closes
-                    if  (1-(num_nops/(num_closes*100))) > random.random():
+                    #if  (1-(num_nops/(num_closes*100))) > random.random():
                         # remember state/action/reward for replay
-                        agent.remember(state, action, reward, next_state, done) 
+                    #    agent.remember(state, action, reward, next_state, done) 
                         # increment number of nop action remembered
-                        num_nops = num_nops + 1
+                    #    num_nops = num_nops + 1
                 # if action opens an order save the observation in tmpvar DONT REMEMBER
                 if ((order_status == -1)or(order_status == 1) ) and (prev_order_status == 0):
                     tmpvar = [state, action, reward, next_state, done]
