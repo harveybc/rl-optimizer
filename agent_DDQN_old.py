@@ -30,7 +30,7 @@ NUMVECTORS = 19
 VECTORSIZE = 48
 # skip for replay
 REPLAYFACTOR = 20
-BATCHSIZE = 10
+BATCHSIZE = 1
 MEMORYSIZE= 128000 #porque hay 1400 ticks y quiero recordar last 50
 REMEMBERTHRESHOLD = 1 #  frames to skip from remember if no action or change of balance is made
 STOPLOSS = 50000
