@@ -29,7 +29,7 @@ EPISODES = 1400
 NUMVECTORS = 19
 VECTORSIZE = 48
 REPLAYFACTOR = 20
-BATCHSIZE = 1
+BATCHSIZE = 10
 MEMORYSIZE= 128000 #porque hay 1400 ticks y quiero recordar last 50
 REMEMBERTHRESHOLD = 1 #  frames to skip from remember if no action or change of balance is made
 STOPLOSS = 50000
@@ -206,7 +206,7 @@ class DQNAgent:
         return np.argmax(act_values[0][0])  # returns action
 
     def replay(self, batch_size):
-        if len(self.memory) > 0:
+        if len(self.memory) > 10:
             minibatch = random.sample(self.memory, batch_size)
             for state, action, reward, next_state, done in minibatch:
                 target = self.model.predict(state)
