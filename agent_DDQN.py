@@ -27,7 +27,7 @@ K.set_session(sess)
 
 EPISODES = 1400     # number of episodes per evaluation
 NUMVECTORS = 19     # number of features
-VECTORSIZE = 48     # window size (ticks per feature)
+WINDOWSIZE = 48     # window size (ticks per feature)
 REPLAYFACTOR = 20   # number of ticks to skip between replays
 BATCHSIZE = 1       # number of samples per replay
 MEMORYSIZE= 128000  # porque hay 1400 ticks y quiero recordar last 50
@@ -57,7 +57,7 @@ class DQNAgent:
         self.epsilon_decay = EPSILON_DECAY
         self.learning_rate = LEARNING_RATE
         self.num_vectors = NUMVECTORS # number of features
-        self.vector_size = VECTORSIZE # number of ticks
+        self.vector_size = WINDOWSIZE # number of ticks
         
         self.model = self._build_model()
         self.model_max = self.model
@@ -255,7 +255,7 @@ class DQNAgent:
 
 # Parameters to be obtained from the genomes as input 
 #EPISODES = 1400
-#VECTORSIZE = 48        # window size (ticks per feature)
+#WINDOWSIZE = 48        # window size (ticks per feature)
 #NUMVECTORS = 19        # number of features 
 
     #TODO: add parameters
@@ -268,7 +268,7 @@ class DQNAgent:
                 entry_point = 'gym_forex.envs:ForexEnv4',
                 kwargs = {
                 'dataset': ts_f, 'volume':0.2, 'sl':STOPLOSS, 'tp':TAKEPROFIT, 
-                'obsticks':VECTORSIZE, 'capital':CAPITAL, 'leverage':100
+                'obsticks':WINDOWSIZE, 'capital':CAPITAL, 'leverage':100
             }
         )
         # Make environments
@@ -353,7 +353,7 @@ class DQNAgent:
                     agent.replay(batch_size+e)
                     progress = info["tick_count"]*100/1450
                     sys.stdout.write("Episode: %d Progress: %d%%   \r" % (e, progress) )
-                    sys.stdout.flush()
+                    sys.stdout.flush()ww
                     #print(".", end="",flush=True)
             #TODO: Adicionar validation set score cada vez que se encuentre un óptimo
             #TODO: Detener por no avanzar en ultimos n episodes 
