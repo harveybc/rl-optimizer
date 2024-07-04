@@ -59,7 +59,7 @@ def main():
         load_and_evaluate_model(config, agent_plugin)
     else:
         print("Processing and running prediction pipeline...")
-        run_prediction_pipeline(config, agent_plugin)
+        run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin)  # Pass all required plugins
 
     if 'save_config' in config and config['save_config']:
         save_config(config, config['save_config'])
