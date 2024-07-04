@@ -10,14 +10,14 @@ setup(
         ],
         'rl_optimizer.optimizers': [
             'neat=app.plugins.optimizer_plugin_neat:Plugin',
-            'neat_p2p=app.plugins.optimizer_plugin_neat_p2p:Plugin',
             'openrl=app.plugins.optimizer_plugin_openrl:Plugin'
         ],
         'rl_optimizer.environments': [
-            'prediction_plugin=app.plugins.environment_plugin_prediction:Plugin'
+            'prediction=app.plugins.environment_plugin_prediction:Plugin'
         ],
         'rl_optimizer.agents': [
-            'agent_predictor=app.plugins.agent_plugin_predictor:Plugin'
+            'neat=app.plugins.agent_plugin_predictor_neat:Plugin',
+            'openrl=app.plugins.agent_plugin_predictor_openrl:Plugin'
         ]
     },
     install_requires=[
