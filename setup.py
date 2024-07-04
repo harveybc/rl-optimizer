@@ -1,5 +1,3 @@
-from setuptools import setup, find_packages
-
 setup(
     name='rl-optimizer',
     version='0.1.0',
@@ -26,7 +24,8 @@ setup(
         'scikit-learn',
         'tensorflow',
         'openrl',
-        'gym'
+        'gym',
+        'neat-python'  
     ],
     author='Harvey Bastidas',
     author_email='your.email@example.com',
