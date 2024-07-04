@@ -48,9 +48,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     epochs = config['epochs']
 
     # Plugin-specific parameters
-    env_params = environment_plugin.params
-    agent_params = agent_plugin.params
-    optimizer_params = optimizer_plugin.params
+    env_params = environment_plugin.plugin_params
+    agent_params = agent_plugin.plugin_params
+    optimizer_params = optimizer_plugin.plugin_params
 
     # Prepare environment
     environment_plugin.set_params(**env_params)
@@ -72,11 +72,12 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         optimizer_plugin.save(config['save_model'])
         print(f"Model saved to {config['save_model']}")
 
-    # Assign the trained model to the agent plugin
-    agent_plugin.model = optimizer_plugin.model
-
     # Predict using the trained model
     predictions = agent_plugin.predict(x_train)
+
+    # Ensure the number of predictions matches y_train shape
+    if len(predictions) != len(y_train):
+        raise ValueError(f"Number of predictions ({len(predictions)}) does not match number of y_train samples ({len(y_train)})")
 
     # Reshape predictions to match y_train shape
     predictions = np.array(predictions).reshape(y_train.shape)
@@ -128,7 +129,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         print(f"y_validation shape: {y_validation.shape}")
         
         validation_predictions = agent_plugin.predict(x_validation)
-        validation_predictions = np.array(validation_predictions).reshape(y_validation.shape)
+        validation_predictions = validation_predictions.reshape(y_validation.shape)
         
         validation_fitness = environment_plugin.calculate_fitness(y_validation, validation_predictions)
         print(f"Validation Fitness: {validation_fitness}")
