@@ -1,0 +1,10 @@
+tensorflow
+keras
+numpy
+pandas
+h5py
+scipy
+build
+pytest
+pdoc3
+keras-multi-head
