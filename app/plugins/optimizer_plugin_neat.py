@@ -64,11 +64,12 @@ class Plugin:
         observation = self.environment.reset()
         done = False
         while not done:
-            print(f"Observation shape: {len(observation)}")  # Add this line
+            print(f"Observation shape: {len(observation)}")  # Debug print
             action = net.activate(observation)
             observation, reward, done, _ = self.environment.step(action)
             fitness += reward
         return fitness
+
 
     def save(self, file_path):
         with open(file_path, 'wb') as f:

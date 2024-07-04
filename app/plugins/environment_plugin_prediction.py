@@ -51,13 +51,14 @@ class PredictionEnv(gym.Env):
         self.max_steps = max_steps
         self.current_step = 0
         self.data = self.load_data()
+        # Ensure observation_space matches the input size expected by the NEAT network
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.data.shape[1],), dtype=np.float32)
         self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
         self.reset()
 
     def load_data(self):
         # Load your dataset here
-        data = np.random.rand(1000, 10)  # Example data
+        data = np.random.rand(1000, 8)  # Example data with 8 features
         return data
 
     def reset(self):
@@ -75,6 +76,7 @@ class PredictionEnv(gym.Env):
 
     def render(self, mode='human'):
         pass
+
 
 # Debugging usage example
 if __name__ == "__main__":
