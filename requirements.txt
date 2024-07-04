@@ -8,4 +8,5 @@ build
 pytest
 pdoc3
 openrl
+neat-python
 keras-multi-head
