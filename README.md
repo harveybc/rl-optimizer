@@ -138,12 +138,12 @@ rl-optimizer/
 │   ├── data_processor.py         # Processes input data and runs the optimization pipeline
 │   ├── main.py                   # Main entry point for the application
 │   ├── plugin_loader.py          # Dynamically loads optimizer, environment, and agent plugins
-│   ├── plugins/                       # Plugin directory
+│   └── plugins/                  # Plugin directory
 │       ├── optimizer_plugin_neat.py        # Optimizer plugin using NEAT
 │       ├── optimizer_plugin_neat_p2p.py    # Optimizer plugin using NEAT_P2P
-│       ├── environment_plugin_gym_fx.py    # Environment plugin for gym-fx
-│       ├── agent_plugin_multi.py           # Agent plugin using agent-multi
-│       ├── agent_plugin_other.py           # Placeholder for additional agent plugin
+│       ├── optimizer_plugin_openrl.py      # Optimizer plugin using OpenRL
+│       ├── environment_plugin_prediction.py # Environment plugin for prediction
+│       └─ agent_plugin_predictor.py       # Agent plugin for prediction
 │
 ├── tests/              # Test modules for the application
 │   ├── acceptance          # User acceptance tests
