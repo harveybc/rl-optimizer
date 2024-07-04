@@ -35,7 +35,11 @@ def process_data(config):
     print(f"x_train_data type: {x_train_data.dtypes}")
     print(f"y_train_data type: {y_train_data.dtypes}")
     
+    print(f"x_train_data shape: {x_train_data.shape}")
+    print(f"y_train_data shape: {y_train_data.shape}")
+    
     return x_train_data, y_train_data
+
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
     start_time = time.time()
