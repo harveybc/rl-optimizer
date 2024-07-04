@@ -61,6 +61,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
     if config['save_model']:
         optimizer_plugin.save(config['save_model'])
+        agent_plugin.model = optimizer_plugin.model  # Assign the trained model to the agent plugin
         agent_plugin.save(config['save_model'])
         print(f"Model saved to {config['save_model']}")
 
