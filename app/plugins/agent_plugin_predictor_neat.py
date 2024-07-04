@@ -31,8 +31,15 @@ class Plugin:
         with open(file_path, 'rb') as f:
             self.model = pickle.load(f)
         print(f"Agent model loaded from {file_path}")
+        # Add a debug statement to verify the model type
+        if isinstance(self.model, neat.nn.FeedForwardNetwork):
+            print("Loaded model is a NEAT FeedForwardNetwork")
+        else:
+            print(f"Loaded model type: {type(self.model)}")
 
     def predict(self, x_data):
+        if self.model is None:
+            raise ValueError("Model has not been loaded.")
         predictions = []
         for data in x_data:
             action = self.model.activate(data)
