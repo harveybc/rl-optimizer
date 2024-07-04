@@ -72,6 +72,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         optimizer_plugin.save(config['save_model'])
         print(f"Model saved to {config['save_model']}")
 
+    # Assign the trained model to the agent plugin
+    agent_plugin.model = optimizer_plugin.model
+
     # Predict using the trained model
     predictions = agent_plugin.predict(x_train)
 
@@ -133,6 +136,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         
         validation_fitness = environment_plugin.calculate_fitness(y_validation, validation_predictions)
         print(f"Validation Fitness: {validation_fitness}")
+
 
 def load_and_evaluate_model(config, agent_plugin):
     # Load the model

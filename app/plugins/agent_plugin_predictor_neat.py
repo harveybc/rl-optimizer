@@ -1,13 +1,14 @@
 import neat
 import pickle
+import numpy as np
 
 class Plugin:
     """
-    An agent plugin for NEAT-based prediction.
+    An agent plugin using NEAT for evolutionary neural networks.
     """
 
     plugin_params = {
-        'config_file': 'neat_config.ini',
+        'config_file': 'tests/data/neat_50.ini',
     }
 
     plugin_debug_vars = ['config_file']
@@ -35,13 +36,11 @@ class Plugin:
     def predict(self, data):
         if self.model is None:
             raise ValueError("Model has not been loaded.")
-        
         predictions = []
         for i in range(len(data)):
             observation = data.iloc[i].to_numpy()
             action = self.model.activate(observation)
-            predictions.append(action[0])  # Assuming the model returns a list with one element
-        
+            predictions.append(action)
         return predictions
 
 # Debugging usage example
