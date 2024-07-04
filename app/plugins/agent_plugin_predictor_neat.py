@@ -1,25 +1,25 @@
+import neat
+import os
+import pickle
+import random
 import numpy as np
-from keras.models import Model, load_model, save_model
-from keras.layers import LSTM, Bidirectional, Dense, Input, Flatten
-from keras.optimizers import Adam
 
 class Plugin:
     """
-    An encoder plugin using a Bidirectional Long Short-Term Memory (Bi-LSTM) network based on Keras, with dynamically configurable size.
+    An agent plugin that uses NEAT for optimizing predictions.
     """
 
     plugin_params = {
-        'epochs': 10,
-        'batch_size': 256,
-        'intermediate_layers': 1,
-        'layer_size_divisor': 2
+        'config_file': 'neat_config.ini',
     }
 
-    plugin_debug_vars = ['epochs', 'batch_size', 'input_shape', 'intermediate_layers']
+    plugin_debug_vars = ['config_file']
 
     def __init__(self):
         self.params = self.plugin_params.copy()
-        self.encoder_model = None
+        self.config = None
+        self.population = None
+        self.best_genome = None
 
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
@@ -32,66 +32,53 @@ class Plugin:
         plugin_debug_info = self.get_debug_info()
         debug_info.update(plugin_debug_info)
 
-    def configure_size(self, input_shape, interface_size):
-        self.params['input_shape'] = input_shape
+    def load_config(self):
+        local_dir = os.path.dirname(__file__)
+        config_path = os.path.join(local_dir, self.params['config_file'])
+        self.config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
+                                  neat.DefaultSpeciesSet, neat.DefaultStagnation,
+                                  config_path)
 
-        layers = []
-        current_size = input_shape
-        layer_size_divisor = self.params['layer_size_divisor'] 
-        current_location = input_shape
-        int_layers = 0
-        while (current_size > interface_size) and (int_layers < (self.params['intermediate_layers']+1)):
-            layers.append(current_location)
-            current_size = max(current_size // layer_size_divisor, interface_size)
-            current_location = interface_size + current_size
-            int_layers += 1
-        layers.append(interface_size)
-        # Debugging message
-        print(f"Encoder Layer sizes: {layers}")
+    def initialize_population(self):
+        self.load_config()
+        self.population = neat.Population(self.config)
+        self.population.add_reporter(neat.StdOutReporter(True))
+        self.population.add_reporter(neat.StatisticsReporter())
+        self.population.add_reporter(neat.Checkpointer(5))
 
-        # set input layer
-        inputs = Input(shape=(input_shape, 1))
-        x = inputs
+    def evaluate_genomes(self, genomes, config):
+        for genome_id, genome in genomes:
+            genome.fitness = self.evaluate_genome(genome, config)
 
-        # add Bi-LSTM layers
-        layers_index = 0
-        for size in layers:
-            layers_index += 1
+    def evaluate_genome(self, genome, config):
+        net = neat.nn.FeedForwardNetwork.create(genome, config)
+        fitness = 0.0
+        # Add your evaluation logic here
+        return fitness
 
-            # add the Bi-LSTM layers
-            if layers_index == 1:
-                x = Bidirectional(LSTM(units=size, activation='tanh', return_sequences=True))(x)
-            else:
-                x = Bidirectional(LSTM(units=size, activation='tanh', return_sequences=(layers_index < len(layers))))(x)
-        
-        x = Flatten()(x)
-        outputs = Dense(interface_size)(x)
-        
-        self.encoder_model = Model(inputs=inputs, outputs=outputs, name="encoder")
-        self.encoder_model.compile(optimizer=Adam(), loss='mean_squared_error')
-
-    def train(self, data):
-        print(f"Training encoder with data shape: {data.shape}")
-        self.encoder_model.fit(data, data, epochs=self.params['epochs'], batch_size=self.params['batch_size'], verbose=1)
-        print("Training completed.")
-
-    def encode(self, data):
-        print(f"Encoding data with shape: {data.shape}")
-        encoded_data = self.encoder_model.predict(data)
-        print(f"Encoded data shape: {encoded_data.shape}")
-        return encoded_data
+    def train(self, generations=100):
+        self.initialize_population()
+        self.best_genome = self.population.run(self.evaluate_genomes, generations)
 
     def save(self, file_path):
-        save_model(self.encoder_model, file_path)
-        print(f"Encoder model saved to {file_path}")
+        with open(file_path, 'wb') as f:
+            pickle.dump(self.best_genome, f)
+        print(f"Best genome saved to {file_path}")
 
     def load(self, file_path):
-        self.encoder_model = load_model(file_path)
-        print(f"Encoder model loaded from {file_path}")
+        with open(file_path, 'rb') as f:
+            self.best_genome = pickle.load(f)
+        print(f"Best genome loaded from {file_path}")
+
+    def get_action(self, observation):
+        net = neat.nn.FeedForwardNetwork.create(self.best_genome, self.config)
+        action = net.activate(observation)
+        return action
 
 # Debugging usage example
 if __name__ == "__main__":
     plugin = Plugin()
-    plugin.configure_size(input_shape=128, interface_size=4)
+    plugin.set_params(config_file='neat_config.ini')
+    plugin.train(generations=10)
     debug_info = plugin.get_debug_info()
     print(f"Debug Info: {debug_info}")
