@@ -20,6 +20,7 @@ class Plugin:
         self.params = self.plugin_params.copy()
         self.environment = None
         self.agent = None
+        self.model = None
 
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
@@ -57,6 +58,8 @@ class Plugin:
         
         with open('winner.pkl', 'wb') as f:
             pickle.dump(winner, f)
+        
+        self.model = neat.nn.FeedForwardNetwork.create(winner, config)
 
     def evaluate_genome(self, genome, config):
         net = neat.nn.FeedForwardNetwork.create(genome, config)
@@ -64,24 +67,19 @@ class Plugin:
         observation = self.environment.reset()
         done = False
         while not done:
-            #print(f"Observation shape: {len(observation)}")  # Debug print
             action = net.activate(observation)
             observation, reward, done, _ = self.environment.step(action)
             fitness += reward
         return fitness
 
-
     def save(self, file_path):
         with open(file_path, 'wb') as f:
-            pickle.dump(self, f)
+            pickle.dump(self.model, f)
         print(f"Optimizer model saved to {file_path}")
 
     def load(self, file_path):
         with open(file_path, 'rb') as f:
-            loaded_model = pickle.load(f)
-        self.params = loaded_model.params
-        self.environment = loaded_model.environment
-        self.agent = loaded_model.agent
+            self.model = pickle.load(f)
         print(f"Optimizer model loaded from {file_path}")
 
 # Debugging usage example
