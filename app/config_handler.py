@@ -11,25 +11,28 @@ def load_config(file_path):
         config = json.load(f)
     return config
 
-def get_plugin_default_params(plugin_name, plugin_type):
-    plugin_class, _ = load_plugin(plugin_type, plugin_name)
+def get_plugin_default_params(plugin_group, plugin_name):
+    plugin_class, _ = load_plugin(plugin_group, plugin_name)
     plugin_instance = plugin_class()
     return plugin_instance.plugin_params
 
 def compose_config(config):
-    encoder_plugin_name = config.get('encoder_plugin', DEFAULT_VALUES.get('encoder_plugin'))
-    decoder_plugin_name = config.get('decoder_plugin', DEFAULT_VALUES.get('decoder_plugin'))
-    
-    encoder_default_params = get_plugin_default_params(encoder_plugin_name, 'feature_extractor.encoders')
-    decoder_default_params = get_plugin_default_params(decoder_plugin_name, 'feature_extractor.decoders')
+    optimizer_name = config.get('optimizer_plugin', DEFAULT_VALUES.get('optimizer_plugin'))
+    environment_name = config.get('environment_plugin', DEFAULT_VALUES.get('environment_plugin'))
+    agent_name = config.get('agent_plugin', DEFAULT_VALUES.get('agent_plugin'))
+
+    optimizer_default_params = get_plugin_default_params('rl_optimizer.optimizers', optimizer_name)
+    environment_default_params = get_plugin_default_params('rl_optimizer.environments', environment_name)
+    agent_default_params = get_plugin_default_params('rl_optimizer.agents', agent_name)
 
     config_to_save = {}
     for k, v in config.items():
         if k not in DEFAULT_VALUES or v != DEFAULT_VALUES[k]:
-            if k not in encoder_default_params or v != encoder_default_params[k]:
-                if k not in decoder_default_params or v != decoder_default_params[k]:
-                    config_to_save[k] = v
-    
+            if (k not in optimizer_default_params or v != optimizer_default_params[k]) and \
+               (k not in environment_default_params or v != environment_default_params[k]) and \
+               (k not in agent_default_params or v != agent_default_params[k]):
+                config_to_save[k] = v
+
     # prints config_to_save
     print(f"Actual config_to_save: {config_to_save}")
     return config_to_save

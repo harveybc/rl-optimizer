@@ -15,7 +15,7 @@ def convert_type(value):
         except ValueError:
             return value
 
-def merge_config(defaults, encoder_plugin_params, decoder_plugin_params, config, cli_args, unknown_args):
+def merge_config(defaults, plugin_params, config, cli_args, unknown_args):
     
     # Step 1: Start with default values from config.py
     merged_config = defaults.copy()
@@ -23,11 +23,8 @@ def merge_config(defaults, encoder_plugin_params, decoder_plugin_params, config,
     print(f"Actual Step 1 Output: {merged_config}")
     
     # Step 2: Merge with plugin default parameters
-    for k, v in encoder_plugin_params.items():
-        print(f"Step 2 merging: encoder_plugin_param {k} = {v}")
-        merged_config[k] = v
-    for k, v in decoder_plugin_params.items():
-        print(f"Step 2 merging: decoder_plugin_param {k} = {v}")
+    for k, v in plugin_params.items():
+        print(f"Step 2 merging: plugin_param {k} = {v}")
         merged_config[k] = v
     
     print(f"Actual Step 2 Output: {merged_config}")
@@ -50,7 +47,7 @@ def merge_config(defaults, encoder_plugin_params, decoder_plugin_params, config,
             print(f"Step 4 merging from unknown args: {key} = {value}")
             merged_config[key] = value
     
-    # Special handling for csv_file
+    # Special handling for input_file
     if len(sys.argv) > 1 and not sys.argv[1].startswith('--'):
         merged_config['input_file'] = sys.argv[1]
     
