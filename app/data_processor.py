@@ -3,170 +3,159 @@ import pandas as pd
 import numpy as np
 import os
 import time
-from app.autoencoder_manager import AutoencoderManager
+import json
 from app.data_handler import load_csv, write_csv
-from app.reconstruction import unwindow_data
 from app.config_handler import save_debug_info, remote_log
 
-def create_sliding_windows(data, window_size):
-    data_array = data.to_numpy()
-    dataset = tf.keras.preprocessing.timeseries_dataset_from_array(
-        data=data_array,
-        targets=None,
-        sequence_length=window_size,
-        sequence_stride=1,
-        batch_size=1
-    )
-
-    windows = []
-    for batch in dataset:
-        windows.append(batch.numpy().flatten())
-
-    return pd.DataFrame(windows)
-
 def process_data(config):
-    print(f"Loading data from CSV file: {config['input_file']}")
-    data = load_csv(config['input_file'], headers=config['headers'])
-    print(f"Data loaded with shape: {data.shape}")
+    print(f"Loading data from CSV file: {config['x_train_file']}")
+    x_train_data = load_csv(config['x_train_file'], headers=config['headers'])
+    print(f"Data loaded with shape: {x_train_data.shape}")
 
-    window_size = config['window_size']
-    print(f"Applying sliding window of size: {window_size}")
-    windowed_data = create_sliding_windows(data, window_size)
-    print(f"Windowed data shape: {windowed_data.shape}")
+    y_train_file = config['y_train_file']
+    target_column = config['target_column']
 
-    processed_data = {col: windowed_data.values for col in data.columns}
-    return processed_data
+    if isinstance(y_train_file, str):
+        print(f"Loading y_train data from CSV file: {y_train_file}")
+        y_train_data = load_csv(y_train_file, headers=config['headers'])
+        print(f"y_train data loaded with shape: {y_train_data.shape}")
+    elif isinstance(y_train_file, int):
+        y_train_data = x_train_data.iloc[:, y_train_file]
+        print(f"Using y_train data at column index: {y_train_file}")
+    elif target_column is not None:
+        y_train_data = x_train_data.iloc[:, target_column]
+        print(f"Using target column at index: {target_column}")
+    else:
+        raise ValueError("Either y_train_file or target_column must be specified in the configuration.")
 
-def run_autoencoder_pipeline(config, encoder_plugin, decoder_plugin):
+    # Ensure both x_train and y_train data are numeric
+    x_train_data = x_train_data.apply(pd.to_numeric, errors='coerce').fillna(0).astype(np.float32)
+    y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0).astype(np.float32)
+    
+    # Add debug message to confirm type
+    print(f"x_train_data type: {x_train_data.dtypes}")
+    print(f"y_train_data type: {y_train_data.dtypes}")
+    
+    return x_train_data, y_train_data
+
+def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
     start_time = time.time()
     
     print("Running process_data...")
-    processed_data = process_data(config)
-    print("Processed data received.")
-    mse=0
-    mae=0
-    for column, windowed_data in processed_data.items():
-        print(f"Processing column: {column}")
+    x_train, y_train = process_data(config)
+    print(f"Processed data received of type: {type(x_train)} and shape: {x_train.shape}")
+
+    batch_size = config['batch_size']
+    epochs = config['epochs']
+
+    # Plugin-specific parameters
+    env_params = environment_plugin.get_params()
+    agent_params = agent_plugin.get_params()
+    optimizer_params = optimizer_plugin.get_params()
+
+    time_horizon = env_params.get('time_horizon')
+    threshold_error = env_params.get('threshold_error')
+
+    # Ensure x_train and y_train are DataFrame or Series
+    if isinstance(x_train, (pd.DataFrame, pd.Series)) and isinstance(y_train, (pd.DataFrame, pd.Series)):
+        # Prepare data for training
+        x_train = x_train[:-time_horizon].to_numpy().astype(np.float32)
+        y_train = y_train[time_horizon:].to_numpy().astype(np.float32)
+
+        # Ensure x_train is a 2D array
+        if x_train.ndim == 1:
+            x_train = x_train.reshape(-1, 1)
         
-        # Training loop to optimize the latent space size
-        initial_size = config['initial_size']
-        step_size = config['step_size']
-        threshold_error = config['threshold_error']
-        training_batch_size = config['batch_size']
-        epochs = config['epochs']
-        incremental_search = config['incremental_search']
-        
-        current_size = initial_size
-        while True:
-            print(f"Training with interface size: {current_size}")
-            
-            # Create a new instance of AutoencoderManager for each iteration
-            autoencoder_manager = AutoencoderManager(encoder_plugin, decoder_plugin)
-            
-            # Build new autoencoder model with the current size
-            autoencoder_manager.build_autoencoder(config['window_size'], current_size)
+        # Ensure y_train matches the first dimension of x_train
+        y_train = y_train[:len(x_train)]
 
-            # Train the autoencoder model
-            autoencoder_manager.train_autoencoder(windowed_data, epochs=epochs, batch_size=training_batch_size)
+        # Debug messages for shapes
+        print(f"x_train shape: {x_train.shape}")
+        print(f"y_train shape: {y_train.shape}")
 
-            # Encode and decode the data
-            encoded_data = autoencoder_manager.encode_data(windowed_data)
-            decoded_data = autoencoder_manager.decode_data(encoded_data)
+        # Train the model using the optimizer plugin
+        optimizer_plugin.build_model(input_shape=x_train.shape[1])
+        optimizer_plugin.train(x_train, y_train, epochs=epochs, batch_size=batch_size, threshold_error=threshold_error)
 
-            # Check if the decoded data needs reshaping
-            if len(decoded_data.shape) == 3:
-                decoded_data = decoded_data.reshape(decoded_data.shape[0], decoded_data.shape[1])
+        # Save the trained model
+        if config['save_model']:
+            optimizer_plugin.save(config['save_model'])
+            print(f"Model saved to {config['save_model']}")
 
-            # Calculate the MSE and MAE
-            mse = autoencoder_manager.calculate_mse(windowed_data, decoded_data)
-            mae = autoencoder_manager.calculate_mae(windowed_data, decoded_data)
-            print(f"Mean Squared Error for column {column} with interface size {current_size}: {mse}")
-            print(f"Mean Absolute Error for column {column} with interface size {current_size}: {mae}")
+        # Predict using the trained model
+        predictions = agent_plugin.predict(x_train)
 
-            if (incremental_search and mse <= threshold_error) or (not incremental_search and mse >= threshold_error):
-                print(f"Optimal interface size found: {current_size} with MSE: {mse} and MAE: {mae}")
-                break
-            else:
-                if incremental_search:
-                    current_size += step_size
-                else:
-                    current_size -= step_size
-                if current_size > windowed_data.shape[1] or current_size <= 0:
-                    print(f"Cannot adjust interface size beyond data dimensions. Stopping.")
-                    break
+        # Reshape predictions to match y_train shape
+        predictions = predictions.reshape(y_train.shape)
 
-        encoder_model_filename = f"{config['save_encoder']}_{column}.keras"
-        decoder_model_filename = f"{config['save_decoder']}_{column}.keras"
-        autoencoder_manager.save_encoder(encoder_model_filename)
-        autoencoder_manager.save_decoder(decoder_model_filename)
-        print(f"Saved encoder model to {encoder_model_filename}")
-        print(f"Saved decoder model to {decoder_model_filename}")
+        # Calculate fitness
+        fitness = environment_plugin.calculate_fitness(y_train, predictions)
+        print(f"Fitness: {fitness}")
 
-        # Perform unwindowing of the decoded data once
-        reconstructed_data = unwindow_data(pd.DataFrame(decoded_data))
-
-        output_filename = os.path.splitext(config['output_file'])[0] + f"_{column}.csv"
-        write_csv(output_filename, reconstructed_data, include_date=config['force_date'], headers=config['headers'])
+        # Convert predictions to a DataFrame and save to CSV
+        predictions_df = pd.DataFrame(predictions, columns=['Prediction'])
+        output_filename = config['output_file']
+        write_csv(output_filename, predictions_df, include_date=config['force_date'], headers=config['headers'])
         print(f"Output written to {output_filename}")
 
-        print(f"Encoder Dimensions: {autoencoder_manager.encoder_model.input_shape} -> {autoencoder_manager.encoder_model.output_shape}")
-        print(f"Decoder Dimensions: {autoencoder_manager.decoder_model.input_shape} -> {autoencoder_manager.decoder_model.output_shape}")
+        # Save final configuration and debug information
+        end_time = time.time()
+        execution_time = end_time - start_time
+        debug_info = {
+            'execution_time': float(execution_time),
+            'fitness': float(fitness)
+        }
 
-    # Save final configuration and debug information
-    end_time = time.time()
-    execution_time = end_time - start_time
-    debug_info = {
-        'execution_time': execution_time,
-        'encoder': encoder_plugin.get_debug_info(),
-        'decoder': decoder_plugin.get_debug_info(),
-        'mse': mse,
-        'mae': mae
-    }
-
-    # save debug info
-    if 'save_log' in config:
-        if config['save_log'] != None:
+        # Save debug info
+        if config.get('save_log'):
             save_debug_info(debug_info, config['save_log'])
             print(f"Debug info saved to {config['save_log']}.")
 
-    # remote log debug info and config
-    if 'remote_log' in config:
-        if config['remote_log'] != None:
+        # Remote log debug info and config
+        if config.get('remote_log'):
             remote_log(config, debug_info, config['remote_log'], config['username'], config['password'])
             print(f"Debug info saved to {config['remote_log']}.")
 
-    print(f"Execution time: {execution_time} seconds")
+        print(f"Execution time: {execution_time} seconds")
 
-def load_and_evaluate_encoder(config, encoder_plugin):
-    # Load the encoder model
-    encoder_plugin.load(config['load_encoder'])
+        # Validate the model if validation data is provided
+        if config['x_validation_file'] and config['y_validation_file']:
+            print("Validating model...")
+            x_validation = load_csv(config['x_validation_file'], headers=config['headers']).to_numpy().astype(np.float32)
+            y_validation = load_csv(config['y_validation_file'], headers=config['headers']).to_numpy().astype(np.float32)
+            
+            # Ensure x_validation is a 2D array
+            if x_validation.ndim == 1:
+                x_validation = x_validation.reshape(-1, 1)
+            
+            # Ensure y_validation matches the first dimension of x_validation
+            y_validation = y_validation[:len(x_validation)]
+            
+            print(f"x_validation shape: {x_validation.shape}")
+            print(f"y_validation shape: {y_validation.shape}")
+            
+            validation_predictions = agent_plugin.predict(x_validation)
+            validation_predictions = validation_predictions.reshape(y_validation.shape)
+            
+            validation_fitness = environment_plugin.calculate_fitness(y_validation, validation_predictions)
+            print(f"Validation Fitness: {validation_fitness}")
+
+    else:
+        print(f"Invalid data type returned: {type(x_train)}, {type(y_train)}")
+        raise ValueError("Processed data is not in the correct format (DataFrame or Series).")
+
+def load_and_evaluate_model(config, agent_plugin):
+    # Load the model
+    agent_plugin.load(config['load_model'])
 
     # Load the input data
-    processed_data = process_data(config)
-    column = list(processed_data.keys())[0]
-    windowed_data = processed_data[column]
-    
-    # Encode the data
-    encoded_data = encoder_plugin.encode(windowed_data)
+    x_train, _ = process_data(config)
 
-    # Save the encoded data to CSV
-    evaluate_filename = config['evaluate_encoder']
-    np.savetxt(evaluate_filename, encoded_data, delimiter=",")
-    print(f"Encoded data saved to {evaluate_filename}")
+    # Predict using the loaded model
+    predictions = agent_plugin.predict(x_train.to_numpy())
 
-def load_and_evaluate_decoder(config, decoder_plugin):
-    # Load the decoder model
-    decoder_plugin.load(config['load_decoder'])
-
-    # Load the input data
-    processed_data = process_data(config)
-    column = list(processed_data.keys())[0]
-    windowed_data = processed_data[column]
-
-    # Decode the data
-    decoded_data = decoder_plugin.decode(windowed_data)
-
-    # Save the decoded data to CSV
-    evaluate_filename = config['evaluate_decoder']
-    np.savetxt(evaluate_filename, decoded_data, delimiter=",")
-    print(f"Decoded data saved to {evaluate_filename}")
+    # Save the predictions to CSV
+    evaluate_filename = config['evaluate_file']
+    predictions_df = pd.DataFrame(predictions, columns=['Prediction'])
+    write_csv(evaluate_filename, predictions_df, include_date=config['force_date'], headers=config['headers'])
+    print(f"Predicted data saved to {evaluate_filename}")
