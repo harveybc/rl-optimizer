@@ -26,5 +26,7 @@ def parse_args():
     parser.add_argument('-fd', '--force_date', action='store_true', help='Include date in the output CSV files.')
     parser.add_argument('-hdr', '--headers', action='store_true', help='Indicate if the CSV file has headers.')
     parser.add_argument('-max_steps', '--max_steps', type=int, help='Maximum number of training steps.')
+    parser.add_argument('-bs', '--batch_size', type=int, help='Batch size for training the model.')
+    parser.add_argument('-e', '--epochs', type=int, help='Number of epochs to train the model.')
 
     return parser.parse_known_args()

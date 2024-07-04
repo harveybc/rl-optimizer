@@ -25,4 +25,6 @@ DEFAULT_VALUES = {
     'force_date': False,
     'headers': True,
     'max_steps': 10000,
+    'batch_size': 32,
+    'epochs': 100
 }
