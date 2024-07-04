@@ -64,6 +64,7 @@ class Plugin:
         observation = self.environment.reset()
         done = False
         while not done:
+            print(f"Observation shape: {len(observation)}")  # Add this line
             action = net.activate(observation)
             observation, reward, done, _ = self.environment.step(action)
             fitness += reward

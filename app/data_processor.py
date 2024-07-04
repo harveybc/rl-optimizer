@@ -30,15 +30,13 @@ def process_data(config):
     # Ensure both x_train and y_train data are numeric
     x_train_data = x_train_data.apply(pd.to_numeric, errors='coerce').fillna(0).astype(np.float32)
     y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0).astype(np.float32)
-    
+
     # Add debug message to confirm type
     print(f"x_train_data type: {x_train_data.dtypes}")
     print(f"y_train_data type: {y_train_data.dtypes}")
-    
-    print(f"x_train_data shape: {x_train_data.shape}")
-    print(f"y_train_data shape: {y_train_data.shape}")
-    
+
     return x_train_data, y_train_data
+
 
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
