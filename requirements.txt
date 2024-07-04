@@ -7,4 +7,5 @@ scipy
 build
 pytest
 pdoc3
+openrl
 keras-multi-head
