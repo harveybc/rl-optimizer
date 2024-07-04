@@ -1,4 +1,4 @@
-from importlib.metadata import entry_points, EntryPoint
+from importlib.metadata import entry_points
 
 def load_plugin(plugin_group, plugin_name):
     print(f"Attempting to load plugin: {plugin_name} from group: {plugin_group}")
@@ -16,10 +16,14 @@ def load_plugin(plugin_group, plugin_name):
         print(f"Failed to load plugin {plugin_name} from group {plugin_group}, Error: {e}")
         raise
 
-def load_encoder_decoder_plugins(encoder_name, decoder_name):
-    encoder_plugin, encoder_params = load_plugin('feature_extractor.encoders', encoder_name)
-    decoder_plugin, decoder_params = load_plugin('feature_extractor.decoders', decoder_name)
-    return encoder_plugin, encoder_params, decoder_plugin, decoder_params
+def load_environment_plugin(env_name):
+    return load_plugin('rl_optimizer.environments', env_name)
+
+def load_agent_plugin(agent_name):
+    return load_plugin('rl_optimizer.agents', agent_name)
+
+def load_optimizer_plugin(optimizer_name):
+    return load_plugin('rl_optimizer.optimizers', optimizer_name)
 
 def get_plugin_params(plugin_group, plugin_name):
     print(f"Getting plugin parameters for: {plugin_name} from group: {plugin_group}")
