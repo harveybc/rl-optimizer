@@ -50,12 +50,14 @@ To install and set up the RL-Optimizer application, follow these steps:
 6. **(Optional) Run the RL-Optimizer**:
     - On Windows, run the following command to verify installation:
         ```bash
-        rl-optimizer.bat tests\data\config.json
+        rl_optimizer.bat tests/data/encoder_eval.csv -ytf tests/data/csv_sel_unb_norm_512.csv -of output_predictions.csv -sm trained_model.pkl -op neat -ep prediction -ap neat 
+
         ```
 
     - On Linux, run:
         ```bash
-        sh rl-optimizer.sh tests\data\config.json
+        sh rl-optimizer.sh tests/data/encoder_eval.csv -ytf tests/data/csv_sel_unb_norm_512.csv -of output_predictions.csv -sm trained_model.pkl -op neat -ep prediction -ap neat 
+
         ```
 
 7. **(Optional) Run Tests**:
