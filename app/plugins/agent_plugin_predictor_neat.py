@@ -1,5 +1,6 @@
 import neat
 import pickle
+import os
 
 class Plugin:
     """
@@ -31,11 +32,18 @@ class Plugin:
         with open(file_path, 'rb') as f:
             self.model = pickle.load(f)
         print(f"Agent model loaded from {file_path}")
-        # Add a debug statement to verify the model type
         if isinstance(self.model, neat.nn.FeedForwardNetwork):
             print("Loaded model is a NEAT FeedForwardNetwork")
         else:
             print(f"Loaded model type: {type(self.model)}")
+
+    def save(self, file_path):
+        if self.model is not None:
+            with open(file_path, 'wb') as f:
+                pickle.dump(self.model, f)
+            print(f"Agent model saved to {file_path}")
+        else:
+            print("No model to save.")
 
     def predict(self, x_data):
         if self.model is None:
