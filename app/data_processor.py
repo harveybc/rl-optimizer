@@ -48,9 +48,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     epochs = config['epochs']
 
     # Plugin-specific parameters
-    env_params = environment_plugin.get_params()
-    agent_params = agent_plugin.get_params()
-    optimizer_params = optimizer_plugin.get_params()
+    env_params = environment_plugin.plugin_params
+    agent_params = agent_plugin.plugin_params
+    optimizer_params = optimizer_plugin.plugin_params
 
     # Prepare environment
     environment_plugin.set_params(**env_params)
