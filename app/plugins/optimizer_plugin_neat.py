@@ -1,4 +1,3 @@
-import numpy as np
 import neat
 import os
 import pickle
@@ -9,12 +8,10 @@ class Plugin:
     """
 
     plugin_params = {
-        'config_file': 'tests/data/neat_50.ini',
+        'config_file': 'neat_config.ini',
         'epochs': 10,
         'batch_size': 256,
     }
-
-    plugin_debug_vars = ['config_file', 'epochs', 'batch_size']
 
     def __init__(self):
         self.params = self.plugin_params.copy()
@@ -27,7 +24,7 @@ class Plugin:
             self.params[key] = value
 
     def get_debug_info(self):
-        return {var: self.params[var] for var in self.plugin_debug_vars}
+        return {var: self.params[var] for var in self.plugin_params}
 
     def add_debug_info(self, debug_info):
         plugin_debug_info = self.get_debug_info()
@@ -55,9 +52,8 @@ class Plugin:
                 genome.fitness = self.evaluate_genome(genome, config)
 
         winner = population.run(eval_genomes, epochs)
-        
         self.model = neat.nn.FeedForwardNetwork.create(winner, config)
-
+        
         with open('winner.pkl', 'wb') as f:
             pickle.dump(winner, f)
 
@@ -74,16 +70,13 @@ class Plugin:
 
     def save(self, file_path):
         with open(file_path, 'wb') as f:
-            pickle.dump(self, f)
+            pickle.dump(self.model, f)
         print(f"Optimizer model saved to {file_path}")
 
     def load(self, file_path):
         with open(file_path, 'rb') as f:
             loaded_model = pickle.load(f)
-        self.params = loaded_model.params
-        self.environment = loaded_model.environment
-        self.agent = loaded_model.agent
-        self.model = loaded_model.model
+        self.model = loaded_model
         print(f"Optimizer model loaded from {file_path}")
 
 # Debugging usage example
