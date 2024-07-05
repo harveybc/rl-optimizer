@@ -42,8 +42,15 @@ def merge_config(defaults, plugin_params, config, cli_args, unknown_args):
 
     # Step 4: Merge with CLI arguments (ensure CLI args always override)
     cli_keys_single = [arg.lstrip('-') for arg in sys.argv if arg.startswith('-') and not arg.startswith('--')]
+    cli_expanded = []
+    for key in cli_keys:
+        if key in ARGUMENT_MAPPING:
+            key = ARGUMENT_MAPPING[key]
+            cli_expanded.append(key)
+
     cli_keys_double = [arg.lstrip('--') for arg in sys.argv if arg.startswith('--')]
-    cli_keys = cli_keys_single + cli_keys_double
+    cli_keys = cli_keys_double + cli_expanded
+    print(f"CLI keys: {cli_keys}")
 
     for key in cli_keys:
         original_key = key
