@@ -28,3 +28,32 @@ DEFAULT_VALUES = {
     'batch_size': 32,
     'epochs': 100
 }
+
+# mapping of short-form to long-form arguments
+ARGUMENT_MAPPING = {
+    'ytf': 'y_train_file',
+    'xvf': 'x_validation_file',
+    'yvf': 'y_validation_file',
+    'tc': 'target_column',
+    'of': 'output_file',
+    'sm': 'save_model',
+    'lm': 'load_model',
+    'ef': 'evaluate_file',
+    'op': 'optimizer_plugin',
+    'ep': 'environment_plugin',
+    'ap': 'agent_plugin',
+    'rl': 'remote_log',
+    'rlc': 'remote_load_config',
+    'rsc': 'remote_save_config',
+    'u': 'username',
+    'p': 'password',
+    'lc': 'load_config',
+    'sc': 'save_config',
+    'sl': 'save_log',
+    'qm': 'quiet_mode',
+    'fd': 'force_date',
+    'hdr': 'headers',
+    'max_steps': 'max_steps',
+    'bs': 'batch_size',
+    'e': 'epochs'
+}
