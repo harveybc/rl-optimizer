@@ -8,7 +8,7 @@ class Plugin:
     """
 
     plugin_params = {
-        'config_file': 'neat_config.ini',
+        'config_file': 'tests\data\neat_50.ini',
         'epochs': 10,
         'batch_size': 256,
     }
