@@ -80,9 +80,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     # Predict using the trained model
     predictions = agent_plugin.predict(x_train)
 
-    # Ensure predictions match y_train length
-    if len(predictions) != len(x_train):
-        raise ValueError(f"Number of predictions ({len(predictions)}) does not match number of x_train samples ({len(x_train)})")
+    # Ensure y_train_data length matches x_train_data length
+    if len(predictions) != len(y_train):
+        raise ValueError(f"Number of predictions ({len(predictions)}) does not match number of y_train samples ({len(y_train)})")
 
     # Reshape predictions to match y_train shape
     predictions = np.array(predictions).reshape(y_train.shape)
