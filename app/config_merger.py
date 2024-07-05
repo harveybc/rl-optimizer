@@ -7,6 +7,7 @@ def process_unknown_args(unknown_args):
     while i < len(unknown_args):
         key = unknown_args[i].lstrip('-')
         value = unknown_args[i + 1] if i + 1 < len(unknown_args) else None
+        # Convert short-form to long-form using the mapping
         if key in ARGUMENT_MAPPING:
             key = ARGUMENT_MAPPING[key]
         processed_args[key] = value
