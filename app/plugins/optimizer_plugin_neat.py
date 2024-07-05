@@ -71,7 +71,8 @@ class Plugin:
         while not done:
             action = net.activate(observation)
             observation, reward, done, info = self.environment.step(action)
-            total_error += reward  
+
+            total_error += 1/reward  
             total_predictions += 1
 
         mae = total_error / total_predictions if total_predictions > 0 else float('inf')
