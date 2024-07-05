@@ -71,11 +71,11 @@ class Plugin:
         while not done:
             action = net.activate(observation)
             observation, reward, done, info = self.environment.step(action)
-            fitness += reward
-            total_error += abs(info['true_value'] - action[0])  # Assuming action[0] is the prediction
+            total_error += reward  
             total_predictions += 1
 
         mae = total_error / total_predictions if total_predictions > 0 else float('inf')
+        fitness = 1/mae
         print(f"MAE for genome {genome.key}: {mae}")
         return fitness
 
