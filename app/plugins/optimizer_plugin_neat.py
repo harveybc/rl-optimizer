@@ -48,7 +48,7 @@ class Plugin:
         population = neat.Population(config)
         population.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
-        population.add_reporter(stats)
+        #population.add_reporter(stats)
 
         def eval_genomes(genomes, config):
             for genome_id, genome in genomes:
