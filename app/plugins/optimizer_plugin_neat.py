@@ -76,7 +76,7 @@ class Plugin:
 
         mae = total_error / total_predictions if total_predictions > 0 else float('inf')
         fitness = 1/mae
-        print(f"MAE for genome {genome.key}: {mae}")
+        #print(f"MAE for genome {genome.key}: {mae}")
         return fitness
 
     def save(self, file_path):
