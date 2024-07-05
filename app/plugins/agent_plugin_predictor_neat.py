@@ -32,6 +32,8 @@ class Plugin:
         print(f"Config loaded from {config_file}")
 
     def predict(self, data):
+        self.load(self.params['genome_file'])
+        self.load_config(self.params['config_file'])
         if self.model is None:
             raise ValueError("Model has not been loaded.")
         if self.config is None:
