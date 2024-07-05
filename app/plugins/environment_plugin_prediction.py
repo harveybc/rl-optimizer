@@ -80,9 +80,10 @@ class PredictionEnv(gym.Env):
             done = self.current_step >= self.max_steps
         prediction = action[0]
         true_value = self.data[self.current_step, 0]  # Assuming the first column is the target
-        reward = 1.0 / np.abs(true_value - prediction)  # Fitness function as inverse of error
+        reward = 1.0 / np.abs(true_value - prediction) if true_value != prediction else float('inf')  # Fitness function as inverse of error
         observation = self.data[self.current_step] if not done else np.zeros_like(self.data[0])
-        return observation, reward, done, {}
+        return observation, reward, done, {'true_value': true_value}
+
 
     def render(self, mode='human'):
         pass

@@ -63,12 +63,20 @@ class Plugin:
     def evaluate_genome(self, genome, config):
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         fitness = 0.0
+        total_error = 0.0
+        total_predictions = 0
+        
         observation = self.environment.reset()
         done = False
         while not done:
             action = net.activate(observation)
-            observation, reward, done, _ = self.environment.step(action)
+            observation, reward, done, info = self.environment.step(action)
             fitness += reward
+            total_error += abs(info['true_value'] - action[0])  # Assuming action[0] is the prediction
+            total_predictions += 1
+
+        mae = total_error / total_predictions if total_predictions > 0 else float('inf')
+        print(f"MAE for genome {genome.key}: {mae}")
         return fitness
 
     def save(self, file_path):
