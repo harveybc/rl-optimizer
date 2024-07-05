@@ -2,7 +2,7 @@ import sys
 from app.config import DEFAULT_VALUES
 
 def process_unknown_args(unknown_args):
-    return {unknown_args[i].lstrip('-').lstrip('-'): unknown_args[i + 1] for i in range(0, len(unknown_args), 2)}
+    return {unknown_args[i].lstrip('-'): unknown_args[i + 1] for i in range(0, len(unknown_args), 2)}
 
 def convert_type(value):
     try:
@@ -32,7 +32,10 @@ def merge_config(defaults, plugin_params, config, cli_args, unknown_args):
     print(f"Actual Step 3 Output: {merged_config}")
 
     # Step 4: Merge with CLI arguments (ensure CLI args always override)
-    cli_keys = [arg.lstrip('-').lstrip('-') for arg in sys.argv if arg.startswith('-')]
+    cli_keys_single = [arg.lstrip('-') for arg in sys.argv if arg.startswith('-') and not arg.startswith('--')]
+    cli_keys_double = [arg.lstrip('--') for arg in sys.argv if arg.startswith('--')]
+    cli_keys = cli_keys_single + cli_keys_double
+
     for key in cli_keys:
         if key in cli_args:
             print(f"Step 4 merging from CLI args: {key} = {cli_args[key]}")
