@@ -57,7 +57,7 @@ class Plugin:
         self.best_genome = population.run(eval_genomes, epochs)
 
         # Save the best genome
-        with open(genome_file, 'wb') as f:
+        with open(self.params['genome_file'], 'wb') as f:
             pickle.dump(self.best_genome, f)
 
     def evaluate_genome(self, genome, config):

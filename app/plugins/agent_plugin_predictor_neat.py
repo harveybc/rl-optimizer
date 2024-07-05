@@ -7,7 +7,8 @@ class Plugin:
     """
 
     plugin_params = {
-        'config_file': 'neat_config.ini',
+        'config_file': 'tests/data/neat_50.ini',
+        'genome_file': 'winner.pkl'
     }
 
     def __init__(self):
