@@ -56,10 +56,10 @@ class Plugin:
 
         winner = population.run(eval_genomes, epochs)
         
+        self.model = neat.nn.FeedForwardNetwork.create(winner, config)
+
         with open('winner.pkl', 'wb') as f:
             pickle.dump(winner, f)
-        
-        self.model = neat.nn.FeedForwardNetwork.create(winner, config)
 
     def evaluate_genome(self, genome, config):
         net = neat.nn.FeedForwardNetwork.create(genome, config)
@@ -74,12 +74,16 @@ class Plugin:
 
     def save(self, file_path):
         with open(file_path, 'wb') as f:
-            pickle.dump(self.model, f)
+            pickle.dump(self, f)
         print(f"Optimizer model saved to {file_path}")
 
     def load(self, file_path):
         with open(file_path, 'rb') as f:
-            self.model = pickle.load(f)
+            loaded_model = pickle.load(f)
+        self.params = loaded_model.params
+        self.environment = loaded_model.environment
+        self.agent = loaded_model.agent
+        self.model = loaded_model.model
         print(f"Optimizer model loaded from {file_path}")
 
 # Debugging usage example
