@@ -9,6 +9,7 @@ class Plugin:
 
     plugin_params = {
         'config_file': 'tests/data/neat_50.ini',
+        'genome_file': 'winner.pkl',
         'epochs': 10,
         'batch_size': 256,
     }
@@ -56,7 +57,7 @@ class Plugin:
         self.best_genome = population.run(eval_genomes, epochs)
 
         # Save the best genome
-        with open('winner.pkl', 'wb') as f:
+        with open(genome_file, 'wb') as f:
             pickle.dump(self.best_genome, f)
 
     def evaluate_genome(self, genome, config):
