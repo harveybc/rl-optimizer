@@ -40,6 +40,13 @@ class Plugin:
     def render(self, mode='human'):
         return self.env.render(mode=mode)
 
+    def calculate_fitness(self, y_true, y_pred):
+        """Calculate fitness as the inverse of the mean absolute error."""
+        mae = np.mean(np.abs(y_true - y_pred))
+        if mae == 0:
+            return float('inf')  # If there is no error, fitness is infinite
+        return 1.0 / mae
+
 class PredictionEnv(gym.Env):
     """
     A custom environment for prediction tasks.
@@ -79,23 +86,6 @@ class PredictionEnv(gym.Env):
 
     def render(self, mode='human'):
         pass
-
-# Debugging usage example
-if __name__ == "__main__":
-    plugin = Plugin()
-    plugin.set_params(time_horizon=10, max_steps=1000)
-    plugin.build_environment()
-    debug_info = plugin.get_debug_info()
-    print(f"Debug Info: {debug_info}")
-    observation = plugin.reset()
-    for _ in range(10):
-        action = np.array([0.5])  # Example action
-        observation, reward, done, _ = plugin.step(action)
-        if done:
-            break
-    plugin.render()
-
-
 
 # Debugging usage example
 if __name__ == "__main__":

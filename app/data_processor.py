@@ -6,7 +6,6 @@ import json
 from app.data_handler import load_csv, write_csv
 from app.config_handler import save_debug_info, remote_log
 
-
 def process_data(config):
     print(f"Loading data from CSV file: {config['x_train_file']}")
     x_train_data = load_csv(config['x_train_file'], headers=config['headers'])
@@ -135,7 +134,6 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         
         validation_fitness = environment_plugin.calculate_fitness(y_validation, validation_predictions)
         print(f"Validation Fitness: {validation_fitness}")
-
 
 def load_and_evaluate_model(config, agent_plugin):
     # Load the model
