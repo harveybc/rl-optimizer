@@ -1,5 +1,3 @@
-# config_merger.py
-
 import sys
 from app.config import DEFAULT_VALUES
 

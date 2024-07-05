@@ -1,5 +1,3 @@
-# config_handler.py
-
 import json
 import sys
 import requests
