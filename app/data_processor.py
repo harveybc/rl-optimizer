@@ -6,7 +6,6 @@ import json
 from app.data_handler import load_csv, write_csv
 from app.config_handler import save_debug_info, remote_log
 
-
 def process_data(config):
     print(f"Loading data from CSV file: {config['x_train_file']}")
     x_train_data = load_csv(config['x_train_file'], headers=config['headers'])
@@ -81,6 +80,10 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     # Predict using the trained model
     predictions = agent_plugin.predict(x_train)
 
+    # Ensure y_train_data length matches x_train_data length
+    if len(predictions) != len(y_train):
+        raise ValueError(f"Number of predictions ({len(predictions)}) does not match number of y_train samples ({len(y_train)})")
+
     # Reshape predictions to match y_train shape
     predictions = np.array(predictions).reshape(y_train.shape)
 
@@ -135,7 +138,6 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         
         validation_fitness = environment_plugin.calculate_fitness(y_validation, validation_predictions)
         print(f"Validation Fitness: {validation_fitness}")
-
 
 def load_and_evaluate_model(config, agent_plugin):
     # Load the model

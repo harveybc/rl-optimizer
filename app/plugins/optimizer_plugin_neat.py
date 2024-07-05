@@ -59,7 +59,7 @@ class Plugin:
         self.model = neat.nn.FeedForwardNetwork.create(winner, config)
 
         with open('winner.pkl', 'wb') as f:
-            pickle.dump(winner, f)
+            pickle.dump(self, f)
 
     def evaluate_genome(self, genome, config):
         net = neat.nn.FeedForwardNetwork.create(genome, config)
