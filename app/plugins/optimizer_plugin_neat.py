@@ -1,4 +1,3 @@
-import numpy as np
 import neat
 import os
 import pickle
@@ -20,6 +19,7 @@ class Plugin:
         self.params = self.plugin_params.copy()
         self.environment = None
         self.agent = None
+        self.best_genome = None
 
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
@@ -43,10 +43,6 @@ class Plugin:
         config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                              neat.DefaultSpeciesSet, neat.DefaultStagnation,
                              config_path)
-        
-        # Override num_inputs and num_outputs based on x_train and y_train
-        config.genome_config.num_inputs = x_train.shape[1]
-        config.genome_config.num_outputs = y_train.shape[1] if len(y_train.shape) > 1 else 1
 
         population = neat.Population(config)
         population.add_reporter(neat.StdOutReporter(True))
@@ -57,13 +53,11 @@ class Plugin:
             for genome_id, genome in genomes:
                 genome.fitness = self.evaluate_genome(genome, config)
 
-        winner = population.run(eval_genomes, epochs)
-        
+        self.best_genome = population.run(eval_genomes, epochs)
+
+        # Save the best genome
         with open('winner.pkl', 'wb') as f:
-            pickle.dump(winner, f)
-        
-        # Save the model for later use in prediction
-        self.model = neat.nn.FeedForwardNetwork.create(winner, config)
+            pickle.dump(self.best_genome, f)
 
     def evaluate_genome(self, genome, config):
         net = neat.nn.FeedForwardNetwork.create(genome, config)
@@ -78,16 +72,12 @@ class Plugin:
 
     def save(self, file_path):
         with open(file_path, 'wb') as f:
-            pickle.dump(self, f)
+            pickle.dump(self.best_genome, f)
         print(f"Optimizer model saved to {file_path}")
 
     def load(self, file_path):
         with open(file_path, 'rb') as f:
-            loaded_model = pickle.load(f)
-        self.params = loaded_model.params
-        self.environment = loaded_model.environment
-        self.agent = loaded_model.agent
-        self.model = loaded_model.model
+            self.best_genome = pickle.load(f)
         print(f"Optimizer model loaded from {file_path}")
 
 # Debugging usage example
