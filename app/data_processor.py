@@ -68,18 +68,17 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     # Prepare environment
     environment_plugin.set_params(**env_params)
     environment_plugin.build_environment(x_train, y_train)
-    
-    # Pass environment instance to optimizer plugin
-    optimizer_plugin.build_environment(environment_plugin.env, x_train, y_train)
 
     # Prepare agent
     agent_plugin.set_params(**agent_params)
 
     # Prepare optimizer
     optimizer_plugin.set_params(**optimizer_params)
+    optimizer_plugin.build_environment(environment_plugin.env, x_train, y_train)
+    optimizer_plugin.build_model()
 
     # Train the model using the optimizer plugin
-    optimizer_plugin.train(x_train, y_train, epochs=epochs, batch_size=batch_size)
+    optimizer_plugin.train()
 
     # Save the trained model
     if config['save_model']:
@@ -94,14 +93,8 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     predictions = np.array(predictions).reshape(y_train.shape)
 
     # Calculate fitness
-    fitness = environment_plugin.calculate_fitness(y_train, predictions)
-    print(f"Fitness: {fitness}")
-
-    # Calculate and print MAE and MSE
-    mae = np.mean(np.abs(y_train - predictions))
-    mse = np.mean((y_train - predictions) ** 2)
-    print(f"Mean Absolute Error (MAE): {mae}")
-    print(f"Mean Squared Error (MSE): {mse}")
+    mae, mse = environment_plugin.calculate_fitness(y_train, predictions)
+    print(f"Fitness: MAE={mae}, MSE={mse}")
 
     # Convert predictions to a DataFrame and save to CSV
     predictions_df = pd.DataFrame(predictions, columns=['Prediction'])
@@ -114,9 +107,8 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     execution_time = end_time - start_time
     debug_info = {
         'execution_time': float(execution_time),
-        'fitness': float(fitness),
-        'mae': float(mae),
-        'mse': float(mse)
+        'fitness_mae': float(mae),
+        'fitness_mse': float(mse)
     }
 
     # Save debug info
@@ -137,22 +129,83 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         x_validation = load_csv(config['x_validation_file'], headers=config['headers']).to_numpy().astype(np.float32)
         y_validation = load_csv(config['y_validation_file'], headers=config['headers']).to_numpy().astype(np.float32)
         
-        # Ensure x_validation is a 2D array
-        if x_validation.ndim == 1:
-            x_validation = x_validation.reshape(-1, 1)
-        
-        # Ensure y_validation matches the first dimension of x_validation
-        y_validation = y_validation[:len(x_validation)]
-        
-        print(f"x_validation shape: {x_validation.shape}")
-        print(f"y_validation shape: {y_validation.shape}")
-        
-        validation_predictions = agent_plugin.predict(x_validation)
-        validation_predictions = validation_predictions.reshape(y_validation.shape)
-        
-        validation_fitness = environment_plugin.calculate_fitness(y_validation, validation_predictions)
-        print(f"Validation Fitness: {validation_fitness}")
+        #To ensure that the optimizer integrates properly with the environment and agent plugins and performs the training and evaluation steps correctly, we need to verify that the optimizer calls the necessary functions and interfaces correctly with the provided environment and agent plugins. Here’s the corrected version of the `optimizer_plugin_openrl.py`, ensuring proper integration and handling of training and evaluation processes:
 
+### Optimizer Plugin (`optimizer_plugin_openrl.py`)
+
+```python
+import pandas as pd
+import numpy as np
+import openrl
+from openrl.algorithms.ppo import PPOAlgorithm as PPO
+from openrl.algorithms.dqn import DQNAlgorithm as DQN
+
+class Plugin:
+    """
+    An optimizer plugin using OpenRL, supporting multiple algorithms.
+    """
+
+    plugin_params = {
+        'algorithm': 'PPO',
+        'total_timesteps': 10000,
+        'env_params': {
+            'time_horizon': 12,
+            'observation_space_size': 8,  # Adjust based on your x_train data
+            'action_space_size': 1,
+        }
+    }
+
+    plugin_debug_vars = ['algorithm', 'total_timesteps']
+
+    def __init__(self):
+        self.params = self.plugin_params.copy()
+        self.model = None
+        self.env = None
+
+    def set_params(self, **kwargs):
+        for key, value in kwargs.items():
+            self.params[key] = value
+
+    def get_debug_info(self):
+        return {var: self.params[var] for var in self.plugin_debug_vars}
+
+    def add_debug_info(self, debug_info):
+        plugin_debug_info = self.get_debug_info()
+        debug_info.update(plugin_debug_info)
+
+    def build_environment(self, environment, x_train, y_train):
+        self.env = environment  # Correctly receive the environment instance
+        self.env.x_train = x_train
+        self.env.y_train = y_train
+
+    def build_model(self):
+        if self.params['algorithm'] == 'PPO':
+            self.model = PPO('MlpPolicy', self.env, verbose=1)
+        elif self.params['algorithm'] == 'DQN':
+            self.model = DQN('MlpPolicy', self.env, verbose=1)
+
+    def train(self):
+        self.model.learn(total_timesteps=self.params['total_timesteps'])
+
+    def evaluate(self):
+        obs = self.env.reset()
+        done = False
+        rewards = []
+        while not done:
+            action, _states = self.model.predict(obs, deterministic=True)
+            obs, reward, done, info = self.env.step(action)
+            rewards.append(reward)
+        # Collect evaluation metrics
+        return np.mean(rewards), np.mean(np.abs(rewards))
+
+    def save(self, file_path):
+        self.model.save(file_path)
+
+    def load(self, file_path):
+        if self.params['algorithm'] == 'PPO':
+            self.model = PPO.load(file_path)
+        elif self.params['algorithm'] == 'DQN':
+            self.model = DQN.load(file_path)
 
 
 def load_and_evaluate_model(config, agent_plugin):

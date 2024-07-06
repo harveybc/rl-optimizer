@@ -30,7 +30,7 @@ class Plugin:
 
     def build_environment(self, x_train, y_train):
         self.env = PredictionEnv(x_train, y_train, self.params['time_horizon'], self.params['max_steps'])
-    
+
     def reset(self):
         return self.env.reset()
 
@@ -43,9 +43,8 @@ class Plugin:
     def calculate_fitness(self, y_true, y_pred):
         """Calculate fitness as the inverse of the mean absolute error."""
         mae = np.mean(np.abs(y_true - y_pred))
-        if mae == 0:
-            return float('inf')  # If there is no error, fitness is infinite
-        return 1.0 / mae
+        mse = np.mean((y_true - y_pred) ** 2)
+        return mae, mse
 
 class PredictionEnv(gym.Env):
     """
@@ -59,13 +58,13 @@ class PredictionEnv(gym.Env):
         self.time_horizon = time_horizon
         self.max_steps = max_steps
         self.current_step = 0
-        self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(x_train.shape[1],), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.x_train.shape[1],), dtype=np.float32)
         self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
         self.reset()
 
     def reset(self):
         self.current_step = 0
-        return self.x_train.iloc[self.current_step].values
+        return self.x_train[self.current_step]
 
     def step(self, action):
         self.current_step += 1
@@ -75,9 +74,9 @@ class PredictionEnv(gym.Env):
             done = False
 
         prediction = action[0]
-        true_value = self.y_train.iloc[self.current_step, 0]
+        true_value = self.y_train[self.current_step]
         reward = 1.0 / np.abs(true_value - prediction)  # Inverse of MAE as fitness function
-        observation = self.x_train.iloc[self.current_step].values if not done else np.zeros_like(self.x_train.iloc[0].values)
+        observation = self.x_train[self.current_step] if not done else np.zeros_like(self.x_train[0])
         return observation, reward, done, {}
 
     def render(self, mode='human'):
