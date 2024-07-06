@@ -29,8 +29,10 @@ class Plugin:
         plugin_debug_info = self.get_debug_info()
         debug_info.update(plugin_debug_info)
 
-    def build_environment(self, x_train, y_train):
-        self.env = PredictionEnv(x_train, y_train, self.params['time_horizon'], self.params['max_steps'])
+    def build_environment(self, environment, x_train, y_train):
+        self.env = environment
+        self.env.x_train = x_train
+        self.env.y_train = y_train
 
     def reset(self):
         return self.env.reset()
