@@ -5,7 +5,7 @@ class Plugin:
     """
     An environment plugin for prediction tasks, compatible with both NEAT and OpenRL.
     """
-    
+
 
     plugin_params = {
         'time_horizon': 10,
@@ -66,7 +66,7 @@ class PredictionEnv(gym.Env):
 
     def reset(self):
         self.current_step = 0
-        return self.x_train[self.current_step]
+        return self.x_train.iloc[self.current_step].to_numpy()
 
     def step(self, action):
         self.current_step += 1
@@ -76,13 +76,14 @@ class PredictionEnv(gym.Env):
             done = False
 
         prediction = action[0]
-        true_value = self.y_train[self.current_step]
+        true_value = self.y_train.iloc[self.current_step].values[0]
         reward = 1.0 / np.abs(true_value - prediction)  # Inverse of MAE as fitness function
-        observation = self.x_train[self.current_step] if not done else np.zeros_like(self.x_train[0])
+        observation = self.x_train.iloc[self.current_step].to_numpy() if not done else np.zeros_like(self.x_train.iloc[0])
         return observation, reward, done, {}
 
     def render(self, mode='human'):
         pass
+
 
 # Debugging usage example
 if __name__ == "__main__":
