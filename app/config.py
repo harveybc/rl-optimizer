@@ -26,7 +26,8 @@ DEFAULT_VALUES = {
     'headers': True,
     'max_steps': 10000,
     'batch_size': 32,
-    'epochs': 1000
+    'epochs': 1000,
+    'input_offset': 128  
 }
 
 # mapping of short-form to long-form arguments

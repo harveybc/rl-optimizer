@@ -28,5 +28,5 @@ def parse_args():
     parser.add_argument('-max_steps', '--max_steps', type=int, help='Maximum number of training steps.')
     parser.add_argument('-bs', '--batch_size', type=int, help='Batch size for training the model.')
     parser.add_argument('-e', '--epochs', type=int, help='Number of epochs to train the model.')
-
+    parser.add_argument('-io', '--input_offset', type=int, default=128, help='Offset for input data to account for feature extraction window size.')
     return parser.parse_known_args()
