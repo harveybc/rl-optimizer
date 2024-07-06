@@ -27,17 +27,24 @@ def process_data(config):
     else:
         raise ValueError("Either y_train_file or target_column must be specified in the configuration.")
 
-    # Ensure both x_train and y_train data are numeric
-    x_train_data = x_train_data.apply(pd.to_numeric, errors='coerce').fillna(0).astype(np.float32)
-    y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0).astype(np.float32)
+    # Ensure input data is numeric
+    x_train_data = x_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
+    y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
+    
+    # Apply input offset and time horizon
+    offset = config['input_offset'] + config['time_horizon']
+    y_train_data = y_train_data[offset:]
+    x_train_data = x_train_data[:-config['time_horizon']]
 
-    # Adjust y_train_data to match x_train_data length if necessary
-    if len(y_train_data) > len(x_train_data):
-        y_train_data = y_train_data[:len(x_train_data)]
+    # Ensure the shapes match
+    min_length = min(len(x_train_data), len(y_train_data))
+    x_train_data = x_train_data[:min_length]
+    y_train_data = y_train_data[:min_length]
 
-    # Add debug message to confirm type
-    print(f"x_train_data type: {x_train_data.dtypes}")
-    print(f"y_train_data type: {y_train_data.dtypes}")
+    # Debugging messages to confirm types and shapes
+    print(f"Returning data of type: {type(x_train_data)}, {type(y_train_data)}")
+    print(f"x_train_data shape after adjustments: {x_train_data.shape}")
+    print(f"y_train_data shape after adjustments: {y_train_data.shape}")
     
     return x_train_data, y_train_data
 
