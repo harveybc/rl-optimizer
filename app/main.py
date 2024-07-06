@@ -33,19 +33,19 @@ def main():
     config = merge_config(config, {}, file_config, cli_args, unknown_args_dict)
 
     # Load and set optimizer plugin
-    optimizer_plugin_name = cli_args['optimizer_plugin']
+    optimizer_plugin_name = config['optimizer_plugin']
     print(f"Loading optimizer plugin: {optimizer_plugin_name}")
     optimizer_class, _ = load_plugin('rl_optimizer.optimizers', optimizer_plugin_name)
     optimizer_plugin = optimizer_class()
 
     # Load and set environment plugin
-    environment_plugin_name = cli_args['environment_plugin']
+    environment_plugin_name = config['environment_plugin']
     print(f"Loading environment plugin: {environment_plugin_name}")
     environment_class, _ = load_plugin('rl_optimizer.environments', environment_plugin_name)
     environment_plugin = environment_class()
 
     # Load and set agent plugin
-    agent_plugin_name = cli_args['agent_plugin']
+    agent_plugin_name = config['agent_plugin']
     print(f"Loading agent plugin: {agent_plugin_name}")
     agent_class, _ = load_plugin('rl_optimizer.agents', agent_plugin_name)
     agent_plugin = agent_class()
