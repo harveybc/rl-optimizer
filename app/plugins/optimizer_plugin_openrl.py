@@ -1,8 +1,8 @@
 import pandas as pd
 import numpy as np
 import openrl
-from openrl.algorithms.ppo import PPOAlgorithm as PPO
-from openrl.algorithms.dqn import DQNAlgorithm as DQN
+from openrl.algorithms.ppo import PPOAlgorithm
+from openrl.algorithms.dqn import DQNAlgorithm
 import pickle
 
 class Plugin:
@@ -38,16 +38,14 @@ class Plugin:
         plugin_debug_info = self.get_debug_info()
         debug_info.update(plugin_debug_info)
 
-    def build_environment(self, environment, x_train, y_train):
-        self.env = environment  # Correctly receive the environment instance
-        self.env.x_train = x_train
-        self.env.y_train = y_train
-
+    def build_environment(self, environment_class, x_train, y_train):
+        self.env = environment_class(x_train, y_train, **self.params['env_params'])
+    
     def build_model(self):
         if self.params['algorithm'] == 'PPO':
-            self.model = PPO('MlpPolicy', self.env, verbose=1)
+            self.model = PPOAlgorithm(self.env, self.params['total_timesteps'])
         elif self.params['algorithm'] == 'DQN':
-            self.model = DQN('MlpPolicy', self.env, verbose=1)
+            self.model = DQNAlgorithm(self.env, self.params['total_timesteps'])
 
     def train(self):
         self.model.learn(total_timesteps=self.params['total_timesteps'])
@@ -55,19 +53,17 @@ class Plugin:
     def evaluate(self):
         obs = self.env.reset()
         done = False
-        rewards = []
         while not done:
             action, _states = self.model.predict(obs, deterministic=True)
             obs, reward, done, info = self.env.step(action)
-            rewards.append(reward)
         # Collect evaluation metrics
-        return np.mean(rewards), np.mean(np.abs(rewards))
+        return reward
 
     def save(self, file_path):
         self.model.save(file_path)
 
     def load(self, file_path):
         if self.params['algorithm'] == 'PPO':
-            self.model = PPO.load(file_path)
+            self.model = PPOAlgorithm.load(file_path)
         elif self.params['algorithm'] == 'DQN':
-            self.model = DQN.load(file_path)
+            self.model = DQNAlgorithm.load(file_path)
