@@ -5,6 +5,7 @@ class Plugin:
     """
     An environment plugin for prediction tasks, compatible with both NEAT and OpenRL.
     """
+    
 
     plugin_params = {
         'time_horizon': 10,
