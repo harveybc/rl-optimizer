@@ -67,7 +67,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
     # Prepare environment
     environment_plugin.set_params(**env_params)
-    environment_plugin.build_environment()
+    environment_plugin.build_environment(x_train, y_train)
     
     # Pass environment instance to optimizer plugin
     optimizer_plugin.build_environment(environment_plugin.env, x_train, y_train)

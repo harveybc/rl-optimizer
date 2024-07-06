@@ -6,7 +6,6 @@ class Plugin:
     An environment plugin for prediction tasks, compatible with both NEAT and OpenRL.
     """
 
-
     plugin_params = {
         'time_horizon': 10,
         'max_steps': 1000
@@ -29,11 +28,9 @@ class Plugin:
         plugin_debug_info = self.get_debug_info()
         debug_info.update(plugin_debug_info)
 
-    def build_environment(self, environment, x_train, y_train):
-        self.env = environment
-        self.env.x_train = x_train
-        self.env.y_train = y_train
-
+    def build_environment(self, x_train, y_train):
+        self.env = PredictionEnv(x_train, y_train, self.params['time_horizon'], self.params['max_steps'])
+    
     def reset(self):
         return self.env.reset()
 
@@ -68,7 +65,7 @@ class PredictionEnv(gym.Env):
 
     def reset(self):
         self.current_step = 0
-        return self.x_train.iloc[self.current_step].to_numpy()
+        return self.x_train.iloc[self.current_step].values
 
     def step(self, action):
         self.current_step += 1
@@ -78,28 +75,10 @@ class PredictionEnv(gym.Env):
             done = False
 
         prediction = action[0]
-        true_value = self.y_train.iloc[self.current_step].values[0]
+        true_value = self.y_train.iloc[self.current_step, 0]
         reward = 1.0 / np.abs(true_value - prediction)  # Inverse of MAE as fitness function
-        observation = self.x_train.iloc[self.current_step].to_numpy() if not done else np.zeros_like(self.x_train.iloc[0])
+        observation = self.x_train.iloc[self.current_step].values if not done else np.zeros_like(self.x_train.iloc[0].values)
         return observation, reward, done, {}
 
     def render(self, mode='human'):
         pass
-
-
-# Debugging usage example
-if __name__ == "__main__":
-    plugin = Plugin()
-    x_train = np.random.rand(100, 8)
-    y_train = np.random.rand(100, 1)
-    plugin.set_params(time_horizon=10, max_steps=1000)
-    plugin.build_environment(x_train, y_train)
-    debug_info = plugin.get_debug_info()
-    print(f"Debug Info: {debug_info}")
-    observation = plugin.reset()
-    for _ in range(10):
-        action = np.array([0.5])  # Example action
-        observation, reward, done, _ = plugin.step(action)
-        if done:
-            break
-    plugin.render()
