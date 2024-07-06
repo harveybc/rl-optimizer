@@ -41,9 +41,9 @@ class Plugin:
         return self.env.render(mode=mode)
 
     def calculate_fitness(self, y_true, y_pred):
-        """Calculate fitness as the inverse of the mean absolute error."""
+        """Calculate fitness as the inverse of the mean absolute error and mean squared error."""
         mae = np.mean(np.abs(y_true - y_pred))
-        mse = np.mean((y_true - y_pred) ** 2)
+        mse = np.mean((y_true - y_pred)**2)
         return mae, mse
 
 class PredictionEnv(gym.Env):
@@ -64,7 +64,7 @@ class PredictionEnv(gym.Env):
 
     def reset(self):
         self.current_step = 0
-        return self.x_train[self.current_step]
+        return self.x_train.iloc[self.current_step].values
 
     def step(self, action):
         self.current_step += 1
@@ -74,10 +74,10 @@ class PredictionEnv(gym.Env):
             done = False
 
         prediction = action[0]
-        true_value = self.y_train[self.current_step]
+        true_value = self.y_train.iloc[self.current_step, 0]  # Assuming the first column is the target
         reward = 1.0 / np.abs(true_value - prediction)  # Inverse of MAE as fitness function
-        observation = self.x_train[self.current_step] if not done else np.zeros_like(self.x_train[0])
-        return observation, reward, done, {}
+        observation = self.x_train.iloc[self.current_step].values if not done else np.zeros_like(self.x_train.iloc[0].values)
+        return observation, reward, done, {'true_value': true_value}
 
     def render(self, mode='human'):
         pass

@@ -88,7 +88,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
     # Predict using the trained model
     predictions = []
-    for obs in x_train:
+    for obs in x_train.values:
         action = agent_plugin.get_action(obs)
         predictions.append(action)
 
@@ -96,7 +96,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     predictions = np.array(predictions).reshape(y_train.shape)
 
     # Calculate fitness
-    mae, mse = environment_plugin.calculate_fitness(y_train, predictions)
+    mae, mse = environment_plugin.calculate_fitness(y_train.values, predictions)
     print(f"Fitness: MAE={mae}, MSE={mse}")
 
     # Convert predictions to a DataFrame and save to CSV
@@ -151,7 +151,6 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         
         validation_fitness = environment_plugin.calculate_fitness(y_validation, validation_predictions)
         print(f"Validation Fitness: MAE={validation_fitness[0]}, MSE={validation_fitness[1]}")
-
 
 def load_and_evaluate_model(config, agent_plugin):
     # Load the model
