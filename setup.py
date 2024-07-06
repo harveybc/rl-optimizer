@@ -1,3 +1,5 @@
+from setuptools import setup, find_packages
+
 setup(
     name='rl-optimizer',
     version='0.1.0',
