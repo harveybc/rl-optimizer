@@ -87,7 +87,10 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         print(f"Model saved to {config['save_model']}")
 
     # Predict using the trained model
-    predictions = agent_plugin.predict(x_train)
+    predictions = []
+    for obs in x_train:
+        action = agent_plugin.get_action(obs)
+        predictions.append(action)
 
     # Reshape predictions to match y_train shape
     predictions = np.array(predictions).reshape(y_train.shape)
@@ -129,83 +132,25 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         x_validation = load_csv(config['x_validation_file'], headers=config['headers']).to_numpy().astype(np.float32)
         y_validation = load_csv(config['y_validation_file'], headers=config['headers']).to_numpy().astype(np.float32)
         
-        #To ensure that the optimizer integrates properly with the environment and agent plugins and performs the training and evaluation steps correctly, we need to verify that the optimizer calls the necessary functions and interfaces correctly with the provided environment and agent plugins. Here’s the corrected version of the `optimizer_plugin_openrl.py`, ensuring proper integration and handling of training and evaluation processes:
+        # Ensure x_validation is a 2D array
+        if x_validation.ndim == 1:
+            x_validation = x_validation.reshape(-1, 1)
+        
+        # Ensure y_validation matches the first dimension of x_validation
+        y_validation = y_validation[:len(x_validation)]
+        
+        print(f"x_validation shape: {x_validation.shape}")
+        print(f"y_validation shape: {y_validation.shape}")
+        
+        validation_predictions = []
+        for obs in x_validation:
+            action = agent_plugin.get_action(obs)
+            validation_predictions.append(action)
 
-### Optimizer Plugin (`optimizer_plugin_openrl.py`)
-
-```python
-import pandas as pd
-import numpy as np
-import openrl
-from openrl.algorithms.ppo import PPOAlgorithm as PPO
-from openrl.algorithms.dqn import DQNAlgorithm as DQN
-
-class Plugin:
-    """
-    An optimizer plugin using OpenRL, supporting multiple algorithms.
-    """
-
-    plugin_params = {
-        'algorithm': 'PPO',
-        'total_timesteps': 10000,
-        'env_params': {
-            'time_horizon': 12,
-            'observation_space_size': 8,  # Adjust based on your x_train data
-            'action_space_size': 1,
-        }
-    }
-
-    plugin_debug_vars = ['algorithm', 'total_timesteps']
-
-    def __init__(self):
-        self.params = self.plugin_params.copy()
-        self.model = None
-        self.env = None
-
-    def set_params(self, **kwargs):
-        for key, value in kwargs.items():
-            self.params[key] = value
-
-    def get_debug_info(self):
-        return {var: self.params[var] for var in self.plugin_debug_vars}
-
-    def add_debug_info(self, debug_info):
-        plugin_debug_info = self.get_debug_info()
-        debug_info.update(plugin_debug_info)
-
-    def build_environment(self, environment, x_train, y_train):
-        self.env = environment  # Correctly receive the environment instance
-        self.env.x_train = x_train
-        self.env.y_train = y_train
-
-    def build_model(self):
-        if self.params['algorithm'] == 'PPO':
-            self.model = PPO('MlpPolicy', self.env, verbose=1)
-        elif self.params['algorithm'] == 'DQN':
-            self.model = DQN('MlpPolicy', self.env, verbose=1)
-
-    def train(self):
-        self.model.learn(total_timesteps=self.params['total_timesteps'])
-
-    def evaluate(self):
-        obs = self.env.reset()
-        done = False
-        rewards = []
-        while not done:
-            action, _states = self.model.predict(obs, deterministic=True)
-            obs, reward, done, info = self.env.step(action)
-            rewards.append(reward)
-        # Collect evaluation metrics
-        return np.mean(rewards), np.mean(np.abs(rewards))
-
-    def save(self, file_path):
-        self.model.save(file_path)
-
-    def load(self, file_path):
-        if self.params['algorithm'] == 'PPO':
-            self.model = PPO.load(file_path)
-        elif self.params['algorithm'] == 'DQN':
-            self.model = DQN.load(file_path)
+        validation_predictions = np.array(validation_predictions).reshape(y_validation.shape)
+        
+        validation_fitness = environment_plugin.calculate_fitness(y_validation, validation_predictions)
+        print(f"Validation Fitness: MAE={validation_fitness[0]}, MSE={validation_fitness[1]}")
 
 
 def load_and_evaluate_model(config, agent_plugin):
