@@ -11,7 +11,8 @@ setup(
             'openrl=app.plugins.optimizer_plugin_openrl:Plugin'
         ],
         'rl_optimizer.environments': [
-            'prediction=app.plugins.environment_plugin_prediction:Plugin'
+            'prediction=app.plugins.environment_plugin_prediction:Plugin',
+            'custom=app.plugins.environment_plugin_custom:Plugin'
         ],
         'rl_optimizer.agents': [
             'neat=app.plugins.agent_plugin_predictor_neat:Plugin',

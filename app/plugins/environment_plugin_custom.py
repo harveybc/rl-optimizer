@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import openrl
 from openrl.algorithms import PPO, DQN
-from openrl.environments import CustomPredictionEnv
+import gym
 import pickle
 
 class Plugin:
@@ -68,7 +68,7 @@ class Plugin:
         elif self.params['algorithm'] == 'DQN':
             self.model = DQN.load(file_path)
 
-class CustomPredictionEnv:
+class CustomPredictionEnv(gym.Env):
     def __init__(self, x_train, y_train, time_horizon, observation_space_size, action_space_size):
         self.x_train = x_train
         self.y_train = y_train
