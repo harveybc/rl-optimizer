@@ -12,7 +12,7 @@ def parse_args():
     parser.add_argument('-lm', '--load_model', type=str, help='Filename to load a trained model from (does not perform training, just evaluate input data).')
     parser.add_argument('-ef', '--evaluate_file', type=str, help='Filename for outputting loaded model evaluation results.')
     parser.add_argument('-op', '--optimizer_plugin', type=str, help='Name of the optimizer plugin to use.')
-    parser.add_argument('-ep', '--environment_plugin', type=str,, help='Name of the environment plugin to use.')
+    parser.add_argument('-ep', '--environment_plugin', type=str, help='Name of the environment plugin to use.')
     parser.add_argument('-ap', '--agent_plugin', type=str,  help='Name of the agent plugin to use.')
     parser.add_argument('-rl', '--remote_log', type=str, help='URL of a remote API endpoint for saving debug variables in JSON format.')
     parser.add_argument('-rlc', '--remote_load_config', type=str, help='URL of a remote JSON configuration file to download and execute.')
