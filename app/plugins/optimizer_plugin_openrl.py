@@ -70,7 +70,7 @@ class Plugin:
 
                 states.append(state_tensor)
                 actions.append(action)
-                rewards.append(torch.tensor([reward], dtype=torch.float32))
+                rewards.append(torch.tensor([reward], dtype=torch.float32).unsqueeze(0))  # Ensuring rewards have same dimensions
                 old_log_probs.append(log_prob)
                 values.append(value)
 
