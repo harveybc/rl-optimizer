@@ -18,7 +18,7 @@ setup(
         ],
         'rl_optimizer.agents': [
             'neat=app.plugins.agent_plugin_predictor_neat:Plugin',
-            'openrl=app.plugins.agent_plugin_predictor_openrl:Plugin'
+            'openrl_ppo=app.plugins.agent_plugin_openrl_ppo:Plugin'
         ]
     },
     install_requires=[
