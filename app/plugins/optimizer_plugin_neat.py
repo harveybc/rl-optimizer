@@ -44,7 +44,8 @@ class Plugin:
         config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                              neat.DefaultSpeciesSet, neat.DefaultStagnation,
                              config_path)
-
+        # overwrite the num_inputs as the number of columns of self.environment.x_train
+        config.genome_config.num_inputs = self.environment.x_train.shape[1]
         population = neat.Population(config)
         population.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
@@ -90,9 +91,3 @@ class Plugin:
             self.best_genome = pickle.load(f)
         print(f"Optimizer model loaded from {file_path}")
 
-# Debugging usage example
-if __name__ == "__main__":
-    plugin = Plugin()
-    plugin.set_params(config_file='neat_config.ini', epochs=10, batch_size=256)
-    debug_info = plugin.get_debug_info()
-    print(f"Debug Info: {debug_info}")
