@@ -48,7 +48,7 @@ class Plugin:
                              config_path)
         # overwrite the num_inputs as the number of columns of self.environment.x_train
         config.genome_config.num_inputs = 128
-        
+        config.genome_config.input_nodes = 128
         population = neat.Population(config)
         population.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
