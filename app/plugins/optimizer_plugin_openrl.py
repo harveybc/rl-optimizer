@@ -66,11 +66,11 @@ class Plugin:
                 policy_dist = torch.distributions.Normal(policy_dist, torch.ones_like(policy_dist))
                 action = policy_dist.sample()
                 log_prob = policy_dist.log_prob(action).sum(dim=-1)
-                state, reward, done, _ = self.environment.step(action.numpy())
+                state, reward, done, _ = self.environment.step(action.detach().numpy())
 
                 states.append(state_tensor)
                 actions.append(action)
-                rewards.append(reward)
+                rewards.append(torch.tensor([reward], dtype=torch.float32))
                 old_log_probs.append(log_prob)
                 values.append(value)
 
@@ -78,7 +78,7 @@ class Plugin:
                     break
 
             # Convert to tensors
-            rewards = torch.tensor(rewards, dtype=torch.float32)
+            rewards = torch.cat(rewards)
             states = torch.cat(states)
             actions = torch.cat(actions)
             old_log_probs = torch.cat(old_log_probs)
