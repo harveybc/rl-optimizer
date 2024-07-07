@@ -21,6 +21,7 @@ class Plugin:
         self.environment = None
         self.agent = None
         self.best_genome = None
+        self.num_inputs = 0
 
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
@@ -35,6 +36,7 @@ class Plugin:
 
     def set_environment(self, environment):
         self.environment = environment
+        self.num_inputs = self.environment.x_train.shape[1]
 
     def set_agent(self, agent):
         self.agent = agent
@@ -45,7 +47,7 @@ class Plugin:
                              neat.DefaultSpeciesSet, neat.DefaultStagnation,
                              config_path)
         # overwrite the num_inputs as the number of columns of self.environment.x_train
-        config.genome_config.num_inputs = self.environment.x_train.shape[1]
+        config.DefaultGenome.num_inputs = self.num_inputs
         population = neat.Population(config)
         population.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
