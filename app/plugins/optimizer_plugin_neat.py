@@ -46,15 +46,15 @@ class Plugin:
         config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                              neat.DefaultSpeciesSet, neat.DefaultStagnation,
                              config_path)
-        # Overwrite the num_inputs based on the number of columns in x_train
+        
+        # Overwrite the num_inputs and input_nodes as the number of columns of self.environment.x_train
         config.genome_config.num_inputs = self.num_inputs
-        config.genome_config.input_nodes = self.num_inputs
-        print(f"Number of inputs: {config.genome_config.num_inputs}")
-        print(f"config.genome_config: { config.genome_config }")
+        config.genome_config.input_keys = [-i - 1 for i in range(self.num_inputs)]
+
         population = neat.Population(config)
         population.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
-        population.add_reporter(stats)
+        #population.add_reporter(stats)
 
         def eval_genomes(genomes, config):
             for genome_id, genome in genomes:
@@ -83,6 +83,7 @@ class Plugin:
 
         mae = total_error / total_predictions if total_predictions > 0 else float('inf')
         fitness = 1/mae
+        #print(f"MAE for genome {genome.key}: {mae}")
         return fitness
 
     def save(self, file_path):
@@ -94,3 +95,10 @@ class Plugin:
         with open(file_path, 'rb') as f:
             self.best_genome = pickle.load(f)
         print(f"Optimizer model loaded from {file_path}")
+
+# Debugging usage example
+if __name__ == "__main__":
+    plugin = Plugin()
+    plugin.set_params(config_file='neat_config.ini', epochs=10, batch_size=256)
+    debug_info = plugin.get_debug_info()
+    print(f"Debug Info: {debug_info}")
