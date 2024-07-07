@@ -51,10 +51,6 @@ class Plugin:
         return 1.0 / mae
 
 class PredictionEnv(gym.Env):
-    """
-    A custom environment for prediction tasks.
-    """
-
     def __init__(self, x_train, y_train, config):
         super(PredictionEnv, self).__init__()
         self.max_steps = config['max_steps']
@@ -68,7 +64,7 @@ class PredictionEnv(gym.Env):
 
     def reset(self):
         self.current_step = 0
-        observation = self.x_train[self.current_step] if not self.done else np.zeros_like(self.x_train[0])
+        observation = self.x_train[self.current_step]
         return observation
 
     def step(self, action):
@@ -81,14 +77,11 @@ class PredictionEnv(gym.Env):
 
         prediction = action[0]
         true_value = self.y_train[self.current_step]  # Assuming the first column is the target
-        reward = 1 / np.abs(true_value - prediction) if true_value != prediction else float('inf')  # Fitness function as inverse of error
-        
-        if self.done:
-            observation = self.x_train[self.current_step]  # Use the last valid observation
-        else:
-            observation = self.x_train[self.current_step]
-        
+        reward = 1/np.abs(true_value - prediction) if true_value != prediction else float('inf')  # Fitness function as inverse of error
+
+        observation = self.x_train[self.current_step]  # Always use the current step's observation
         return observation, reward, self.done, {}
+
 
 
     def render(self, mode='human'):
