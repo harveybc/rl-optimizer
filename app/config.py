@@ -28,7 +28,8 @@ DEFAULT_VALUES = {
     'batch_size': 32,
     'epochs': 1000,
     'input_offset': 128,
-    'mse_threshold': 0.001
+    'mse_threshold': 0.001,
+    'time_horizon': 12
 }
 
 # mapping of short-form to long-form arguments

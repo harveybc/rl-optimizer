@@ -30,5 +30,6 @@ def parse_args():
     parser.add_argument('-e', '--epochs', type=int, help='Number of epochs to train the model.')
     parser.add_argument('-io', '--input_offset', type=int, help='Offset for input data to account for feature extraction window size.')
     parser.add_argument('-mt', '--mse_threshold', type=float, help='Error threshold for stopping the training.')
+    parser.add_argument('-th', '--time_horizon', type=int, help='Number of ticks ahead to predict.')
 
     return parser.parse_known_args()
