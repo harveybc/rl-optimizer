@@ -1,7 +1,6 @@
 import neat
 import os
 import pickle
-import numpy as np
 
 class Plugin:
     """
@@ -79,12 +78,12 @@ class Plugin:
             action = net.activate(observation)
             observation, reward, done, info = self.environment.step(action)
 
-            total_error += 1/reward  
+            total_error += 1 / reward  
             total_predictions += 1
 
         mae = total_error / total_predictions if total_predictions > 0 else float('inf')
-        fitness = 1/mae if mae != float('inf') else 0.0  # Ensure fitness is a single float value
-        return float(fitness)
+        fitness = 1 / mae if mae != float('inf') else 0.0  # Ensure fitness is a single float value
+        return float(fitness)  # Explicitly return float
 
     def save(self, file_path):
         with open(file_path, 'wb') as f:
