@@ -153,6 +153,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         print(f"Validation Fitness: {validation_fitness}")
 
 
+
 def load_and_evaluate_model(config, agent_plugin):
     # Load the model
     agent_plugin.load(config['load_model'])
