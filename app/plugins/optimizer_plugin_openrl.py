@@ -70,8 +70,8 @@ class Plugin:
 
                 states.append(state_tensor)
                 actions.append(action)
-                rewards.append(torch.tensor(reward, dtype=torch.float32).unsqueeze(0))  # Ensuring rewards have the same dimensions
-                old_log_probs.append(log_prob)
+                rewards.append(torch.tensor([reward], dtype=torch.float32))  # Keep reward as scalar
+                old_log_probs.append(log_prob.unsqueeze(0))  # Ensure log_prob has an extra dimension
                 values.append(value)
 
                 if done:
@@ -79,11 +79,11 @@ class Plugin:
 
             # Convert to tensors
             print(f"Shapes before concatenation - rewards: {len(rewards)}, states: {len(states)}, actions: {len(actions)}, old_log_probs: {len(old_log_probs)}, values: {len(values)}")
-            rewards = torch.cat(rewards)
+            rewards = torch.cat(rewards).view(-1, 1)  # Ensure rewards have the correct shape
             states = torch.cat(states)
             actions = torch.cat(actions)
             old_log_probs = torch.cat(old_log_probs)
-            values = torch.cat(values)
+            values = torch.cat(values).view(-1, 1)  # Ensure values have the correct shape
 
             print(f"Shapes after concatenation - rewards: {rewards.shape}, states: {states.shape}, actions: {actions.shape}, old_log_probs: {old_log_probs.shape}, values: {values.shape}")
 
