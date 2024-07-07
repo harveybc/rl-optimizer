@@ -1,50 +1,4 @@
-import torch
-import torch.optim as optim
-import torch.nn as nn
-import numpy as np
-import pickle
-
 class Plugin:
-    """
-    An optimizer plugin using PPO for reinforcement learning.
-    """
-
-    plugin_params = {
-        'lr': 0.0003,
-        'gamma': 0.99,
-        'lmbda': 0.95,
-        'eps_clip': 0.2,
-        'K_epochs': 4,
-        'hidden_dim': 64,
-        'genome_file': 'ppo_model.pkl'
-    }
-
-    plugin_debug_vars = ['lr', 'gamma', 'lmbda', 'eps_clip', 'K_epochs', 'hidden_dim']
-
-    def __init__(self):
-        self.params = self.plugin_params.copy()
-        self.environment = None
-        self.agent = None
-        self.optimizer = None
-
-    def set_params(self, **kwargs):
-        for key, value in kwargs.items():
-            self.params[key] = value
-
-    def get_debug_info(self):
-        return {var: self.params[var] for var in self.plugin_debug_vars}
-
-    def add_debug_info(self, debug_info):
-        plugin_debug_info = self.get_debug_info()
-        debug_info.update(plugin_debug_info)
-
-    def set_environment(self, environment):
-        self.environment = environment
-
-    def set_agent(self, agent_plugin):
-        self.agent = agent_plugin.get_agent()
-        self.optimizer = optim.Adam(self.agent.parameters(), lr=self.params['lr'])
-
     def train(self, epochs):
         gamma = self.params['gamma']
         lmbda = self.params['lmbda']
@@ -59,6 +13,8 @@ class Plugin:
             actions = []
             old_log_probs = []
             values = []
+
+            last_valid_state = state.clone()
 
             for t in range(self.environment.max_steps):
                 state_tensor = torch.FloatTensor(state).unsqueeze(0)
@@ -82,13 +38,18 @@ class Plugin:
                 old_log_probs.append(log_prob.view(1))  # Ensure log_prob is 1D
                 values.append(value.view(1))  # Ensure value is 1D
 
+                if not done:
+                    last_valid_state = state_tensor.squeeze(0).clone()
+
                 if done:
+                    if len(states) != self.environment.max_steps:
+                        states.append(last_valid_state)  # Append the last valid state to ensure correct dimensions
                     break
 
             # Convert to tensors and ensure dimensions match
             print(f"Shapes before concatenation - rewards: {rewards[0].shape}, states: {states[0].shape}, actions: {actions[0].shape}, old_log_probs: {old_log_probs[0].shape}, values: {values[0].shape}")
             rewards = torch.cat(rewards, dim=0).view(-1, 1)
-            print(f"Rewards shape after concatenation: {rewards.shape}") 
+            print(f"Rewards shape after concatenation: {rewards.shape}")
             print(f"States shape before concatenation: {states[0].shape}")
             states = torch.cat(states, dim=0).view(-1, self.environment.x_train.shape[1])
             print(f"States shape after concatenation: {states.shape}")
@@ -127,14 +88,3 @@ class Plugin:
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-
-    def save(self, file_path):
-        with open(file_path, 'wb') as f:
-            pickle.dump(self.agent.state_dict(), f)
-        print(f"Optimizer model saved to {file_path}")
-
-    def load(self, file_path):
-        with open(file_path, 'rb') as f:
-            state_dict = pickle.load(f)
-        self.agent.load_state_dict(state_dict)
-        print(f"Optimizer model loaded from {file_path}")
