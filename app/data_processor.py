@@ -60,17 +60,24 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     batch_size = config['batch_size']
     epochs = config['epochs']
 
+    # Plugin-specific parameters
+    env_params = environment_plugin.plugin_params
+    agent_params = agent_plugin.plugin_params
+    optimizer_params = optimizer_plugin.plugin_params
+
     # Prepare environment
-    environment_plugin.set_params(**config)
+    environment_plugin.set_params(**env_params)
     environment_plugin.build_environment(x_train, y_train)
 
     # Prepare agent
-    agent_plugin.set_params(**config)
+    agent_plugin.set_params(**agent_params)
 
     # Prepare optimizer
-    optimizer_plugin.set_params(**config)
-    optimizer_plugin.build_environment(environment_plugin.env)
+    optimizer_plugin.set_params(**optimizer_params)
+    optimizer_plugin.build_environment(environment_plugin.env, x_train, y_train)
     optimizer_plugin.build_model()
+
+    # Train the model using the optimizer plugin
     optimizer_plugin.train()
 
     # Save the trained model
@@ -80,18 +87,20 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         print(f"Model saved to {config['save_model']}")
 
     # Predict using the trained model
-    predictions = []
-    for index in range(len(x_train)):
-        observation = x_train[index]
-        action = agent_plugin.get_action(observation)
-        predictions.append(action)
+    predictions = agent_plugin.predict(x_train)
 
+    # Reshape predictions to match y_train shape
     predictions = np.array(predictions).reshape(y_train.shape)
 
     # Calculate fitness
-    mae = np.mean(np.abs(predictions - y_train))
-    mse = np.mean((predictions - y_train) ** 2)
-    print(f"MAE: {mae}, MSE: {mse}")
+    fitness = environment_plugin.calculate_fitness(y_train, predictions)
+    print(f"Fitness: {fitness}")
+
+    # Calculate and print MSE and MAE
+    mse = np.mean((y_train - predictions) ** 2)
+    mae = np.mean(np.abs(y_train - predictions))
+    print(f"MSE: {mse}")
+    print(f"MAE: {mae}")
 
     # Convert predictions to a DataFrame and save to CSV
     predictions_df = pd.DataFrame(predictions, columns=['Prediction'])
@@ -104,8 +113,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     execution_time = end_time - start_time
     debug_info = {
         'execution_time': float(execution_time),
-        'mae': float(mae),
-        'mse': float(mse)
+        'fitness': float(fitness),
+        'mse': float(mse),
+        'mae': float(mae)
     }
 
     # Save debug info
@@ -141,6 +151,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         
         validation_fitness = environment_plugin.calculate_fitness(y_validation, validation_predictions)
         print(f"Validation Fitness: {validation_fitness}")
+
 
 def load_and_evaluate_model(config, agent_plugin):
     # Load the model
