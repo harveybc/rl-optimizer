@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 from openrl.algorithms.ppo import PPOAlgorithm
 from openrl.algorithms.dqn import DQNAlgorithm
-from openrl.modules import CustomModule
 
 class Plugin:
     """
@@ -25,7 +24,6 @@ class Plugin:
         self.params = self.plugin_params.copy()
         self.model = None
         self.env = None
-        self.init_module = CustomModule  # Assuming CustomModule is required
 
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
@@ -43,9 +41,9 @@ class Plugin:
 
     def build_model(self):
         if self.params['algorithm'] == 'PPO':
-            self.model = PPOAlgorithm(cfg=self.params, init_module=self.init_module)
+            self.model = PPOAlgorithm(self.env, self.params)
         elif self.params['algorithm'] == 'DQN':
-            self.model = DQNAlgorithm(cfg=self.params, init_module=self.init_module)
+            self.model = DQNAlgorithm(self.env, self.params)
 
     def train(self):
         self.model.learn(total_timesteps=self.params['total_timesteps'])
