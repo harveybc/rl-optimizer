@@ -21,6 +21,7 @@ class Plugin:
         'learning_rate': 3e-4,
         'mini_batch_size': 64,  # Default value, adjust as needed
         'bc_epoch': 10,         # Default value, adjust as needed
+        'use_share_model': False,
         'env_params': {
             'time_horizon': 12,
             'observation_space_size': 8,  # Adjust based on your x_train data
@@ -28,7 +29,7 @@ class Plugin:
         }
     }
 
-    plugin_debug_vars = ['algorithm', 'total_timesteps', 'clip_param', 'ent_coef', 'learning_rate', 'mini_batch_size', 'bc_epoch']
+    plugin_debug_vars = ['algorithm', 'total_timesteps', 'clip_param', 'ent_coef', 'learning_rate', 'mini_batch_size', 'bc_epoch', 'use_share_model']
 
     def __init__(self):
         self.params = self.plugin_params.copy()
