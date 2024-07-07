@@ -63,24 +63,27 @@ class PredictionEnv(gym.Env):
         self.current_step = 0
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.x_train.shape[1],), dtype=np.float32)
         self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
+        self.done = False
         self.reset()
 
     def reset(self):
         self.current_step = 0
-        return self.current_step
+        observation = self.x_train[self.current_step] if not self.done else np.zeros_like(self.x_train[0])
+        return observation
+        
 
     def step(self, action):
         self.current_step += 1
         if self.current_step >= self.x_train.shape[0]:
             self.current_step = self.x_train.shape[0] - 1
-            done = True
+            self.done = True
         else:
-            done = self.current_step >= self.max_steps
+            self.done = self.current_step >= self.max_steps
         prediction = action[0]
         true_value = self.y_train[self.current_step]  # Assuming the first column is the target
         reward = 1/np.abs(true_value - prediction) if true_value != prediction else float('inf')  # Fitness function as inverse of error
-        observation = self.x_train[self.current_step] if not done else np.zeros_like(self.x_train[0])
-        return observation, reward, done, {}
+        observation = self.x_train[self.current_step] if not self.done else np.zeros_like(self.x_train[0])
+        return observation, reward, self.done, {}
 
 
     def render(self, mode='human'):
