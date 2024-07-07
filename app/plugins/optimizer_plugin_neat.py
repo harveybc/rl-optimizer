@@ -47,7 +47,8 @@ class Plugin:
                              neat.DefaultSpeciesSet, neat.DefaultStagnation,
                              config_path)
         # overwrite the num_inputs as the number of columns of self.environment.x_train
-        config.genome_config.num_inputs = self.num_inputs
+        config.genome_config.num_inputs = 128
+        
         population = neat.Population(config)
         population.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
