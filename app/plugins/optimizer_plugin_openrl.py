@@ -59,11 +59,10 @@ class Plugin:
             actions = []
             old_log_probs = []
             values = []
-            last_states = []
 
             last_valid_state = state.clone()
 
-            for t in range(self.environment.max_steps):
+            for t in range(self.environment.max_steps-1):
                 state_tensor = torch.FloatTensor(state).unsqueeze(0)
                 policy_dist, value = self.agent(state_tensor)
                 policy_dist = torch.distributions.Normal(policy_dist, torch.ones_like(policy_dist))
@@ -103,18 +102,16 @@ class Plugin:
             rewards = torch.cat(rewards, dim=0).view(-1, 1)
             print(f"Rewards shape after concatenation: {rewards.shape}")
             print(f"States shape before concatenation: {states[0].shape}")
-            
-            if done:
-                print("Done")
-            else:
-                states = torch.cat(states, dim=0).view(-1, self.environment.x_train.shape[1])
-                print(f"Actions shape before concatenation: {actions[0].shape}")
-                actions = torch.cat(actions, dim=0).view(-1, 1)
-                print(f"Actions shape after concatenation: {actions.shape}")
-                print(f"Old Log Probs shape before concatenation: {old_log_probs[0].shape}")
-                old_log_probs = torch.cat(old_log_probs, dim=0).view(-1, 1)
-                print(f"Old Log Probs shape after concatenation: {old_log_probs.shape}")
+            states = torch.cat(states, dim=0).view(-1, self.environment.x_train.shape[1])
+            print(f"States shape after concatenation: {states.shape}")
+            print(f"Actions shape before concatenation: {actions[0].shape}")
+            actions = torch.cat(actions, dim=0).view(-1, 1)
+            print(f"Actions shape after concatenation: {actions.shape}")
+            print(f"Old Log Probs shape before concatenation: {old_log_probs[0].shape}")
+            old_log_probs = torch.cat(old_log_probs, dim=0).view(-1, 1)
+            print(f"Old Log Probs shape after concatenation: {old_log_probs.shape}")
             values = torch.cat(values, dim=0).view(-1, 1)
+
             print(f"Shapes after concatenation - rewards: {rewards.shape}, states: {states.shape}, actions: {actions.shape}, old_log_probs: {old_log_probs.shape}, values: {values.shape}")
 
             # Compute advantages
