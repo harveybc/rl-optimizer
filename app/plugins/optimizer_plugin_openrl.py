@@ -116,7 +116,7 @@ class Plugin:
                 print(f"Old Log Probs shape after concatenation: {old_log_probs.shape}")
                 values = torch.cat(values, dim=0).view(-1, 1)
 
-            print(f"Shapes after concatenation - rewards: {rewards.shape}, states: {states.shape}, actions: {actions.shape}, old_log_probs: {old_log_probs.shape}, values: {values.shape}")
+                print(f"Shapes after concatenation - rewards: {rewards.shape}, states: {states.shape}, actions: {actions.shape}, old_log_probs: {old_log_probs.shape}, values: {values.shape}")
 
             # Compute advantages
             returns = []
