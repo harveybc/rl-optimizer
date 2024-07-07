@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
-import openrl
-from openrl.algorithms import PPOAlgorithm, DQNAlgorithm
+from openrl.algorithms.ppo import PPOAlgorithm
+from openrl.algorithms.dqn import DQNAlgorithm
 import pickle
 
 class Config:
@@ -43,8 +43,9 @@ class Plugin:
 
     def build_environment(self, environment, x_train, y_train):
         self.env = environment
-        self.env.set_data(x_train, y_train)
-
+        self.x_train = x_train
+        self.y_train = y_train
+    
     def build_model(self):
         config = Config(self.params)
         if self.params['algorithm'] == 'PPO':
@@ -58,12 +59,10 @@ class Plugin:
     def evaluate(self):
         obs = self.env.reset()
         done = False
-        total_reward = 0
         while not done:
             action, _states = self.model.predict(obs, deterministic=True)
             obs, reward, done, info = self.env.step(action)
-            total_reward += reward
-        return total_reward
+        return reward
 
     def save(self, file_path):
         self.model.save(file_path)
