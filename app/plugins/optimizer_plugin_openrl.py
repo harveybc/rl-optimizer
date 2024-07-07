@@ -109,7 +109,6 @@ class Plugin:
             else:
                 states = torch.cat(states, dim=0).view(-1, self.environment.x_train.shape[1])
                 last_states = states
-            print(f"States shape after concatenation: {states.shape}")
             print(f"Actions shape before concatenation: {actions[0].shape}")
             actions = torch.cat(actions, dim=0).view(-1, 1)
             print(f"Actions shape after concatenation: {actions.shape}")
