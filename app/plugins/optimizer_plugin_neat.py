@@ -84,7 +84,7 @@ class Plugin:
 
         mae = total_error / total_predictions if total_predictions > 0 else float('inf')
         fitness = 1/mae if mae != float('inf') else 0.0  # Ensure fitness is a single float value
-        return fitness
+        return float(fitness)
 
     def save(self, file_path):
         with open(file_path, 'wb') as f:
