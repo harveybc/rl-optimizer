@@ -1,73 +1,68 @@
-import pandas as pd
-import numpy as np
-from openrl.algorithms.ppo import PPOAlgorithm
-from torch.optim import Adam
-import pickle
+import torch
+import torch.nn as nn
 
-class Config:
-    def __init__(self, config_dict):
-        self.__dict__.update(config_dict)
+class PPOAgent(nn.Module):
+    def __init__(self, state_dim, action_dim, hidden_dim):
+        super(PPOAgent, self).__init__()
+        self.actor = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, action_dim),
+            nn.Tanh()
+        )
+        self.critic = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1)
+        )
+
+    def forward(self, state):
+        value = self.critic(state)
+        policy_dist = self.actor(state)
+        return policy_dist, value
 
 class Plugin:
     """
-    An agent plugin using OpenRL's PPO for predictions.
+    An agent plugin for making predictions using a PPO model.
     """
 
     plugin_params = {
-        'algorithm': 'PPO',
-        'total_timesteps': 10000,
-        'clip_param': 0.2,
-        'ent_coef': 0.01,
-        'learning_rate': 3e-4,
-        'env_params': {
-            'time_horizon': 12,
-            'observation_space_size': 8,  # Adjust based on your x_train data
-            'action_space_size': 1,
-        }
+        'state_dim': 64,
+        'action_dim': 1,
+        'hidden_dim': 64,
+        'genome_file': 'ppo_model.pkl'
     }
-
-    plugin_debug_vars = ['algorithm', 'total_timesteps', 'clip_param', 'ent_coef', 'learning_rate']
 
     def __init__(self):
         self.params = self.plugin_params.copy()
-        self.model = None
-        self.env = None
+        self.agent = None
 
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
             self.params[key] = value
+        self.agent = PPOAgent(
+            state_dim=self.params['state_dim'],
+            action_dim=self.params['action_dim'],
+            hidden_dim=self.params['hidden_dim']
+        )
 
-    def get_debug_info(self):
-        return {var: self.params[var] for var in self.plugin_debug_vars}
+    def load(self, model_path):
+        with open(model_path, 'rb') as f:
+            self.agent.load_state_dict(torch.load(f))
+        print(f"Agent model loaded from {model_path}")
 
-    def add_debug_info(self, debug_info):
-        plugin_debug_info = self.get_debug_info()
-        debug_info.update(plugin_debug_info)
+    def predict(self, data):
+        self.agent.eval()
+        with torch.no_grad():
+            data = torch.FloatTensor(data.to_numpy())
+            policy_dist, _ = self.agent(data)
+            predictions = policy_dist.numpy()
+        return predictions
 
-    def build_environment(self, environment, x_train, y_train):
-        self.env = environment
-        self.x_train = x_train
-        self.y_train = y_train
-    
-    def build_model(self):
-        config = Config(self.params)
-        self.model = PPOAlgorithm(cfg=config, init_module=self.env)
-        # Set optimizer
-        self.optimizer = Adam(self.model.parameters(), lr=self.params['learning_rate'])
+    def save(self, model_path):
+        with open(model_path, 'wb') as f:
+            torch.save(self.agent.state_dict(), f)
+        print(f"Agent model saved to {model_path}")
 
-    def train(self):
-        self.model.learn(total_timesteps=self.params['total_timesteps'], optimizer=self.optimizer)
-
-    def evaluate(self):
-        obs = self.env.reset()
-        done = False
-        while not done:
-            action, _states = self.model.predict(obs, deterministic=True)
-            obs, reward, done, info = self.env.step(action)
-        return reward
-
-    def save(self, file_path):
-        self.model.save(file_path)
-
-    def load(self, file_path):
-        self.model = PPOAlgorithm.load(file_path)
+    def get_agent(self):
+        return self.agent
