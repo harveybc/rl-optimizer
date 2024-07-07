@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
-import openrl
-from openrl.algorithms import PPO, DQN
+from openrl.algorithms.ppo import PPOAlgorithm
+from openrl.algorithms.dqn import DQNAlgorithm
 import pickle
 
 class Plugin:
@@ -37,14 +37,14 @@ class Plugin:
         plugin_debug_info = self.get_debug_info()
         debug_info.update(plugin_debug_info)
 
-    def build_environment(self, environment):
+    def build_environment(self, environment, x_train, y_train):
         self.env = environment
 
     def build_model(self):
         if self.params['algorithm'] == 'PPO':
-            self.model = PPO('MlpPolicy', self.env)
+            self.model = PPOAlgorithm(policy='MlpPolicy', env=self.env)
         elif self.params['algorithm'] == 'DQN':
-            self.model = DQN('MlpPolicy', self.env)
+            self.model = DQNAlgorithm(policy='MlpPolicy', env=self.env)
 
     def train(self):
         self.model.learn(total_timesteps=self.params['total_timesteps'])
@@ -52,17 +52,20 @@ class Plugin:
     def evaluate(self):
         obs = self.env.reset()
         done = False
+        rewards = []
         while not done:
             action, _states = self.model.predict(obs, deterministic=True)
             obs, reward, done, info = self.env.step(action)
-        # Collect evaluation metrics
-        return reward
+            rewards.append(reward)
+        # Calculate mean reward as evaluation metric
+        mean_reward = np.mean(rewards)
+        return mean_reward
 
     def save(self, file_path):
         self.model.save(file_path)
 
     def load(self, file_path):
         if self.params['algorithm'] == 'PPO':
-            self.model = PPO.load(file_path)
+            self.model = PPOAlgorithm.load(file_path)
         elif self.params['algorithm'] == 'DQN':
-            self.model = DQN.load(file_path)
+            self.model = DQNAlgorithm.load(file_path)
