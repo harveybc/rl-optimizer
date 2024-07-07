@@ -51,7 +51,7 @@ class Plugin:
         eps_clip = self.params['eps_clip']
         K_epochs = self.params['K_epochs']
 
-        for _ in range(epochs):
+        for epoch in range(epochs):
             state = self.environment.reset()
             state = torch.FloatTensor(state).unsqueeze(0)
             rewards = []
@@ -78,21 +78,18 @@ class Plugin:
 
                 states.append(state_tensor.squeeze(0))  # Ensure state_tensor is 1D
                 actions.append(action.squeeze(0))  # Ensure action is 1D
-                rewards.append(torch.tensor([reward], dtype=torch.float32).unsqueeze(0))  # Ensure reward is 2D
-                old_log_probs.append(log_prob)  # Ensure log_prob is 1D
-                values.append(value.squeeze(0))  # Ensure value is 1D
+                rewards.append(torch.tensor([reward], dtype=torch.float32).view(1, 1))  # Ensure reward is 2D
+                old_log_probs.append(log_prob.view(1))  # Ensure log_prob is 1D
+                values.append(value.view(1))  # Ensure value is 1D
 
                 if done:
                     break
 
-            # Print shapes before concatenation
-            print(f"Shapes before concatenation - rewards: {len(rewards)}, states: {len(states)}, actions: {len(actions)}, old_log_probs: {len(old_log_probs)}, values: {len(values)}")
-            #for i, (r, s, a, o, v) in enumerate(zip(rewards, states, actions, old_log_probs, values)):
-            #    print(f"  Step {i}: Reward: {r.shape}, State: {s.shape}, Action: {a.shape}, Log Prob: {o.shape}, Value: {v.shape}")
-
-            # Convert to tensors
+            # Convert to tensors and ensure dimensions match
+            print(f"Shapes before concatenation - rewards: {rewards[0].shape}, states: {states[0].shape}, actions: {actions[0].shape}, old_log_probs: {old_log_probs[0].shape}, values: {values[0].shape}")
             rewards = torch.cat(rewards, dim=0).view(-1, 1)
-            states = torch.cat(states, dim=0)
+            print(f"Rewards shape after concatenation: {rewards.shape}") 
+            states = torch.cat(states, dim=0).view(-1, self.environment.x_train.shape[1])
             actions = torch.cat(actions, dim=0).view(-1, 1)
             old_log_probs = torch.cat(old_log_probs, dim=0).view(-1, 1)
             values = torch.cat(values, dim=0).view(-1, 1)
