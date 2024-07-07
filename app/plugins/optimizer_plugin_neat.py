@@ -39,7 +39,7 @@ class Plugin:
     def set_agent(self, agent):
         self.agent = agent
 
-    def train(self, x_train, y_train, epochs, batch_size):
+    def train(self, epochs):
         config_path = self.params['config_file']
         config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                              neat.DefaultSpeciesSet, neat.DefaultStagnation,

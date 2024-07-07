@@ -57,9 +57,6 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     x_train, y_train = process_data(config)
     print(f"Processed data received of type: {type(x_train)} and shape: {x_train.shape}")
 
-    batch_size = config['batch_size']
-    epochs = config['epochs']
-
     # Plugin-specific parameters
     env_params = environment_plugin.plugin_params
     agent_params = agent_plugin.plugin_params
@@ -67,16 +64,15 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
     # Prepare environment
     environment_plugin.set_params(**env_params)
-    environment_plugin.build_environment(x_train, y_train)
+    environment_plugin.build_environment(x_train, y_train, config)
 
     # Prepare agent
     agent_plugin.set_params(**agent_params)
 
     # Prepare optimizer
     optimizer_plugin.set_params(**optimizer_params)
-    optimizer_plugin.build_environment(environment_plugin.env, x_train, y_train)
-    optimizer_plugin.build_model()
-    optimizer_plugin.train()
+    optimizer_plugin.set_environment(environment_plugin.env)
+    optimizer_plugin.train(config['epochs'])
     
     # Save the trained model
     if config['save_model']:
