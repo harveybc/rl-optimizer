@@ -89,7 +89,12 @@ class Plugin:
 
                 if done:
                     if len(states) != self.environment.max_steps:
-                        states.append(last_valid_state)  # Append the last valid state to ensure correct dimensions
+                        # Append the last valid state to ensure correct dimensions
+                        states.append(last_valid_state)
+                        actions.append(actions[-1])
+                        rewards.append(rewards[-1])
+                        old_log_probs.append(old_log_probs[-1])
+                        values.append(values[-1])
                     break
 
             # Convert to tensors and ensure dimensions match
@@ -134,7 +139,8 @@ class Plugin:
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-                
+
+
     def save(self, file_path):
         with open(file_path, 'wb') as f:
             pickle.dump(self.agent.state_dict(), f)
