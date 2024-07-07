@@ -1,7 +1,12 @@
 import pandas as pd
 import numpy as np
-from openrl.algorithms.ppo import PPOAlgorithm
-from openrl.algorithms.dqn import DQNAlgorithm
+import openrl
+from openrl.algorithms import PPOAlgorithm, DQNAlgorithm
+import pickle
+
+class Config:
+    def __init__(self, config_dict):
+        self.__dict__.update(config_dict)
 
 class Plugin:
     """
@@ -38,9 +43,10 @@ class Plugin:
 
     def build_environment(self, environment, x_train, y_train):
         self.env = environment
+        self.env.set_data(x_train, y_train)
 
     def build_model(self):
-        config = self.params.copy()  # Create a config object
+        config = Config(self.params)
         if self.params['algorithm'] == 'PPO':
             self.model = PPOAlgorithm(cfg=config, init_module=self.env)
         elif self.params['algorithm'] == 'DQN':
