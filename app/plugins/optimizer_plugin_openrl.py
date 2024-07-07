@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import openrl
 from openrl.algorithms.ppo import PPOAlgorithm
 from openrl.algorithms.dqn import DQNAlgorithm
 import pickle
@@ -42,9 +43,9 @@ class Plugin:
 
     def build_model(self):
         if self.params['algorithm'] == 'PPO':
-            self.model = PPOAlgorithm(policy='MlpPolicy', env=self.env)
+            self.model = PPOAlgorithm(env=self.env)
         elif self.params['algorithm'] == 'DQN':
-            self.model = DQNAlgorithm(policy='MlpPolicy', env=self.env)
+            self.model = DQNAlgorithm(env=self.env)
 
     def train(self):
         self.model.learn(total_timesteps=self.params['total_timesteps'])
@@ -52,14 +53,12 @@ class Plugin:
     def evaluate(self):
         obs = self.env.reset()
         done = False
-        rewards = []
+        total_reward = 0
         while not done:
             action, _states = self.model.predict(obs, deterministic=True)
             obs, reward, done, info = self.env.step(action)
-            rewards.append(reward)
-        # Calculate mean reward as evaluation metric
-        mean_reward = np.mean(rewards)
-        return mean_reward
+            total_reward += reward
+        return total_reward
 
     def save(self, file_path):
         self.model.save(file_path)
