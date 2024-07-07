@@ -1,9 +1,7 @@
 import pandas as pd
 import numpy as np
-import openrl
 from openrl.algorithms.ppo import PPOAlgorithm
 from openrl.algorithms.dqn import DQNAlgorithm
-import pickle
 
 class Plugin:
     """
@@ -43,9 +41,9 @@ class Plugin:
 
     def build_model(self):
         if self.params['algorithm'] == 'PPO':
-            self.model = PPOAlgorithm(env=self.env)
+            self.model = PPOAlgorithm(self.env)
         elif self.params['algorithm'] == 'DQN':
-            self.model = DQNAlgorithm(env=self.env)
+            self.model = DQNAlgorithm(self.env)
 
     def train(self):
         self.model.learn(total_timesteps=self.params['total_timesteps'])
