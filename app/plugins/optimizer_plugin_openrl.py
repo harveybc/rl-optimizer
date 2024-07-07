@@ -76,11 +76,11 @@ class Plugin:
                 print(f"  Reward: {reward}")
                 print(f"  Done: {done}")
 
-                states.append(state_tensor)
-                actions.append(action.unsqueeze(0))  # Ensure action is 2D
-                rewards.append(torch.tensor([reward], dtype=torch.float32))  # Ensure reward is 2D
-                old_log_probs.append(log_prob.unsqueeze(0))  # Ensure log_prob is 2D
-                values.append(value.unsqueeze(0))  # Ensure value is 2D
+                states.append(state_tensor.squeeze(0))  # Ensure state_tensor is 1D
+                actions.append(action.squeeze(0))  # Ensure action is 1D
+                rewards.append(torch.tensor([reward], dtype=torch.float32))  # Ensure reward is 1D
+                old_log_probs.append(log_prob)  # Ensure log_prob is 1D
+                values.append(value.squeeze(0))  # Ensure value is 1D
 
                 if done:
                     break
@@ -91,7 +91,7 @@ class Plugin:
                 print(f"  Step {i}: Reward: {r.shape}, State: {s.shape}, Action: {a.shape}, Log Prob: {o.shape}, Value: {v.shape}")
 
             # Convert to tensors
-            rewards = torch.cat(rewards, dim=0)
+            rewards = torch.cat(rewards, dim=0).view(-1, 1)
             states = torch.cat(states, dim=0)
             actions = torch.cat(actions, dim=0)
             old_log_probs = torch.cat(old_log_probs, dim=0)
