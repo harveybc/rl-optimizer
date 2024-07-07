@@ -70,7 +70,7 @@ class Plugin:
 
                 states.append(state_tensor)
                 actions.append(action)
-                rewards.append(torch.tensor([reward], dtype=torch.float32).unsqueeze(0))
+                rewards.append(torch.tensor([reward], dtype=torch.float32))
                 old_log_probs.append(log_prob)
                 values.append(value)
 
@@ -78,11 +78,14 @@ class Plugin:
                     break
 
             # Convert to tensors
-            rewards = torch.cat(rewards).view(-1, 1)  # Ensuring rewards have the correct shape
-            states = torch.cat(states).view(-1, self.environment.observation_space.shape[0])
-            actions = torch.cat(actions).view(-1, self.environment.action_space.shape[0])
-            old_log_probs = torch.cat(old_log_probs).view(-1)
-            values = torch.cat(values).view(-1, 1)
+            print(f"Shapes before concatenation - rewards: {len(rewards)}, states: {len(states)}, actions: {len(actions)}, old_log_probs: {len(old_log_probs)}, values: {len(values)}")
+            rewards = torch.stack(rewards)
+            states = torch.cat(states)
+            actions = torch.cat(actions)
+            old_log_probs = torch.cat(old_log_probs)
+            values = torch.cat(values)
+
+            print(f"Shapes after concatenation - rewards: {rewards.shape}, states: {states.shape}, actions: {actions.shape}, old_log_probs: {old_log_probs.shape}, values: {values.shape}")
 
             # Compute advantages
             returns = []
