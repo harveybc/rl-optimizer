@@ -40,10 +40,11 @@ class Plugin:
         self.env = environment
 
     def build_model(self):
+        config = self.params.copy()  # Create a config object
         if self.params['algorithm'] == 'PPO':
-            self.model = PPOAlgorithm(self.env, self.params)
+            self.model = PPOAlgorithm(cfg=config, init_module=self.env)
         elif self.params['algorithm'] == 'DQN':
-            self.model = DQNAlgorithm(self.env, self.params)
+            self.model = DQNAlgorithm(cfg=config, init_module=self.env)
 
     def train(self):
         self.model.learn(total_timesteps=self.params['total_timesteps'])
