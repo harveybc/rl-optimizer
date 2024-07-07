@@ -12,6 +12,23 @@ class Config:
         self.use_joint_action_loss = getattr(self, 'use_joint_action_loss', False)
         self.use_deepspeed = getattr(self, 'use_deepspeed', False)
         self.world_size = getattr(self, 'world_size', 1)
+        self.clip_param = getattr(self, 'clip_param', 0.2)  # Add clip_param with default value
+        self.use_valuenorm = getattr(self, 'use_valuenorm', False)  # Add use_valuenorm with default value
+        self.value_loss_coef = getattr(self, 'value_loss_coef', 0.5)  # Add value_loss_coef with default value
+        self.entropy_coef = getattr(self, 'entropy_coef', 0.01)  # Add entropy_coef with default value
+        self.max_grad_norm = getattr(self, 'max_grad_norm', 0.5)  # Add max_grad_norm with default value
+        self.use_huber_loss = getattr(self, 'use_huber_loss', False)  # Add use_huber_loss with default value
+        self.huber_delta = getattr(self, 'huber_delta', 1.0)  # Add huber_delta with default value
+        self.use_clipped_value_loss = getattr(self, 'use_clipped_value_loss', True)  # Add use_clipped_value_loss with default value
+        self.use_value_active_masks = getattr(self, 'use_value_active_masks', True)  # Add use_value_active_masks with default value
+        self.use_policy_active_masks = getattr(self, 'use_policy_active_masks', True)  # Add use_policy_active_masks with default value
+        self.use_policy_vhead = getattr(self, 'use_policy_vhead', False)  # Add use_policy_vhead with default value
+        self.use_adv_normalize = getattr(self, 'use_adv_normalize', True)  # Add use_adv_normalize with default value
+        self.ppo_epoch = getattr(self, 'ppo_epoch', 10)  # Add ppo_epoch with default value
+        self.num_mini_batch = getattr(self, 'num_mini_batch', 32)  # Add num_mini_batch with default value
+        self.data_chunk_length = getattr(self, 'data_chunk_length', 10)  # Add data_chunk_length with default value
+        self.dual_clip_ppo = getattr(self, 'dual_clip_ppo', False)  # Add dual_clip_ppo with default value
+        self.dual_clip_coeff = getattr(self, 'dual_clip_coeff', 10.0)  # Add dual_clip_coeff with default value
 
 class Plugin:
     """
