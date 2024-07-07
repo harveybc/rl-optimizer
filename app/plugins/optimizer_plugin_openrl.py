@@ -105,17 +105,16 @@ class Plugin:
             print(f"States shape before concatenation: {states[0].shape}")
             
             if done:
-                states = last_states
+                print("Done")
             else:
                 states = torch.cat(states, dim=0).view(-1, self.environment.x_train.shape[1])
-                last_states = states
-            print(f"Actions shape before concatenation: {actions[0].shape}")
-            actions = torch.cat(actions, dim=0).view(-1, 1)
-            print(f"Actions shape after concatenation: {actions.shape}")
-            print(f"Old Log Probs shape before concatenation: {old_log_probs[0].shape}")
-            old_log_probs = torch.cat(old_log_probs, dim=0).view(-1, 1)
-            print(f"Old Log Probs shape after concatenation: {old_log_probs.shape}")
-            values = torch.cat(values, dim=0).view(-1, 1)
+                print(f"Actions shape before concatenation: {actions[0].shape}")
+                actions = torch.cat(actions, dim=0).view(-1, 1)
+                print(f"Actions shape after concatenation: {actions.shape}")
+                print(f"Old Log Probs shape before concatenation: {old_log_probs[0].shape}")
+                old_log_probs = torch.cat(old_log_probs, dim=0).view(-1, 1)
+                print(f"Old Log Probs shape after concatenation: {old_log_probs.shape}")
+                values = torch.cat(values, dim=0).view(-1, 1)
 
             print(f"Shapes after concatenation - rewards: {rewards.shape}, states: {states.shape}, actions: {actions.shape}, old_log_probs: {old_log_probs.shape}, values: {values.shape}")
 
