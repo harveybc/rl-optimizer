@@ -33,7 +33,6 @@ class Plugin:
         self.max_steps = config['max_steps']
         self.env = PredictionEnv(x_train, y_train, config)
 
-
     def reset(self):
         return self.env.reset()
 
@@ -58,8 +57,8 @@ class PredictionEnv(gym.Env):
     def __init__(self, x_train, y_train, config):
         super(PredictionEnv, self).__init__()
         self.max_steps = config['max_steps']
-        self.x_train = x_train
-        self.y_train = y_train
+        self.x_train = x_train.to_numpy() if isinstance(x_train, pd.DataFrame) else x_train
+        self.y_train = y_train.to_numpy() if isinstance(y_train, pd.DataFrame) else y_train
         self.current_step = 0
         self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.x_train.shape[1],), dtype=np.float32)
         self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
@@ -70,7 +69,6 @@ class PredictionEnv(gym.Env):
         self.current_step = 0
         observation = self.x_train[self.current_step] if not self.done else np.zeros_like(self.x_train[0])
         return observation
-        
 
     def step(self, action):
         self.current_step += 1
@@ -85,7 +83,5 @@ class PredictionEnv(gym.Env):
         observation = self.x_train[self.current_step] if not self.done else np.zeros_like(self.x_train[0])
         return observation, reward, self.done, {}
 
-
     def render(self, mode='human'):
         pass
-
