@@ -67,7 +67,7 @@ class PredictionEnv(gym.Env):
 
     def reset(self):
         self.current_step = 0
-        return self.x_train[self.current_step]
+        return self.current_step
 
     def step(self, action):
         self.current_step += 1
