@@ -9,7 +9,7 @@ class Plugin:
 
     plugin_params = {
         'time_horizon': 10,
-        'max_steps': 1000
+        'max_steps': 500
     }
 
     plugin_debug_vars = ['time_horizon', 'max_steps']
