@@ -88,6 +88,52 @@ class Plugin:
         lmbda = self.params['lmbda']
         eps_clip = self.params['eps_clip']
         K_epochs = self.params['K_epochs']
+class Plugin:
+    """
+    An optimizer plugin using PPO for reinforcement learning.
+    """
+
+    plugin_params = {
+        'lr': 0.0003,
+        'gamma': 0.99,
+        'lmbda': 0.95,
+        'eps_clip': 0.2,
+        'K_epochs': 4,
+        'hidden_dim': 64,
+        'genome_file': 'ppo_model.pkl'
+    }
+
+    plugin_debug_vars = ['lr', 'gamma', 'lmbda', 'eps_clip', 'K_epochs', 'hidden_dim']
+
+    def __init__(self):
+        self.params = self.plugin_params.copy()
+        self.environment = None
+        self.agent = None
+        self.optimizer = None
+
+    def set_params(self, **kwargs):
+        for key, value in kwargs.items():
+            self.params[key] = value
+
+    def get_debug_info(self):
+        return {var: self.params[var] for var in self.plugin_debug_vars}
+
+    def add_debug_info(self, debug_info):
+        plugin_debug_info = self.get_debug_info()
+        debug_info.update(plugin_debug_info)
+
+    def set_environment(self, environment):
+        self.environment = environment
+
+    def set_agent(self, agent_plugin):
+        self.agent = agent_plugin.get_agent()
+        self.optimizer = optim.Adam(self.agent.parameters(), lr=self.params['lr'])
+
+    def train(self, epochs):
+        gamma = self.params['gamma']
+        lmbda = self.params['lmbda']
+        eps_clip = self.params['eps_clip']
+        K_epochs = self.params['K_epochs']
 
         for _ in range(epochs):
             state = self.environment.reset()
