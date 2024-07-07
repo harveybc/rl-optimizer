@@ -72,6 +72,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     # Prepare optimizer
     optimizer_plugin.set_params(**optimizer_params)
     optimizer_plugin.set_environment(environment_plugin.env)
+    optimizer_plugin.set_agent(agent_plugin)
     optimizer_plugin.train(config['epochs'])
     
     # Save the trained model
