@@ -45,7 +45,7 @@ class Plugin:
         self.agent = agent_plugin.get_agent()
         self.optimizer = optim.Adam(self.agent.parameters(), lr=self.params['lr'])
 
-    def def train(self, epochs):
+    def train(self, epochs):
         gamma = self.params['gamma']
         lmbda = self.params['lmbda']
         eps_clip = self.params['eps_clip']
