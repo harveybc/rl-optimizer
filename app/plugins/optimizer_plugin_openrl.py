@@ -102,7 +102,12 @@ class Plugin:
             rewards = torch.cat(rewards, dim=0).view(-1, 1)
             print(f"Rewards shape after concatenation: {rewards.shape}")
             print(f"States shape before concatenation: {states[0].shape}")
-            states = torch.cat(states, dim=0).view(-1, self.environment.x_train.shape[1])
+            last_states = states
+            if done:
+                states = last_states
+            else:
+                states = torch.cat(states, dim=0).view(-1, self.environment.x_train.shape[1])
+            
             print(f"States shape after concatenation: {states.shape}")
             print(f"Actions shape before concatenation: {actions[0].shape}")
             actions = torch.cat(actions, dim=0).view(-1, 1)
