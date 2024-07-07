@@ -59,6 +59,7 @@ class Plugin:
             actions = []
             old_log_probs = []
             values = []
+            last_states = []
 
             last_valid_state = state.clone()
 
