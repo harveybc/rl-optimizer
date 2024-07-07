@@ -68,22 +68,34 @@ class Plugin:
                 log_prob = policy_dist.log_prob(action).sum(dim=-1)
                 state, reward, done, _ = self.environment.step(action.detach().numpy())
 
+                print(f"Step {t}:")
+                print(f"  State Tensor: {state_tensor.shape} {state_tensor}")
+                print(f"  Policy Dist: {policy_dist}")
+                print(f"  Action: {action.shape} {action}")
+                print(f"  Log Prob: {log_prob.shape} {log_prob}")
+                print(f"  Reward: {reward}")
+                print(f"  Done: {done}")
+
                 states.append(state_tensor)
                 actions.append(action.unsqueeze(0))  # Ensure action is 2D
-                rewards.append(torch.tensor([reward], dtype=torch.float32).unsqueeze(0))  # Ensure reward is 2D
+                rewards.append(torch.tensor([reward], dtype=torch.float32))  # Ensure reward is 2D
                 old_log_probs.append(log_prob.unsqueeze(0))  # Ensure log_prob is 2D
                 values.append(value.unsqueeze(0))  # Ensure value is 2D
 
                 if done:
                     break
 
-            # Convert to tensors
+            # Print shapes before concatenation
             print(f"Shapes before concatenation - rewards: {len(rewards)}, states: {len(states)}, actions: {len(actions)}, old_log_probs: {len(old_log_probs)}, values: {len(values)}")
-            rewards = torch.cat(rewards)
-            states = torch.cat(states)
-            actions = torch.cat(actions)
-            old_log_probs = torch.cat(old_log_probs)
-            values = torch.cat(values)
+            for i, (r, s, a, o, v) in enumerate(zip(rewards, states, actions, old_log_probs, values)):
+                print(f"  Step {i}: Reward: {r.shape}, State: {s.shape}, Action: {a.shape}, Log Prob: {o.shape}, Value: {v.shape}")
+
+            # Convert to tensors
+            rewards = torch.cat(rewards, dim=0)
+            states = torch.cat(states, dim=0)
+            actions = torch.cat(actions, dim=0)
+            old_log_probs = torch.cat(old_log_probs, dim=0)
+            values = torch.cat(values, dim=0)
 
             print(f"Shapes after concatenation - rewards: {rewards.shape}, states: {states.shape}, actions: {actions.shape}, old_log_probs: {old_log_probs.shape}, values: {values.shape}")
 
@@ -106,7 +118,8 @@ class Plugin:
 
                 surr1 = ratios * advantages
                 surr2 = torch.clamp(ratios, 1 - eps_clip, 1 + eps_clip) * advantages
-                loss = -torch.min(surr1, surr2).mean() + nn.MSELoss()(value, returns)
+
+                loss = -torch.min(surr1, surr2).mean() + 0.5 * (returns - value).pow(2).mean()
 
                 self.optimizer.zero_grad()
                 loss.backward()
@@ -119,5 +132,6 @@ class Plugin:
 
     def load(self, file_path):
         with open(file_path, 'rb') as f:
-            self.agent.load_state_dict(pickle.load(f))
+            state_dict = pickle.load(f)
+        self.agent.load_state_dict(state_dict)
         print(f"Optimizer model loaded from {file_path}")
