@@ -61,13 +61,14 @@ class Plugin:
             values = []
 
             for t in range(self.environment.max_steps):
-                policy_dist, value = self.agent(state)
+                state_tensor = torch.FloatTensor(state).unsqueeze(0)
+                policy_dist, value = self.agent(state_tensor)
                 policy_dist = torch.distributions.Normal(policy_dist, torch.ones_like(policy_dist))
                 action = policy_dist.sample()
                 log_prob = policy_dist.log_prob(action).sum(dim=-1)
                 state, reward, done, _ = self.environment.step(action.numpy())
 
-                states.append(state)
+                states.append(state_tensor)
                 actions.append(action)
                 rewards.append(reward)
                 old_log_probs.append(log_prob)
@@ -78,10 +79,10 @@ class Plugin:
 
             # Convert to tensors
             rewards = torch.tensor(rewards, dtype=torch.float32)
-            states = torch.tensor(states, dtype=torch.float32)
-            actions = torch.tensor(actions, dtype=torch.float32)
-            old_log_probs = torch.tensor(old_log_probs, dtype=torch.float32)
-            values = torch.tensor(values, dtype=torch.float32)
+            states = torch.cat(states)
+            actions = torch.cat(actions)
+            old_log_probs = torch.cat(old_log_probs)
+            values = torch.cat(values)
 
             # Compute advantages
             returns = []
