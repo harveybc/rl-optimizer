@@ -78,7 +78,7 @@ class Plugin:
 
                 states.append(state_tensor.squeeze(0))  # Ensure state_tensor is 1D
                 actions.append(action.squeeze(0))  # Ensure action is 1D
-                rewards.append(torch.tensor([reward], dtype=torch.float32))  # Ensure reward is 1D
+                rewards.append(torch.tensor([reward], dtype=torch.float32).unsqueeze(0))  # Ensure reward is 2D
                 old_log_probs.append(log_prob)  # Ensure log_prob is 1D
                 values.append(value.squeeze(0))  # Ensure value is 1D
 
@@ -87,15 +87,15 @@ class Plugin:
 
             # Print shapes before concatenation
             print(f"Shapes before concatenation - rewards: {len(rewards)}, states: {len(states)}, actions: {len(actions)}, old_log_probs: {len(old_log_probs)}, values: {len(values)}")
-            for i, (r, s, a, o, v) in enumerate(zip(rewards, states, actions, old_log_probs, values)):
-                print(f"  Step {i}: Reward: {r.shape}, State: {s.shape}, Action: {a.shape}, Log Prob: {o.shape}, Value: {v.shape}")
+            #for i, (r, s, a, o, v) in enumerate(zip(rewards, states, actions, old_log_probs, values)):
+            #    print(f"  Step {i}: Reward: {r.shape}, State: {s.shape}, Action: {a.shape}, Log Prob: {o.shape}, Value: {v.shape}")
 
             # Convert to tensors
             rewards = torch.cat(rewards, dim=0).view(-1, 1)
             states = torch.cat(states, dim=0)
-            actions = torch.cat(actions, dim=0)
-            old_log_probs = torch.cat(old_log_probs, dim=0)
-            values = torch.cat(values, dim=0)
+            actions = torch.cat(actions, dim=0).view(-1, 1)
+            old_log_probs = torch.cat(old_log_probs, dim=0).view(-1, 1)
+            values = torch.cat(values, dim=0).view(-1, 1)
 
             print(f"Shapes after concatenation - rewards: {rewards.shape}, states: {states.shape}, actions: {actions.shape}, old_log_probs: {old_log_probs.shape}, values: {values.shape}")
 
