@@ -46,38 +46,28 @@ class Plugin:
         mse = np.mean((y_true - y_pred)**2)
         return mae, mse
 
-class PredictionEnv(gym.Env):
-    """
-    A custom environment for prediction tasks.
-    """
-
-    def __init__(self, x_train, y_train, time_horizon=10, max_steps=1000):
-        super(PredictionEnv, self).__init__()
+class PredictionEnv:
+    def __init__(self, x_train, y_train, time_horizon, max_steps):
         self.x_train = x_train
         self.y_train = y_train
         self.time_horizon = time_horizon
         self.max_steps = max_steps
         self.current_step = 0
-        self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.x_train.shape[1],), dtype=np.float32)
-        self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
-        self.reset()
+        self.world_size = 1  # Ensure this attribute is included
+        self.use_share_model = False  # Ensure this attribute is included
+        self.use_joint_action_loss = False  # Ensure this attribute is included
+        self.use_deepspeed = False  # Ensure this attribute is included
 
     def reset(self):
         self.current_step = 0
-        return self.x_train.iloc[self.current_step].values
+        return self.x_train[self.current_step]
 
     def step(self, action):
         self.current_step += 1
-        if self.current_step >= len(self.x_train):
-            done = True
-        else:
-            done = False
-
-        prediction = action[0]
-        true_value = self.y_train.iloc[self.current_step, 0]  # Assuming the first column is the target
-        reward = 1.0 / np.abs(true_value - prediction)  # Inverse of MAE as fitness function
-        observation = self.x_train.iloc[self.current_step].values if not done else np.zeros_like(self.x_train.iloc[0].values)
-        return observation, reward, done, {'true_value': true_value}
+        done = self.current_step >= self.max_steps
+        reward = self.y_train[self.current_step] if not done else 0
+        info = {}
+        return self.x_train[self.current_step], reward, done, info
 
     def render(self, mode='human'):
         pass
