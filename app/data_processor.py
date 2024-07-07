@@ -76,10 +76,8 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_params(**optimizer_params)
     optimizer_plugin.build_environment(environment_plugin.env, x_train, y_train)
     optimizer_plugin.build_model()
-
-    # Train the model using the optimizer plugin
     optimizer_plugin.train()
-
+    
     # Save the trained model
     if config['save_model']:
         optimizer_plugin.save(config['save_model'])
@@ -96,12 +94,6 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     fitness = environment_plugin.calculate_fitness(y_train, predictions)
     print(f"Fitness: {fitness}")
 
-    # Calculate and print MSE and MAE
-    mse = np.mean((y_train - predictions) ** 2)
-    mae = np.mean(np.abs(y_train - predictions))
-    print(f"MSE: {mse}")
-    print(f"MAE: {mae}")
-
     # Convert predictions to a DataFrame and save to CSV
     predictions_df = pd.DataFrame(predictions, columns=['Prediction'])
     output_filename = config['output_file']
@@ -113,9 +105,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     execution_time = end_time - start_time
     debug_info = {
         'execution_time': float(execution_time),
-        'fitness': float(fitness),
-        'mse': float(mse),
-        'mae': float(mae)
+        'fitness': float(fitness)
     }
 
     # Save debug info
@@ -151,6 +141,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         
         validation_fitness = environment_plugin.calculate_fitness(y_validation, validation_predictions)
         print(f"Validation Fitness: {validation_fitness}")
+
 
 
 def load_and_evaluate_model(config, agent_plugin):
