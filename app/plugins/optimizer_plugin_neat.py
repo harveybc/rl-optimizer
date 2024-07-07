@@ -49,7 +49,7 @@ class Plugin:
         # Overwrite the num_inputs based on the number of columns in x_train
         config.genome_config.num_inputs = self.num_inputs
         config.genome_config.input_nodes = self.num_inputs
-
+        new_config = config
         population = neat.Population(config)
         population.add_reporter(neat.StdOutReporter(True))
         stats = neat.StatisticsReporter()
@@ -57,7 +57,7 @@ class Plugin:
 
         def eval_genomes(genomes, config):
             for genome_id, genome in genomes:
-                genome.fitness = self.evaluate_genome(genome, config)
+                genome.fitness = self.evaluate_genome(genome, new_config)
 
         self.best_genome = population.run(eval_genomes, epochs)
 
