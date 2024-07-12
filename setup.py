@@ -14,10 +14,11 @@ setup(
         ],
         'rl_optimizer.environments': [
             'prediction=app.plugins.environment_plugin_prediction:Plugin',
-            'custom=app.plugins.environment_plugin_custom:Plugin'
+            'automation=app.plugins.environment_plugin_automation:Plugin'
         ],
         'rl_optimizer.agents': [
-            'neat=app.plugins.agent_plugin_neat:Plugin',
+            'neat_prediction=app.plugins.agent_plugin_neat_prediction:Plugin',
+            'neat_automation=app.plugins.agent_plugin_neat_automation:Plugin',
             'openrl_ppo=app.plugins.agent_plugin_openrl_ppo:Plugin'
         ]
     },
