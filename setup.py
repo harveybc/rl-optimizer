@@ -9,7 +9,8 @@ setup(
             'rl_optimizer=app.main:main'
         ],
         'rl_optimizer.optimizers': [
-            'neat=app.plugins.optimizer_plugin_neat:Plugin',
+            'neat_prediction=app.plugins.optimizer_plugin_neat_prediction:Plugin',
+            'neat_automation=app.plugins.optimizer_plugin_neat_automation:Plugin',
             'openrl=app.plugins.optimizer_plugin_openrl:Plugin'
         ],
         'rl_optimizer.environments': [
