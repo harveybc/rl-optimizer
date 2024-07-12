@@ -3,15 +3,13 @@ import pickle
 
 class Plugin:
     """
-    An agent plugin for making trading decisions using a NEAT model.
+    An agent plugin for making predictions using a NEAT model.
     """
 
     plugin_params = {
         'config_file': 'tests/data/neat_50.ini',
         'genome_file': 'winner.pkl'
     }
-
-    plugin_debug_vars = ['config_file', 'genome_file']
 
     def __init__(self):
         self.params = self.plugin_params.copy()
@@ -21,13 +19,6 @@ class Plugin:
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
             self.params[key] = value
-
-    def get_debug_info(self):
-        return {var: self.params[var] for var in self.plugin_debug_vars}
-
-    def add_debug_info(self, debug_info):
-        plugin_debug_info = self.get_debug_info()
-        debug_info.update(plugin_debug_info)
 
     def load(self, model_path):
         with open(model_path, 'rb') as f:
@@ -40,7 +31,7 @@ class Plugin:
                                   config_file)
         print(f"Config loaded from {config_file}")
 
-    def decide_action(self, data):
+    def predict(self, data):
         self.load(self.params['genome_file'])
         self.load_config(self.params['config_file'])
         if self.model is None:
@@ -50,12 +41,12 @@ class Plugin:
 
         net = neat.nn.FeedForwardNetwork.create(self.model, self.config)
         
-        actions = []
+        predictions = []
         for _, row in data.iterrows():
             observation = row.values
             action = net.activate(observation)
-            actions.append(action)
-        return actions
+            predictions.append(action)
+        return predictions
 
     def save(self, model_path):
         with open(model_path, 'wb') as f:
@@ -68,8 +59,8 @@ if __name__ == "__main__":
     agent.set_params(config_file='neat_config.ini')
     agent.load('trained_model.pkl')
     agent.load_config('neat_config.ini')
-    # Example data for action decision
+    # Example data for prediction
     import pandas as pd
     test_data = pd.DataFrame([[0.5] * 8, [0.2] * 8])
-    actions = agent.decide_action(test_data)
-    print(f"Actions: {actions}")
+    predictions = agent.predict(test_data)
+    print(f"Predictions: {predictions}")
