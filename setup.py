@@ -27,10 +27,8 @@ setup(
         'numpy',
         'pandas',
         'scikit-learn',
-        'tensorflow',
         'openrl',
-        'gym',
-        'neat-python'  
+        'gym'
     ],
     author='Harvey Bastidas',
     author_email='your.email@example.com',
