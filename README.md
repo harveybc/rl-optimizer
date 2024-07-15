@@ -124,7 +124,7 @@ usage: rl-optimizer.bat tests\data\config.json
 To optimize an agent using the NEAT optimizer with the gym-fx environment and agent-multi plugin, use the following command:
 
 ```bash
-rl-optimizer.bat tests\data\config.json --optimizer_plugin neat --environment_plugin gym_fx --agent_plugin agent_multi
+rl-optimizer.bat tests\data\EURUSD_hour_2010_2020.csv --y_train_file ..\Documents\encoder_eval_close_eurusd_1h_norm_10y.csv --environment_plugin automation --optimizer_plugin neat_automation --agent_plugin neat_automation
 ```
 
 ## Project Directory Structure
