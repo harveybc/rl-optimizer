@@ -243,27 +243,7 @@ class AutomationEnv(gym.Env):
                 print(f"Current balance 2: {self.balance}, Equity: {self.equity}, Number of closes: {self.num_closes}")
                 print(f"Order Status after sell action: {self.order_status}")
 
-            # Verify if minimum order time has passed before closing manually
-            if (self.current_step - self.order_time) > self.min_order_time:
-                if (self.order_status == -1) and action == 1:
-                    self.order_status = 0
-                    self.balance = self.equity
-                    self.margin = 0.0
-                    self.c_c = 0  # Set closing cause to normal close
-                    self.order_volume = 0.0
-                    self.num_closes += 1
-                    print(f"{self.x_train[self.current_step-1, 0]} - Closed order - Cause: Normal Close")
-                    print(f"Order Status after normal close (sell): {self.order_status}")
-
-                if (self.order_status == 1) and action == 2:
-                    self.order_status = 0
-                    self.balance = self.equity
-                    self.margin = 0.0
-                    self.c_c = 0  # Set closing cause to normal close
-                    self.order_volume = 0.0
-                    self.num_closes += 1
-                    print(f"{self.x_train[self.current_step-1, 0]} - Closed order - Cause: Normal Close")
-                    print(f"Order Status after normal close (buy): {self.order_status}")
+            
 
         # Simplified reward calculation
         equity_increment = self.equity - self.equity_ant
