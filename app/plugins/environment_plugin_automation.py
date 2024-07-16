@@ -55,7 +55,28 @@ class Plugin:
                                  self.min_orders, self.sl, self.tp, self.rel_volume, self.leverage, self.pip_cost, self.min_order_time, self.spread)
 
     def reset(self):
-        return self.env.reset()
+        observation = self.env.reset()
+        info = {
+            "date": self.x_train[self.current_step, 0],
+            "close": self.x_train[self.current_step, 4],
+            "high": self.x_train[self.current_step, 3],
+            "low": self.x_train[self.current_step, 2],
+            "open": self.x_train[self.current_step, 1],
+            "action": 0,
+            "observation": observation,
+            "episode_over": self.done,
+            "balance": self.balance,
+            "tick_count": 0,
+            "num_closes": 0,
+            "balance": self.balance,
+            "equity": self.balance,
+            "reward": 0.0,
+            "order_status": 0,
+            "order_volume": 0,
+            "spread": self.spread,
+            "initial_balance": self.initial_balance
+        }
+        return observation, info
 
     def step(self, action):
         return self.env.step(action)
@@ -176,6 +197,7 @@ class AutomationEnv(gym.Env):
                 self.balance = self.equity
                 self.margin = 0.0
                 self.c_c = 2  # Set closing cause to stop loss
+                self.order_volume = 0.0
                 self.num_closes += 1
 
             # Verify if close by TP
@@ -184,6 +206,7 @@ class AutomationEnv(gym.Env):
                 self.balance = self.equity
                 self.margin = 0.0
                 self.c_c = 3  # Set closing cause to take profit
+                self.order_volume = 0.0
                 self.num_closes += 1
 
             # Executes BUY action, order status = 1
@@ -211,6 +234,7 @@ class AutomationEnv(gym.Env):
                     self.balance = self.equity
                     self.margin = 0.0
                     self.c_c = 0  # Set closing cause to normal close
+                    self.order_volume = 0.0
                     self.num_closes += 1
 
                 if (self.order_status == 1) and action == 2:
@@ -218,6 +242,7 @@ class AutomationEnv(gym.Env):
                     self.balance = self.equity
                     self.margin = 0.0
                     self.c_c = 0  # Set closing cause to normal close
+                    self.order_volume = 0.0
                     self.num_closes += 1
 
         # Simplified reward calculation
@@ -258,11 +283,14 @@ class AutomationEnv(gym.Env):
             "balance": self.balance,
             "tick_count": self.current_step,
             "num_closes": self.num_closes,
+            "balance": self.balance,
             "equity": self.equity,
             "reward": self.reward,
             "order_status": self.order_status,
+            "order_volume": self.order_volume,
+            "spread": self.spread,
             "margin": self.margin,
-            "initial_capital": self.initial_balance
+            "initial_balance": self.initial_balance
         }
 
         return ob, reward, self.done, info

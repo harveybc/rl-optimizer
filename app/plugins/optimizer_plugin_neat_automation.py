@@ -90,7 +90,7 @@ class Plugin:
 
     def evaluate_genome(self, genome):
         fitness = 0.0
-        observation = self.environment.reset()
+        observation, info = self.environment.reset()
         done = False
         action_counts = {'buy': 0, 'sell': 0, 'hold': 0}
 
@@ -99,7 +99,7 @@ class Plugin:
         #print(f"Mean: {np.mean(observation)}, Std: {np.std(observation)}, Min: {np.min(observation)}, Max: {np.max(observation)}")
 
         while not done:
-            action = self.agent.predict(observation)  # Get action values from the agent
+            action = self.agent.predict(observation, info)  # Get action values from the agent
             # Increment action counts and print only if action is different from 'hold'
             if action == 1:
                 action_counts['buy'] += 1

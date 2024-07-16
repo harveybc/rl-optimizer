@@ -36,7 +36,7 @@ class Plugin:
         self.config = config  # Ensure config is set for the network creation
         self.model = neat.nn.FeedForwardNetwork.create(genome, self.config)
 
-    def predict(self, observation):
+    def predict(self, observation, info=None):
         if self.model is None:
             raise ValueError("Model has not been set.")
         action_values = self.model.activate(observation)
