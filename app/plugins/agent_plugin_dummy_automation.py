@@ -43,6 +43,7 @@ class Plugin:
         self.pip_cost = 0.0001  # Default pip cost, update as necessary
         self.buy_dates = [datetime.datetime.strptime(date, '%d/%m/%Y %H:%M') for date in self.params['buy_dates']]
         self.sell_dates = [datetime.datetime.strptime(date, '%d/%m/%Y %H:%M') for date in self.params['sell_dates']]
+        self.executed_actions = set()
 
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
@@ -71,10 +72,13 @@ class Plugin:
 
         action = 0  # Default to hold
 
-        if current_date in self.buy_dates:
+        if current_date in self.buy_dates and current_date not in self.executed_actions:
             action = 1  # Buy
-        elif current_date in self.sell_dates:
+        elif current_date in self.sell_dates and current_date not in self.executed_actions:
             action = 2  # Sell
+
+        if action != 0:
+            self.executed_actions.add(current_date)
 
         # Opening order
         if info["order_status"] == 0 and action != 0:
@@ -112,6 +116,11 @@ class Plugin:
 
             # Reset order status
             self.order_status = 0
+
+        # Exit program when no more actions are available
+        if all(date in self.executed_actions for date in self.buy_dates + self.sell_dates):
+            print("All actions executed. Exiting program.")
+            sys.exit(0)
 
         return action
 
