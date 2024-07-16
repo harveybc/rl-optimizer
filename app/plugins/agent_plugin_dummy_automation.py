@@ -96,7 +96,7 @@ class Plugin:
             else:
                 profit_pips = 0.0
 
-            real_profit = profit_pips * self.pip_cost * self.order_volume / self.params['leverage']
+            real_profit = profit_pips * self.pip_cost * self.order_volume
             desired_balance = self.initial_balance + real_profit
 
             print(f"{current_date} - Closed order - Action: {'Buy' if self.order_status == 1 else 'Sell'}, Close Price: {info['close']}, Spread: {self.spread}")
