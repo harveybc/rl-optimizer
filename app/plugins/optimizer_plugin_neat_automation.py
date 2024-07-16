@@ -95,8 +95,8 @@ class Plugin:
         action_counts = {'buy': 0, 'sell': 0, 'hold': 0}
 
         # Print observation statistics
-        print("Observation statistics:")
-        print(f"Mean: {np.mean(observation)}, Std: {np.std(observation)}, Min: {np.min(observation)}, Max: {np.max(observation)}")
+        #print("Observation statistics:")
+        #print(f"Mean: {np.mean(observation)}, Std: {np.std(observation)}, Min: {np.min(observation)}, Max: {np.max(observation)}")
 
         while not done:
             action = self.agent.predict(observation)  # Get action values from the agent
@@ -114,7 +114,7 @@ class Plugin:
 
             fitness += reward
 
-        print(f"Action counts - Buy: {action_counts['buy']}, Sell: {action_counts['sell']}, Hold: {action_counts['hold']}")
+        #print(f"Action counts - Buy: {action_counts['buy']}, Sell: {action_counts['sell']}, Hold: {action_counts['hold']}")
 
         return float(fitness)  # Explicitly return float
 
