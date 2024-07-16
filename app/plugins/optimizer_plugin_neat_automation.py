@@ -99,13 +99,7 @@ class Plugin:
         print(f"Mean: {np.mean(observation)}, Std: {np.std(observation)}, Min: {np.min(observation)}, Max: {np.max(observation)}")
 
         while not done:
-            action_values = self.agent.predict(observation)  # Get action values from the agent
-            
-            # Print action values for debugging
-            print(f"Action values: {action_values}")
-
-            action = np.argmax(action_values)  # Get the discrete action
-
+            action = self.agent.predict(observation)  # Get action values from the agent
             # Increment action counts and print only if action is different from 'hold'
             if action == 1:
                 action_counts['buy'] += 1
