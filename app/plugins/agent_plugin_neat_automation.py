@@ -46,15 +46,3 @@ class Plugin:
         with open(model_path, 'wb') as f:
             pickle.dump(self.model, f)
         print(f"Agent model saved to {model_path}")
-
-# Debugging usage example
-if __name__ == "__main__":
-    agent = Plugin()
-    agent.set_params(config_file='neat_config.ini')
-    agent.load('trained_model.pkl')
-    agent.load_config('neat_config.ini')
-    # Example data for prediction
-    import pandas as pd
-    test_data = pd.DataFrame([[0.5] * 8, [0.2] * 8])
-    predictions = [agent.predict(row.values) for _, row in test_data.iterrows()]
-    print(f"Predictions: {predictions}")
