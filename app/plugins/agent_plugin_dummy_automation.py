@@ -81,7 +81,8 @@ class Plugin:
             self.order_volume = info["equity"] * 0.1 * 1 / 100000  # Example volume calculation
             self.order_volume = max(0.01, round(self.order_volume, 2))
             self.initial_balance = info["balance"]
-            print(f"Opening order - Current balance: {self.initial_balance}, Equity: {info['equity']}, Number of closes: {info['num_closes']}")
+            print(f"Opening order - Action: {'Buy' if action == 1 else 'Sell'}, Price: {self.order_price}, Volume: {self.order_volume}")
+            print(f"Current balance: {self.initial_balance}, Equity: {info['equity']}, Number of closes: {info['num_closes']}")
 
         # Calculate the desired balance when closing an order
         if info["order_status"] == 0 and self.order_status != 0:
@@ -95,7 +96,9 @@ class Plugin:
             real_profit = profit_pips * self.pip_cost * self.order_volume * 100000
             desired_balance = self.initial_balance + real_profit
 
-            print(f"Closed order - New balance: {info['balance']}, Expected balance: {desired_balance}, Equity: {info['equity']}, Number of closes: {info['num_closes']}")
+            print(f"Closed order - Action: {'Buy' if self.order_status == 1 else 'Sell'}, Close Price: {info['close']}, Spread: {self.spread}")
+            print(f"Profit pips: {profit_pips}, Profit: {real_profit}")
+            print(f"New balance: {info['balance']}, Expected balance: {desired_balance}, Equity: {info['equity']}, Number of closes: {info['num_closes']}")
 
             if desired_balance != info['balance']:
                 print("Error: Balance mismatch! Exiting.")
