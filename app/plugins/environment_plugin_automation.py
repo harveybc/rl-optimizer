@@ -13,8 +13,8 @@ class Plugin:
         'max_steps': 500,
         'fitness_function': 'brute_profit',  # 'sharpe_ratio' can be another option
         'min_orders': 4,
-        'sl': 0.005,  # Adjusted Stop Loss
-        'tp': 0.005,  # Adjusted Take Profit
+        'sl': 50,  # Adjusted Stop Loss
+        'tp': 50,  # Adjusted Take Profit
         'rel_volume': 0.1,
         'leverage': 100,
         'pip_cost': 0.0001,
@@ -306,7 +306,7 @@ class AutomationEnv(gym.Env):
             "margin": self.margin,
             "initial_balance": self.initial_balance
         }
-        
+
 
         print(f"Info at the end of step: {info}")
         return ob, reward, self.done, info
