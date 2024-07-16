@@ -55,27 +55,7 @@ class Plugin:
                                  self.min_orders, self.sl, self.tp, self.rel_volume, self.leverage, self.pip_cost, self.min_order_time, self.spread)
 
     def reset(self):
-        observation = self.env.reset()
-        info = {
-            "date": self.x_train[self.current_step, 0],
-            "close": self.x_train[self.current_step, 4],
-            "high": self.x_train[self.current_step, 3],
-            "low": self.x_train[self.current_step, 2],
-            "open": self.x_train[self.current_step, 1],
-            "action": 0,
-            "observation": observation,
-            "episode_over": self.done,
-            "balance": self.balance,
-            "tick_count": 0,
-            "num_closes": 0,
-            "balance": self.balance,
-            "equity": self.balance,
-            "reward": 0.0,
-            "order_status": 0,
-            "order_volume": 0,
-            "spread": self.spread,
-            "initial_balance": self.initial_balance
-        }
+        observation, info = self.env.reset()
         return observation, info
 
     def step(self, action):
@@ -151,7 +131,26 @@ class AutomationEnv(gym.Env):
         self.done = False
         self.equity_curve = [self.initial_balance]
         observation = self.y_train[self.current_step] if self.y_train is not None else self.x_train[self.current_step]
-        return observation
+        info = {
+            "date": self.x_train[self.current_step, 0],
+            "close": self.x_train[self.current_step, 4],
+            "high": self.x_train[self.current_step, 3],
+            "low": self.x_train[self.current_step, 2],
+            "open": self.x_train[self.current_step, 1],
+            "action": 0,
+            "observation": observation,
+            "episode_over": self.done,
+            "tick_count": 0,
+            "num_closes": 0,
+            "balance": self.balance,
+            "equity": self.balance,
+            "reward": 0.0,
+            "order_status": 0,
+            "order_volume": 0,
+            "spread": self.spread,
+            "initial_balance": self.initial_balance
+        }
+        return observation, info
 
     def step(self, action):
         if self.done:
@@ -280,7 +279,6 @@ class AutomationEnv(gym.Env):
             "action": action,
             "observation": ob,
             "episode_over": self.done,
-            "balance": self.balance,
             "tick_count": self.current_step,
             "num_closes": self.num_closes,
             "balance": self.balance,
