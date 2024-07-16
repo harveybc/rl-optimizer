@@ -40,7 +40,7 @@ class Plugin:
         if self.model is None:
             raise ValueError("Model has not been set.")
         action_values = self.model.activate(observation)
-        print(f"Action values: {action_values}")
+        #print(f"Action values: {action_values}")
 
         action = np.argmax(action_values)  # Get the discrete action
         return action
