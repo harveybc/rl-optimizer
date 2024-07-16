@@ -43,7 +43,7 @@ class Plugin:
         # Convert observation to a numpy array if it is not already
         if not isinstance(observation, np.ndarray):
             observation = np.array(observation, dtype=np.float32)
-        
+            print(f"Observation: {observation}")  # Print cleaned observation for debugging
         
         #print(f"Cleaned Observation: {cleaned_observation}")  # Print cleaned observation for debugging
 
