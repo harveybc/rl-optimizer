@@ -13,8 +13,8 @@ class Plugin:
         'max_steps': 500,
         'fitness_function': 'brute_profit',  # 'sharpe_ratio' can be another option
         'min_orders': 4,
-        'sl': 100,  # Adjusted Stop Loss
-        'tp': 100,  # Adjusted Take Profit
+        'sl': 0.0005,  # Adjusted Stop Loss
+        'tp': 0.0005,  # Adjusted Take Profit
         'rel_volume': 0.1,
         'leverage': 100,
         'pip_cost': 0.0001,
@@ -107,8 +107,7 @@ class AutomationEnv(gym.Env):
         self.num_ticks = self.x_train.shape[0]
         self.num_closes = 0  # Track number of closes
         self.c_c = 0  # Track closing cause
-
-        self.obs_matrix = [deque(self.min_order_time * [0.0], self.min_order_time) for _ in range(self.x_train.shape[1])]
+        self.ant_c_c = 0  # Track previous closing cause
 
         if y_train is None:
             self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.x_train.shape[1],), dtype=np.float32)
@@ -271,13 +270,8 @@ class AutomationEnv(gym.Env):
         reward = (balance_increment + equity_increment) / 2
         reward = reward / self.initial_balance  # Normalize the reward
 
-        # Push values from timeseries into state (assumes all values are already normalized)
-        for i in range(0, self.x_train.shape[1]):
-            if self.y_train is not None:
-                ob = self.y_train[self.current_step, i]
-            else:
-                ob = self.x_train[self.current_step, i]
-            
+        ob = self.x_train[self.current_step]
+
         self.current_step += 1
         self.equity_ant = self.equity
         self.balance_ant = self.balance
@@ -307,10 +301,8 @@ class AutomationEnv(gym.Env):
             "initial_balance": self.initial_balance
         }
 
-
         print(f"Info at the end of step: {info}")
         return ob, reward, self.done, info
-
 
     def render(self, mode='human'):
         pass
