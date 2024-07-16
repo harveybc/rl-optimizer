@@ -84,7 +84,6 @@ class AutomationEnv(gym.Env):
         self.initial_balance = initial_balance
         self.balance = initial_balance
         self.equity = initial_balance
-        # for equity variation calculus
         self.balance_ant = self.balance
         self.equity_ant = self.balance
         self.current_step = 0
@@ -117,8 +116,7 @@ class AutomationEnv(gym.Env):
         else:
             self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.y_train.shape[1],), dtype=np.float32)
 
-        # Discrete action space with 3 actions: 0 = do nothing, 1 = buy, 2 = sell
-        self.action_space = gym.spaces.Discrete(3)
+        self.action_space = gym.spaces.Discrete(3)  # Buy, sell, hold
         self.reset()
 
     def reset(self):
@@ -222,17 +220,23 @@ class AutomationEnv(gym.Env):
                     self.c_c = 0  # Set closing cause to normal close
                     self.num_closes += 1
 
-        # Calculate reward
+        # Simplified reward calculation
         equity_increment = self.equity - self.equity_ant
         balance_increment = self.balance - self.balance_ant
-
-        # Calculate reward based on fitness function (TODO: make it depending on the fitness function used)
-        bonus = ((self.equity - self.initial_balance) / self.num_ticks)
-        reward = (balance_increment + bonus) / 2
-        reward = reward / self.initial_balance
+        reward = (balance_increment + equity_increment) / 2
+        reward = reward / self.initial_balance  # Normalize the reward
 
         # Push values from timeseries into state (assumes all values are already normalized)
-        ob = self.y_train[self.current_step] if self.y_train is not None else self.x_train[self.current_step]
+        for i in range(0, self.x_train.shape[1]):
+            if self.y_train is not None:
+                obs_normalized = self.y_train[self.current_step, i]
+            else:
+                obs_normalized = self.x_train[self.current_step, i]
+            self.obs_matrix[i].append(obs_normalized)
+
+        obs_normalized = self.order_status
+        self.state[0].append(obs_normalized)
+        ob = np.concatenate([self.obs_matrix, self.state])
 
         self.current_step += 1
         self.equity_ant = self.equity
