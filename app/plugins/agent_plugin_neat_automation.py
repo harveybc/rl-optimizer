@@ -45,7 +45,7 @@ class Plugin:
             observation = np.array(observation, dtype=np.float32)
         
         # Print observation for debugging
-        #print(f"Observation before cleaning: {observation}")
+        print(f"Observation before cleaning: {observation}")
         
         # Ensure observation contains only numeric data
         cleaned_observation = []
