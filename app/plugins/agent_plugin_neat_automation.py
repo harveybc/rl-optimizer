@@ -1,5 +1,6 @@
 import neat
 import pickle
+import numpy as np
 
 class Plugin:
     """
@@ -31,22 +32,20 @@ class Plugin:
                                   config_file)
         print(f"Config loaded from {config_file}")
 
-    def predict(self, data):
-        self.load(self.params['genome_file'])
-        self.load_config(self.params['config_file'])
+    def load_genome_and_config(self, genome, config):
+        self.model = genome
+        self.config = config
+
+    def predict(self, observation):
         if self.model is None:
             raise ValueError("Model has not been loaded.")
         if self.config is None:
             raise ValueError("Config has not been loaded.")
 
         net = neat.nn.FeedForwardNetwork.create(self.model, self.config)
-        
-        predictions = []
-        for _, row in data.iterrows():
-            observation = row.values
-            action = net.activate(observation)
-            predictions.append(action)
-        return predictions
+        action_values = net.activate(observation)
+        action = np.argmax(action_values)  # Choose the action with the highest value
+        return action
 
     def save(self, model_path):
         with open(model_path, 'wb') as f:
@@ -62,5 +61,5 @@ if __name__ == "__main__":
     # Example data for prediction
     import pandas as pd
     test_data = pd.DataFrame([[0.5] * 8, [0.2] * 8])
-    predictions = agent.predict(test_data)
+    predictions = [agent.predict(row.values) for _, row in test_data.iterrows()]
     print(f"Predictions: {predictions}")

@@ -105,13 +105,20 @@ class AutomationEnv(gym.Env):
         self.margin = 0.0
         self.order_time = 0
         self.num_ticks = self.x_train.shape[0]
+        self.num_closes = 0  # Track number of closes
+        self.c_c = 0  # Track closing cause
+        self.ant_c_c = 0  # Track previous closing cause
+        self.state_columns = 3  # Number of state columns
+        self.obs_matrix = [deque(self.min_order_time * [0.0], self.min_order_time) for _ in range(self.x_train.shape[1])]
+        self.state = [deque(self.min_order_time * [0.0], self.min_order_time) for _ in range(self.state_columns)]
 
         if y_train is None:
             self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.x_train.shape[1],), dtype=np.float32)
         else:
             self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.y_train.shape[1],), dtype=np.float32)
 
-        self.action_space = gym.spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
+        # Discrete action space with 3 actions: 0 = do nothing, 1 = buy, 2 = sell
+        self.action_space = gym.spaces.Discrete(3)
         self.reset()
 
     def reset(self):
@@ -135,7 +142,7 @@ class AutomationEnv(gym.Env):
         if self.current_step >= self.max_steps:
             self.done = True
 
-        # Read time variables from CSV (Format: 0 = HighBid, 1 = Low, 2 = Close, 3 = NextOpen, 4 = v, 5 = MoY, 6 = DoM, 7 = DoW, 8 = HoD, 9 = MoH, ..<num_columns>)
+        # Read time variables from CSV (Format: 0 = HighBid, 1 = Low, 2 = Close, 3 = NextOpen, 4 = v)
         High = self.x_train[self.current_step, 3]
         Low = self.x_train[self.current_step, 2]
         Close = self.x_train[self.current_step, 4]
@@ -161,6 +168,7 @@ class AutomationEnv(gym.Env):
             self.balance = 0.0
             self.equity = 0.0
             self.margin = 0.0
+            self.c_c = 1  # Set closing cause to margin call
             self.done = True
 
         if not self.done:
@@ -169,12 +177,16 @@ class AutomationEnv(gym.Env):
                 self.order_status = 0
                 self.balance = self.equity
                 self.margin = 0.0
+                self.c_c = 2  # Set closing cause to stop loss
+                self.num_closes += 1
 
             # Verify if close by TP
             if self.profit_pips >= self.tp:
                 self.order_status = 0
                 self.balance = self.equity
                 self.margin = 0.0
+                self.c_c = 3  # Set closing cause to take profit
+                self.num_closes += 1
 
             # Executes BUY action, order status = 1
             if (self.order_status == 0) and action == 1:
@@ -185,7 +197,7 @@ class AutomationEnv(gym.Env):
                 self.margin += (self.order_volume * 100000 / self.leverage)
                 self.order_time = self.current_step
 
-            # Executes SELL action, order status = 1
+            # Executes SELL action, order status = -1
             if (self.order_status == 0) and action == 2:
                 self.order_status = -1
                 self.order_price = Close
@@ -200,11 +212,15 @@ class AutomationEnv(gym.Env):
                     self.order_status = 0
                     self.balance = self.equity
                     self.margin = 0.0
+                    self.c_c = 0  # Set closing cause to normal close
+                    self.num_closes += 1
 
                 if (self.order_status == 1) and action == 2:
                     self.order_status = 0
                     self.balance = self.equity
                     self.margin = 0.0
+                    self.c_c = 0  # Set closing cause to normal close
+                    self.num_closes += 1
 
         # Calculate reward
         equity_increment = self.equity - self.equity_ant
@@ -221,7 +237,7 @@ class AutomationEnv(gym.Env):
             reward = reward - ((self.initial_balance / (10 * self.num_ticks)) * (1 - (self.num_closes / self.min_orders)))
         if self.c_c == 1:
             reward = -(5.0 * self.initial_balance)
-        if self.tick_count >= (self.num_ticks - 2):
+        if self.current_step >= (self.num_ticks - 2):
             if self.num_closes < self.min_orders:
                 reward = -(10 * self.initial_balance * (1 - (self.num_closes / self.min_orders)))
                 self.balance = 0
@@ -233,8 +249,7 @@ class AutomationEnv(gym.Env):
         reward = reward / self.initial_balance
 
         # Push values from timeseries into state (assumes all values are already normalized)
-        for i in range(0, self.num_columns - 1):
-            # verify of y_train is none
+        for i in range(0, self.x_train.shape[1]):
             if self.y_train is not None:
                 obs_normalized = self.y_train[self.current_step, i]
             else:
@@ -245,12 +260,12 @@ class AutomationEnv(gym.Env):
         self.state[0].append(obs_normalized)
         ob = np.concatenate([self.obs_matrix, self.state])
 
-        self.tick_count += 1
+        self.current_step += 1
         self.equity_ant = self.equity
         self.balance_ant = self.balance
         self.reward += reward
 
-        if self.tick_count >= (self.num_ticks - 1):
+        if self.current_step >= (self.num_ticks - 1):
             self.done = True
 
         info = {
@@ -263,7 +278,7 @@ class AutomationEnv(gym.Env):
             "observation": ob,
             "episode_over": self.done,
             "balance": self.balance,
-            "tick_count": self.tick_count,
+            "tick_count": self.current_step,
             "num_closes": self.num_closes,
             "equity": self.equity,
             "reward": self.reward,

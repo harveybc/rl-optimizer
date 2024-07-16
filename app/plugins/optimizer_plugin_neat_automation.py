@@ -50,9 +50,10 @@ class Plugin:
                              neat.DefaultSpeciesSet, neat.DefaultStagnation,
                              config_path)
         
-        # Overwrite the num_inputs and input_nodes as the number of columns of self.environment.x_train or y_train
+        # Overwrite the num_inputs and num_outputs in the config
         config.genome_config.num_inputs = self.num_inputs
         config.genome_config.input_keys = [-i - 1 for i in range(self.num_inputs)]
+        config.genome_config.num_outputs = 3  # Set the number of outputs to 3 for discrete actions
 
         population = neat.Population(config)
         population.add_reporter(neat.StdOutReporter(True))
@@ -70,12 +71,12 @@ class Plugin:
             pickle.dump(self.best_genome, f)
 
     def evaluate_genome(self, genome, config):
-        net = neat.nn.FeedForwardNetwork.create(genome, config)
+        self.agent.load_genome_and_config(genome, config)  # Ensure agent loads the genome and config
         fitness = 0.0
         observation = self.environment.reset()
         done = False
         while not done:
-            action = net.activate(observation)
+            action = self.agent.predict(observation)  # Get action from the agent
             observation, reward, done, info = self.environment.step(action)
 
             fitness += reward
