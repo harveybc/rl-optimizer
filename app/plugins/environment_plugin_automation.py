@@ -88,7 +88,7 @@ class AutomationEnv(gym.Env):
         self.balance_ant = self.balance
         self.equity_ant = self.balance
         self.current_step = 0
-        self.order_status = 0  # 0 = no order, 1 = buy, -1 = sell
+        self.order_status = 0  # 0 = no order, 1 = buy, 2 = sell
         self.order_price = 0.0
         self.order_volume = 0.0
         self.done = False
@@ -157,14 +157,10 @@ class AutomationEnv(gym.Env):
         if self.current_step >= self.max_steps:
             self.done = True
 
-        #print(f"Step: {self.current_step}, Action: {action}")
-
         # Read time variables from CSV (Format: 0 = HighBid, 1 = Low, 2 = Close, 3 = NextOpen, 4 = v)
         High = self.x_train[self.current_step, 3]
         Low = self.x_train[self.current_step, 2]
         Close = self.x_train[self.current_step, 4]
-
-        #print(f"High: {High}, Low: {Low}, Close: {Close}")
 
         # Calculate profit
         self.profit_pips = 0
@@ -173,16 +169,13 @@ class AutomationEnv(gym.Env):
         if self.order_status == 1:
             self.profit_pips = ((Low - self.order_price) / self.pip_cost)
             self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
-        # Calculate for existing SELL order (status=-1)
-        if self.order_status == -1:
+        # Calculate for existing SELL order (status=2)
+        if self.order_status == 2:
             self.profit_pips = ((self.order_price - (High + self.spread)) / self.pip_cost)
             self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
 
-        #print(f"Order Status: {self.order_status}, Profit Pips: {self.profit_pips}, Real Profit: {self.real_profit}")
-
         # Calculate equity
         self.equity = self.balance + self.real_profit
-        #print(f"Equity: {self.equity}, Balance: {self.balance}")
 
         # Verify if Margin Call
         if self.equity < self.margin:
@@ -210,7 +203,6 @@ class AutomationEnv(gym.Env):
             # Verify if close by TP
             if self.profit_pips >= self.tp:
                 self.order_status = 0
-                order_profit = self.equity - self.balance
                 self.balance = self.equity
                 self.margin = 0.0
                 self.c_c = 3  # Set closing cause to take profit
@@ -231,9 +223,9 @@ class AutomationEnv(gym.Env):
                 print(f"Current balance 1: {self.balance}, Equity: {self.equity}, Number of closes: {self.num_closes}")
                 print(f"Order Status after buy action: {self.order_status}")
 
-            # Executes SELL action, order status = -1
+            # Executes SELL action, order status = 2
             if (self.order_status == 0) and action == 2:
-                self.order_status = -1
+                self.order_status = 2
                 self.order_price = Close
                 self.order_volume = self.equity * self.rel_volume * self.leverage
                 self.order_volume = max(0.01, round(self.order_volume, 2))
@@ -243,7 +235,27 @@ class AutomationEnv(gym.Env):
                 print(f"Current balance 2: {self.balance}, Equity: {self.equity}, Number of closes: {self.num_closes}")
                 print(f"Order Status after sell action: {self.order_status}")
 
-            
+            # Verify if minimum order time has passed before closing manually
+            if (self.current_step - self.order_time) > self.min_order_time:
+                if (self.order_status == 2) and action == 1:
+                    self.order_status = 0
+                    self.balance = self.equity
+                    self.margin = 0.0
+                    self.c_c = 0  # Set closing cause to normal close
+                    self.order_volume = 0.0
+                    self.num_closes += 1
+                    print(f"{self.x_train[self.current_step-1, 0]} - Closed order - Cause: Normal Close")
+                    print(f"Order Status after normal close (sell): {self.order_status}")
+
+                if (self.order_status == 1) and action == 2:
+                    self.order_status = 0
+                    self.balance = self.equity
+                    self.margin = 0.0
+                    self.c_c = 0  # Set closing cause to normal close
+                    self.order_volume = 0.0
+                    self.num_closes += 1
+                    print(f"{self.x_train[self.current_step-1, 0]} - Closed order - Cause: Normal Close")
+                    print(f"Order Status after normal close (buy): {self.order_status}")
 
         # Simplified reward calculation
         equity_increment = self.equity - self.equity_ant
@@ -282,7 +294,6 @@ class AutomationEnv(gym.Env):
             "initial_balance": self.initial_balance
         }
 
-        #print(f"Info at the end of step: {info}")
         return ob, reward, self.done, info
 
     def render(self, mode='human'):
