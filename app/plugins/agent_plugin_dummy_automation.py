@@ -43,6 +43,7 @@ class Plugin:
         self.pip_cost = 0.0001  # Default pip cost, update as necessary
         self.buy_dates = [datetime.datetime.strptime(date, '%d/%m/%Y %H:%M') for date in self.params['buy_dates']]
         self.sell_dates = [datetime.datetime.strptime(date, '%d/%m/%Y %H:%M') for date in self.params['sell_dates']]
+        self.actions_completed = 0  # Track completed actions
 
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
@@ -85,21 +86,20 @@ class Plugin:
             print(f"{current_date} - Opening order - Action: {'Buy' if action == 1 else 'Sell'}, Price: {self.order_price}, Volume: {self.order_volume}")
             print(f"Current balance: {info['balance']}, Equity: {info['equity']}, Number of closes: {info['num_closes']}")
             print(f"Order Status after action: {self.order_status}")
+            self.actions_completed += 1
             return action
 
         # Calculate the desired balance when closing an order
         if info["order_status"] == 0 and self.order_status != 0:
             if self.order_status == 1:  # Closing a buy order
-                profit_pips = (info["low"] - self.order_price) / self.pip_cost
+                profit_pips = ((info["close"] - self.order_price) / self.pip_cost) - self.spread
             elif self.order_status == 2:  # Closing a sell order
-                profit_pips = (self.order_price - (info["high"] + self.spread)) / self.pip_cost
+                profit_pips = ((self.order_price - info["close"]) / self.pip_cost) - self.spread
             else:
                 profit_pips = 0.0
 
-            real_profit = profit_pips * self.pip_cost * self.order_volume
-
-            # Match the environment's balance update logic
-            desired_balance = info['equity']
+            real_profit = profit_pips * self.pip_cost * self.order_volume / self.params['leverage']
+            desired_balance = self.initial_balance + real_profit
 
             print(f"{current_date} - Closed order - Action: {'Buy' if self.order_status == 1 else 'Sell'}, Close Price: {info['close']}, Spread: {self.spread}")
             print(f"Profit pips: {profit_pips}, Profit: {real_profit}")
@@ -112,6 +112,10 @@ class Plugin:
 
             # Reset order status
             self.order_status = 0
+
+        if self.actions_completed >= len(self.buy_dates) + len(self.sell_dates):
+            print("All actions completed. Exiting.")
+            sys.exit(0)
 
         return action
 
