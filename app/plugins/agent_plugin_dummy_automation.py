@@ -21,7 +21,8 @@ class Plugin:
             '30/04/2010 09:00'
         ],
         'config_file': 'dummy_config.ini',
-        'genome_file': 'dummy_winner.pkl'
+        'genome_file': 'dummy_winner.pkl',
+        'leverage': 100
     }
 
     plugin_debug_vars = ['balance', 'equity', 'num_closes']
@@ -74,11 +75,13 @@ class Plugin:
         elif current_date in self.sell_dates:
             action = 2  # Sell
 
+        leverage = self.params['leverage']
+
         # Opening order
         if info["order_status"] == 0 and action != 0:
             self.order_status = action
             self.order_price = info["close"]
-            self.order_volume = info["equity"] * 0.1 * 1 / 100000  # Example volume calculation
+            self.order_volume = info["equity"] * 0.1 * leverage / 100000  # Example volume calculation
             self.order_volume = max(0.01, round(self.order_volume, 2))
             self.initial_balance = info["balance"]
             print(f"Opening order - Action: {'Buy' if action == 1 else 'Sell'}, Price: {self.order_price}, Volume: {self.order_volume}")
@@ -88,15 +91,19 @@ class Plugin:
         if info["order_status"] == 0 and self.order_status != 0:
             if self.order_status == 1:  # Closing a buy order
                 profit_pips = ((info["close"] - self.order_price) / self.pip_cost) - self.spread
+                order_close_price = info["close"]
             elif self.order_status == 2:  # Closing a sell order
                 profit_pips = ((self.order_price - info["close"]) / self.pip_cost) - self.spread
+                order_close_price = info["close"]
             else:
                 profit_pips = 0.0
+                order_close_price = self.order_price
 
-            real_profit = profit_pips * self.pip_cost * self.order_volume * 100000
+            real_profit = profit_pips * self.pip_cost * self.order_volume * 100000 / leverage
             desired_balance = self.initial_balance + real_profit
 
-            print(f"Closed order - Action: {'Buy' if self.order_status == 1 else 'Sell'}, Close Price: {info['close']}, Spread: {self.spread}")
+            print(f"Closed order - Action: {'Buy' if self.order_status == 1 else 'Sell'}, Close Price: {order_close_price}, Spread: {self.spread}")
+            print(f"Volume: {self.order_volume}, Leverage: {leverage}")
             print(f"Profit pips: {profit_pips}, Profit: {real_profit}")
             print(f"New balance: {info['balance']}, Expected balance: {desired_balance}, Equity: {info['equity']}, Number of closes: {info['num_closes']}")
 
