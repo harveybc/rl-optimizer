@@ -2,7 +2,7 @@
 
 DEFAULT_VALUES = {
     'x_train_file': './tests/data/encoder_eval.csv',
-    'y_train_file': './tests/data/csv_sel_unb_norm_512.csv',
+    'y_train_file': None,
     'x_validation_file': None,
     'y_validation_file': None,
     'target_column': None,
