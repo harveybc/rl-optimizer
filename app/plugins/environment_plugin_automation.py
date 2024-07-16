@@ -249,16 +249,7 @@ class AutomationEnv(gym.Env):
         reward = reward / self.initial_balance
 
         # Push values from timeseries into state (assumes all values are already normalized)
-        for i in range(0, self.x_train.shape[1]):
-            if self.y_train is not None:
-                obs_normalized = self.y_train[self.current_step, i]
-            else:
-                obs_normalized = self.x_train[self.current_step, i]
-            self.obs_matrix[i].append(obs_normalized)
-
-        obs_normalized = self.order_status
-        self.state[0].append(obs_normalized)
-        ob = np.concatenate([self.obs_matrix, self.state])
+        ob = self.y_train[self.current_step] if self.y_train is not None else self.x_train[self.current_step]
 
         self.current_step += 1
         self.equity_ant = self.equity
