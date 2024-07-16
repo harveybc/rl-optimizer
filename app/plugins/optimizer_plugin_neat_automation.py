@@ -88,27 +88,36 @@ class Plugin:
             print(f"Connection {conn_key}: {conn}")
 
     def evaluate_genome(self, genome):
-        fitness = 0.0
-        observation = self.environment.reset()
-        done = False
-        action_counts = {'buy': 0, 'sell': 0, 'hold': 0}
+    fitness = 0.0
+    observation = self.environment.reset()
+    done = False
+    action_counts = {'buy': 0, 'sell': 0, 'hold': 0}
 
-        while not done:
-            action = self.agent.predict(observation)  # Get action values from the agent
-            
-            if action == 1:
-                action_counts['buy'] += 1
-            elif action == 2:
-                action_counts['sell'] += 1
-            else:
-                action_counts['hold'] += 1
-            observation, reward, done, info = self.environment.step(action)
+    while not done:
+        action_values = self.agent.predict(observation)  # Get action values from the agent
+        action = np.argmax(action_values)  # Get the discrete action
 
-            fitness += reward
+        # Print action values and observation for debugging
+        print(f"Observation: {observation}")
+        print(f"Action values: {action_values}, Chosen action: {action}")
 
-        print(f"Action counts - Buy: {action_counts['buy']}, Sell: {action_counts['sell']}, Hold: {action_counts['hold']}")
+        # Increment action counts and print only if action is different from 'hold'
+        if action == 1:
+            action_counts['buy'] += 1
+            print(f"Action taken: Buy (1)")
+        elif action == 2:
+            action_counts['sell'] += 1
+            print(f"Action taken: Sell (2)")
+        else:
+            action_counts['hold'] += 1
 
-        return float(fitness)  # Explicitly return float
+        observation, reward, done, info = self.environment.step(action)
+
+        fitness += reward
+
+    print(f"Action counts - Buy: {action_counts['buy']}, Sell: {action_counts['sell']}, Hold: {action_counts['hold']}")
+
+    return float(fitness)  # Explicitly return float
 
     def save(self, file_path):
         with open(file_path, 'wb') as f:
