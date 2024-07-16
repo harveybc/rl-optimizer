@@ -20,7 +20,8 @@ setup(
         'rl_optimizer.agents': [
             'neat_prediction=app.plugins.agent_plugin_neat_prediction:Plugin',
             'neat_automation=app.plugins.agent_plugin_neat_automation:Plugin',
-            'openrl_ppo=app.plugins.agent_plugin_openrl_ppo:Plugin'
+            'openrl_ppo=app.plugins.agent_plugin_openrl_ppo:Plugin',
+            'dummy_automation=app.plugins.agent_plugin_dummy_automation:Plugin'
         ]
     },
     install_requires=[

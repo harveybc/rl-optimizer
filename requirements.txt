@@ -12,4 +12,5 @@ openrl
 neat-python
 keras-multi-head
 stable-baselines3
+scikit-learn
 gym

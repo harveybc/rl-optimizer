@@ -1,5 +1,6 @@
 import neat
 import pickle
+import numpy as np
 
 class Plugin:
     """
@@ -31,36 +32,20 @@ class Plugin:
                                   config_file)
         print(f"Config loaded from {config_file}")
 
-    def predict(self, data):
-        self.load(self.params['genome_file'])
-        self.load_config(self.params['config_file'])
-        if self.model is None:
-            raise ValueError("Model has not been loaded.")
-        if self.config is None:
-            raise ValueError("Config has not been loaded.")
+    def set_model(self, genome, config):
+        self.config = config  # Ensure config is set for the network creation
+        self.model = neat.nn.FeedForwardNetwork.create(genome, self.config)
 
-        net = neat.nn.FeedForwardNetwork.create(self.model, self.config)
-        
-        predictions = []
-        for _, row in data.iterrows():
-            observation = row.values
-            action = net.activate(observation)
-            predictions.append(action)
-        return predictions
+    def predict(self, observation, info=None):
+        if self.model is None:
+            raise ValueError("Model has not been set.")
+        action_values = self.model.activate(observation)
+        #print(f"Action values: {action_values}")
+
+        action = np.argmax(action_values)  # Get the discrete action
+        return action
 
     def save(self, model_path):
         with open(model_path, 'wb') as f:
             pickle.dump(self.model, f)
         print(f"Agent model saved to {model_path}")
-
-# Debugging usage example
-if __name__ == "__main__":
-    agent = Plugin()
-    agent.set_params(config_file='neat_config.ini')
-    agent.load('trained_model.pkl')
-    agent.load_config('neat_config.ini')
-    # Example data for prediction
-    import pandas as pd
-    test_data = pd.DataFrame([[0.5] * 8, [0.2] * 8])
-    predictions = agent.predict(test_data)
-    print(f"Predictions: {predictions}")

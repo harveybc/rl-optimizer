@@ -50,7 +50,7 @@ To install and set up the RL-Optimizer application, follow these steps:
 6. **(Optional) Run the RL-Optimizer**:
     - On Windows, run the following command to verify installation:
         ```bash
-        rl_optimizer.bat tests/data/encoder_eval.csv -ytf tests/data/csv_sel_unb_norm_512.csv -of output_predictions.csv -sm trained_model.pkl -op neat -ep prediction -ap neat 
+        rl-optimizer.bat tests/data/encoder_eval.csv -ytf tests/data/csv_sel_unb_norm_512.csv -of output_predictions.csv -sm trained_model.pkl -op neat -ep prediction -ap neat 
 
         ```
 
@@ -124,7 +124,7 @@ usage: rl-optimizer.bat tests\data\config.json
 To optimize an agent using the NEAT optimizer with the gym-fx environment and agent-multi plugin, use the following command:
 
 ```bash
-rl-optimizer.bat tests\data\config.json --optimizer_plugin neat --environment_plugin gym_fx --agent_plugin agent_multi
+rl-optimizer.bat tests\data\EURUSD_hour_2010_2020.csv --y_train_file ..\Documents\encoder_eval_close_eurusd_1h_norm_10y.csv --environment_plugin automation --optimizer_plugin neat_automation --agent_plugin neat_automation
 ```
 
 ## Project Directory Structure
