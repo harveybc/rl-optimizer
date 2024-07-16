@@ -107,10 +107,8 @@ class AutomationEnv(gym.Env):
         self.num_ticks = self.x_train.shape[0]
         self.num_closes = 0  # Track number of closes
         self.c_c = 0  # Track closing cause
-        self.ant_c_c = 0  # Track previous closing cause
-        self.state_columns = 3  # Number of state columns
+
         self.obs_matrix = [deque(self.min_order_time * [0.0], self.min_order_time) for _ in range(self.x_train.shape[1])]
-        self.state = [deque(self.min_order_time * [0.0], self.min_order_time) for _ in range(self.state_columns)]
 
         if y_train is None:
             self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.x_train.shape[1],), dtype=np.float32)
@@ -267,9 +265,7 @@ class AutomationEnv(gym.Env):
                 obs_normalized = self.x_train[self.current_step, i]
             self.obs_matrix[i].append(obs_normalized)
 
-        obs_normalized = self.order_status
-        self.state[0].append(obs_normalized)
-        ob = np.concatenate([self.obs_matrix, self.state])
+        ob = np.array([item for sublist in self.obs_matrix for item in sublist])
 
         self.current_step += 1
         self.equity_ant = self.equity
