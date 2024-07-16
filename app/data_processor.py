@@ -31,7 +31,7 @@ def process_data(config):
 
     # Ensure input data is numeric except for the first column of x_train asummed to contain the date
     #x_train_data = x_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
-    #y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
+    y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
     
     # Apply input offset and time horizon
     offset = config['input_offset'] + config['time_horizon']
