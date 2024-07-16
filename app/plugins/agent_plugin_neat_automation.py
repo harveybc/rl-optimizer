@@ -42,15 +42,25 @@ class Plugin:
         
         # Convert observation to a numpy array if it is not already
         if not isinstance(observation, np.ndarray):
-            observation = np.array(observation, dtype=np.float32)
+            observation = np.array(observation)
+        
+        # Print observation for debugging
+        print(f"Observation before cleaning: {observation}")
         
         # Ensure observation contains only numeric data
-        if not np.issubdtype(observation.dtype, np.number):
-            raise ValueError("Observation contains non-numeric data")
+        cleaned_observation = []
+        for item in observation:
+            try:
+                cleaned_observation.append(float(item))
+            except ValueError:
+                print(f"Non-numeric data found in observation: {item}")
+                raise ValueError("Observation contains non-numeric data")
 
-        print(f"Observation: {observation}")  # Print observation for debugging
+        cleaned_observation = np.array(cleaned_observation, dtype=np.float32)
+        
+        print(f"Cleaned Observation: {cleaned_observation}")  # Print cleaned observation for debugging
 
-        action_values = self.model.activate(observation)
+        action_values = self.model.activate(cleaned_observation)
         #print(f"Action values: {action_values}")
 
         action = np.argmax(action_values)  # Get the discrete action
