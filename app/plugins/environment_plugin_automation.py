@@ -18,7 +18,7 @@ class Plugin:
         'rel_volume': 0.1,
         'leverage': 100,
         'pip_cost': 0.0001,
-        'min_order_time': 5,  # Adjusted Minimum Order Time
+        'min_order_time': 5,  #  Minimum Order Time to allow manual closing by an action inverse to the current order.
         'spread': 0.001  # Default spread value
     }
 
@@ -235,6 +235,17 @@ class AutomationEnv(gym.Env):
                 print(f"Current balance 2: {self.balance}, Equity: {self.equity}, Number of closes: {self.num_closes}")
                 print(f"Order Status after sell action: {self.order_status}")
 
+            # Manual close by action (Buy -> Sell or Sell -> Buy) if min_order_time has passed
+            if (self.order_status == 1 and action == 2) or (self.order_status == 2 and action == 1):
+                if (self.current_step - self.order_time) > self.min_order_time:
+                    self.order_status = 0
+                    self.balance = self.equity
+                    self.margin = 0.0
+                    self.c_c = 0  # Set closing cause to normal close
+                    self.order_volume = 0.0
+                    self.num_closes += 1
+                    print(f"{self.x_train[self.current_step-1, 0]} - Closed order - Cause: Normal Close")
+                    print(f"Order Status after normal close: {self.order_status}")
 
         # Simplified reward calculation
         equity_increment = self.equity - self.equity_ant
