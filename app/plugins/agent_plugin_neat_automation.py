@@ -1,3 +1,5 @@
+import neat
+import pickle
 import numpy as np
 
 class Plugin:
@@ -37,14 +39,30 @@ class Plugin:
     def predict(self, observation, info=None):
         if self.model is None:
             raise ValueError("Model has not been set.")
+        
+        # Convert observation to a numpy array if it is not already
+        if not isinstance(observation, np.ndarray):
+            observation = np.array(observation, dtype=np.float32)
+        
+        # Print observation for debugging
+        print(f"Observation before cleaning: {observation}")
+        
+        # Ensure observation contains only numeric data
+        cleaned_observation = []
+        for item in observation:
+            try:
+                cleaned_observation.append(float(item))
+            except ValueError:
+                print(f"Non-numeric data found in observation: {item}")
+                raise ValueError("Observation contains non-numeric data")
 
-        # Use NumPy for efficient conversion
-        try:
-            cleaned_observation = np.array(observation, dtype=np.float32)
-        except ValueError:
-            raise ValueError("Observation contains non-numeric data")
+        cleaned_observation = np.array(cleaned_observation, dtype=np.float32)
+        
+        #print(f"Cleaned Observation: {cleaned_observation}")  # Print cleaned observation for debugging
 
         action_values = self.model.activate(cleaned_observation)
+        #print(f"Action values: {action_values}")
+
         action = np.argmax(action_values)  # Get the discrete action
         return action
 
