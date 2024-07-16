@@ -1,7 +1,6 @@
 import neat
 import os
 import pickle
-import numpy as np
 
 class Plugin:
     """
@@ -23,7 +22,6 @@ class Plugin:
         self.agent = None
         self.best_genome = None
         self.num_inputs = 0
-        self.num_outputs = 3  # Assuming three outputs for discrete actions (buy, sell, hold)
 
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
@@ -52,11 +50,13 @@ class Plugin:
                              neat.DefaultSpeciesSet, neat.DefaultStagnation,
                              config_path)
         
-        # Overwrite the num_inputs and num_outputs as the number of columns of self.environment.x_train or y_train
+        # Overwrite the num_inputs and input_nodes as the number of columns of self.environment.x_train or y_train
         config.genome_config.num_inputs = self.num_inputs
-        config.genome_config.num_outputs = self.num_outputs
         config.genome_config.input_keys = [-i - 1 for i in range(self.num_inputs)]
-        config.genome_config.output_keys = [i for i in range(self.num_outputs)]
+
+        # Overwrite the num_outputs for discrete actions
+        config.genome_config.num_outputs = 3  # For buy, sell, and hold actions
+        config.genome_config.output_keys = [i for i in range(3)]
 
         population = neat.Population(config)
         population.add_reporter(neat.StdOutReporter(True))
@@ -65,7 +65,8 @@ class Plugin:
 
         def eval_genomes(genomes, config):
             for genome_id, genome in genomes:
-                genome.fitness = self.evaluate_genome(genome, config)
+                self.agent.set_model(genome, config)  # Set the genome in the agent
+                genome.fitness = self.evaluate_genome(genome)
 
         self.best_genome = population.run(eval_genomes, epochs)
 
@@ -86,16 +87,15 @@ class Plugin:
         for conn_key, conn in connections.items():
             print(f"Connection {conn_key}: {conn}")
 
-    def evaluate_genome(self, genome, config):
-        net = neat.nn.FeedForwardNetwork.create(genome, config)
+    def evaluate_genome(self, genome):
         fitness = 0.0
         observation = self.environment.reset()
         done = False
         action_counts = {'buy': 0, 'sell': 0, 'hold': 0}
 
         while not done:
-            action_values = self.agent.predict(np.array([observation]))[0]  # Get action values from the agent
-            action = np.argmax(action_values)  # Get the action with the highest value
+            action = self.agent.predict(observation)  # Get action values from the agent
+            
             if action == 1:
                 action_counts['buy'] += 1
             elif action == 2:

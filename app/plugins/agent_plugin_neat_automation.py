@@ -1,5 +1,6 @@
 import neat
 import pickle
+import numpy as np
 
 class Plugin:
     """
@@ -31,16 +32,16 @@ class Plugin:
                                   config_file)
         print(f"Config loaded from {config_file}")
 
+    def set_model(self, genome, config):
+        self.config = config  # Ensure config is set for the network creation
+        self.model = neat.nn.FeedForwardNetwork.create(genome, self.config)
+
     def predict(self, observation):
         if self.model is None:
-            self.load(self.params['genome_file'])
-        if self.config is None:
-            self.load_config(self.params['config_file'])
-
-        net = neat.nn.FeedForwardNetwork.create(self.model, self.config)
-        
-        action_values = net.activate(observation)
-        return action_values
+            raise ValueError("Model has not been set.")
+        action_values = self.model.activate(observation)
+        action = np.argmax(action_values)  # Get the discrete action
+        return action
 
     def save(self, model_path):
         with open(model_path, 'wb') as f:
