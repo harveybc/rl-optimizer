@@ -1,5 +1,6 @@
 import datetime
 import numpy as np
+import sys
 
 class Plugin:
     """
@@ -32,6 +33,12 @@ class Plugin:
         self.balance = 0
         self.equity = 0
         self.num_closes = 0
+        self.order_status = 0
+        self.order_price = 0.0
+        self.order_volume = 0.0
+        self.initial_balance = 0.0
+        self.spread = 0.001  # Default spread value, update as necessary
+        self.pip_cost = 0.0001  # Default pip cost, update as necessary
         self.buy_dates = [datetime.datetime.strptime(date, '%d/%m/%Y %H:%M') for date in self.params['buy_dates']]
         self.sell_dates = [datetime.datetime.strptime(date, '%d/%m/%Y %H:%M') for date in self.params['sell_dates']]
 
@@ -67,16 +74,35 @@ class Plugin:
         elif current_date in self.sell_dates:
             action = 2  # Sell
 
-        # Print balance and equity information for verification
+        # Opening order
         if info["order_status"] == 0 and action != 0:
-            self.balance = info['balance']
-            self.equity = info['equity']
-            self.num_closes = info['num_closes']
-            print(f"Opening order - Current balance: {self.balance}, Equity: {self.equity}, Number of closes: {self.num_closes}")
+            self.order_status = action
+            self.order_price = info["close"]
+            self.order_volume = info["equity"] * 0.1 * 1 / 100000  # Example volume calculation
+            self.order_volume = max(0.01, round(self.order_volume, 2))
+            self.initial_balance = info["balance"]
+            print(f"Opening order - Current balance: {self.initial_balance}, Equity: {info['equity']}, Number of closes: {info['num_closes']}")
 
-        # Check for closed orders and print verification
-        if info["order_status"] == 0 and self.balance != info['balance']:
-            print(f"Closed order - New balance: {info['balance']}, Expected balance: {self.balance}, Equity: {info['equity']}, Number of closes: {info['num_closes']}")
+        # Calculate the desired balance when closing an order
+        if info["order_status"] == 0 and self.order_status != 0:
+            if self.order_status == 1:  # Closing a buy order
+                profit_pips = ((info["close"] - self.order_price) / self.pip_cost) - self.spread
+            elif self.order_status == 2:  # Closing a sell order
+                profit_pips = ((self.order_price - info["close"]) / self.pip_cost) - self.spread
+            else:
+                profit_pips = 0.0
+
+            real_profit = profit_pips * self.pip_cost * self.order_volume * 100000
+            desired_balance = self.initial_balance + real_profit
+
+            print(f"Closed order - New balance: {info['balance']}, Expected balance: {desired_balance}, Equity: {info['equity']}, Number of closes: {info['num_closes']}")
+
+            if desired_balance != info['balance']:
+                print("Error: Balance mismatch! Exiting.")
+                sys.exit(1)
+
+            # Reset order status
+            self.order_status = 0
 
         return action
 
