@@ -50,10 +50,13 @@ class Plugin:
                              neat.DefaultSpeciesSet, neat.DefaultStagnation,
                              config_path)
         
-        # Overwrite the num_inputs and num_outputs in the config
+        # Overwrite the num_inputs and input_nodes as the number of columns of self.environment.x_train or y_train
         config.genome_config.num_inputs = self.num_inputs
         config.genome_config.input_keys = [-i - 1 for i in range(self.num_inputs)]
-        config.genome_config.num_outputs = 3  # Set the number of outputs to 3 for discrete actions
+
+        # Overwrite the num_outputs for discrete actions
+        config.genome_config.num_outputs = 3  # For buy, sell, and hold actions
+        config.genome_config.output_keys = [i for i in range(3)]
 
         population = neat.Population(config)
         population.add_reporter(neat.StdOutReporter(True))
@@ -69,17 +72,41 @@ class Plugin:
         # Save the best genome
         with open(self.params['genome_file'], 'wb') as f:
             pickle.dump(self.best_genome, f)
+        
+        # Print the champion genome
+        print(f"Champion Genome:\n{self.best_genome}")
+
+        # Print the nodes and connections of the best genome
+        nodes = self.best_genome.nodes
+        connections = self.best_genome.connections
+        print("Nodes:")
+        for node_key, node in nodes.items():
+            print(f"Node {node_key}: {node}")
+        print("Connections:")
+        for conn_key, conn in connections.items():
+            print(f"Connection {conn_key}: {conn}")
 
     def evaluate_genome(self, genome, config):
-        self.agent.load_genome_and_config(genome, config)  # Ensure agent loads the genome and config
+        net = neat.nn.FeedForwardNetwork.create(genome, config)
         fitness = 0.0
         observation = self.environment.reset()
         done = False
+        action_counts = {'buy': 0, 'sell': 0, 'hold': 0}
+
         while not done:
-            action = self.agent.predict(observation)  # Get action from the agent
+            action_values = self.agent.predict(observation)  # Get action values from the agent
+            action = np.argmax(action_values)  # Get the action with the highest value
+            if action == 1:
+                action_counts['buy'] += 1
+            elif action == 2:
+                action_counts['sell'] += 1
+            else:
+                action_counts['hold'] += 1
             observation, reward, done, info = self.environment.step(action)
 
             fitness += reward
+
+        print(f"Action counts - Buy: {action_counts['buy']}, Sell: {action_counts['sell']}, Hold: {action_counts['hold']}")
 
         return float(fitness)  # Explicitly return float
 
