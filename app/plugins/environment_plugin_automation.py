@@ -104,6 +104,7 @@ class AutomationEnv(gym.Env):
         self.spread = spread
         self.margin = 0.0
         self.order_time = 0
+        self.num_ticks = self.x_train.shape[0]
 
         if y_train is None:
             self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.x_train.shape[1],), dtype=np.float32)
