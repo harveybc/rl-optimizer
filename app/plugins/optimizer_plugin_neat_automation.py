@@ -36,7 +36,10 @@ class Plugin:
 
     def set_environment(self, environment):
         self.environment = environment
-        self.num_inputs = self.environment.x_train.shape[1]
+        if self.environment.y_train is not None:
+            self.num_inputs = self.environment.y_train.shape[1]
+        else:
+            self.num_inputs = self.environment.x_train.shape[1]
 
     def set_agent(self, agent):
         self.agent = agent
@@ -47,7 +50,7 @@ class Plugin:
                              neat.DefaultSpeciesSet, neat.DefaultStagnation,
                              config_path)
         
-        # Overwrite the num_inputs and input_nodes as the number of columns of self.environment.x_train
+        # Overwrite the num_inputs and input_nodes as the number of columns of self.environment.x_train or y_train
         config.genome_config.num_inputs = self.num_inputs
         config.genome_config.input_keys = [-i - 1 for i in range(self.num_inputs)]
 
