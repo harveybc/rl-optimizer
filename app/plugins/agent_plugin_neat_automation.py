@@ -45,7 +45,7 @@ class Plugin:
             observation = np.array(observation)
         
         # Print observation for debugging
-        print(f"Observation before cleaning: {observation}")
+        #print(f"Observation before cleaning: {observation}")
         
         # Ensure observation contains only numeric data
         cleaned_observation = []
@@ -58,7 +58,7 @@ class Plugin:
 
         cleaned_observation = np.array(cleaned_observation, dtype=np.float32)
         
-        print(f"Cleaned Observation: {cleaned_observation}")  # Print cleaned observation for debugging
+        #print(f"Cleaned Observation: {cleaned_observation}")  # Print cleaned observation for debugging
 
         action_values = self.model.activate(cleaned_observation)
         #print(f"Action values: {action_values}")
