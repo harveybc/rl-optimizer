@@ -208,27 +208,28 @@ class AutomationEnv(gym.Env):
         # Calculate reward
         equity_increment = self.equity - self.equity_ant
         balance_increment = self.balance - self.balance_ant
-        if self.reward_function == 0:
-            bonus = ((self.equity - self.initial_balance) / self.num_ticks)
-            reward = (balance_increment + bonus) / 2
-            if (self.num_closes < self.min_orders / 2) and reward > 0:
-                reward = reward * (self.num_closes / self.min_orders)
-            if (self.num_closes < self.min_orders / 2) and reward <= 0:
-                reward = reward - (self.initial_balance / self.num_ticks) * (1 - (self.num_closes / self.min_orders))
-            if (self.num_closes < self.min_orders) and reward <= 0:
-                reward = reward - ((self.initial_balance / (10 * self.num_ticks)) * (1 - (self.num_closes / self.min_orders)))
-            if self.c_c == 1:
-                reward = -(5.0 * self.initial_balance)
-            if self.tick_count >= (self.num_ticks - 2):
-                if self.num_closes < self.min_orders:
-                    reward = -(10 * self.initial_balance * (1 - (self.num_closes / self.min_orders)))
-                    self.balance = 0
-                    self.equity = 0
-                if self.equity == self.initial_balance:
-                    reward = -(10.0 * self.initial_balance)
-                    self.balance = 0
-                    self.equity = 0
-            reward = reward / self.initial_balance
+
+        # Calculate reward based on fitness function (TODO: make it depending on the fitness function used)
+        bonus = ((self.equity - self.initial_balance) / self.num_ticks)
+        reward = (balance_increment + bonus) / 2
+        if (self.num_closes < self.min_orders / 2) and reward > 0:
+            reward = reward * (self.num_closes / self.min_orders)
+        if (self.num_closes < self.min_orders / 2) and reward <= 0:
+            reward = reward - (self.initial_balance / self.num_ticks) * (1 - (self.num_closes / self.min_orders))
+        if (self.num_closes < self.min_orders) and reward <= 0:
+            reward = reward - ((self.initial_balance / (10 * self.num_ticks)) * (1 - (self.num_closes / self.min_orders)))
+        if self.c_c == 1:
+            reward = -(5.0 * self.initial_balance)
+        if self.tick_count >= (self.num_ticks - 2):
+            if self.num_closes < self.min_orders:
+                reward = -(10 * self.initial_balance * (1 - (self.num_closes / self.min_orders)))
+                self.balance = 0
+                self.equity = 0
+            if self.equity == self.initial_balance:
+                reward = -(10.0 * self.initial_balance)
+                self.balance = 0
+                self.equity = 0
+        reward = reward / self.initial_balance
 
         # Push values from timeseries into state (assumes all values are already normalized)
         for i in range(0, self.num_columns - 1):
