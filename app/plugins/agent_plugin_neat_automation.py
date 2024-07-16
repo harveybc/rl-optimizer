@@ -1,6 +1,5 @@
 import neat
 import pickle
-import numpy as np
 
 class Plugin:
     """
@@ -32,20 +31,16 @@ class Plugin:
                                   config_file)
         print(f"Config loaded from {config_file}")
 
-    def load_genome_and_config(self, genome, config):
-        self.model = genome
-        self.config = config
-
     def predict(self, observation):
         if self.model is None:
-            raise ValueError("Model has not been loaded.")
+            self.load(self.params['genome_file'])
         if self.config is None:
-            raise ValueError("Config has not been loaded.")
+            self.load_config(self.params['config_file'])
 
         net = neat.nn.FeedForwardNetwork.create(self.model, self.config)
+        
         action_values = net.activate(observation)
-        action = np.argmax(action_values)  # Choose the action with the highest value
-        return action
+        return action_values
 
     def save(self, model_path):
         with open(model_path, 'wb') as f:
