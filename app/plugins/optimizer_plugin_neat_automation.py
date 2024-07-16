@@ -1,6 +1,7 @@
 import neat
 import os
 import pickle
+import numpy as np
 
 class Plugin:
     """
