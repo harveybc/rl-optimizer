@@ -13,8 +13,8 @@ class Plugin:
         'max_steps': 100000,
         'fitness_function': 'brute_profit',  # 'sharpe_ratio' can be another option
         'min_orders': 4,
-        'sl': 0.0005,  # Adjusted Stop Loss
-        'tp': 0.0005,  # Adjusted Take Profit
+        'sl': 100,  # Adjusted Stop Loss
+        'tp': 100,  # Adjusted Take Profit
         'rel_volume': 0.1,
         'leverage': 100,
         'pip_cost': 0.0001,
@@ -210,6 +210,7 @@ class AutomationEnv(gym.Env):
             # Verify if close by TP
             if self.profit_pips >= self.tp:
                 self.order_status = 0
+                order_profit = self.equity - self.balance
                 self.balance = self.equity
                 self.margin = 0.0
                 self.c_c = 3  # Set closing cause to take profit
