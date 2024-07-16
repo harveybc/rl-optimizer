@@ -103,10 +103,10 @@ class Plugin:
             # Increment action counts and print only if action is different from 'hold'
             if action == 1:
                 action_counts['buy'] += 1
-                print(f"Action taken: Buy (1)")
+                #print(f"Action taken: Buy (1)")
             elif action == 2:
                 action_counts['sell'] += 1
-                print(f"Action taken: Sell (2)")
+                #print(f"Action taken: Sell (2)")
             else:
                 action_counts['hold'] += 1
 
