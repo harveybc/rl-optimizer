@@ -13,8 +13,8 @@ class Plugin:
         'max_steps': 500,
         'fitness_function': 'brute_profit',  # 'sharpe_ratio' can be another option
         'min_orders': 4,
-        'sl': 50,  # Adjusted Stop Loss
-        'tp': 50,  # Adjusted Take Profit
+        'sl': 100,  # Adjusted Stop Loss
+        'tp': 100,  # Adjusted Take Profit
         'rel_volume': 0.1,
         'leverage': 100,
         'pip_cost': 0.0001,
