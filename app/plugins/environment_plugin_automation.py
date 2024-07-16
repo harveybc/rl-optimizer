@@ -228,7 +228,7 @@ class AutomationEnv(gym.Env):
                 self.margin += (self.order_volume / self.leverage)
                 self.order_time = self.current_step
                 print(f"{self.x_train[self.current_step-1, 0]} - Opening order - Action: Buy, Price: {self.order_price}, Volume: {self.order_volume}")
-                print(f"Current balance: {self.balance}, Equity: {self.equity}, Number of closes: {self.num_closes}")
+                print(f"Current balance 1: {self.balance}, Equity: {self.equity}, Number of closes: {self.num_closes}")
                 print(f"Order Status after buy action: {self.order_status}")
 
             # Executes SELL action, order status = -1
@@ -240,7 +240,7 @@ class AutomationEnv(gym.Env):
                 self.margin += (self.order_volume / self.leverage)
                 self.order_time = self.current_step
                 print(f"{self.x_train[self.current_step-1, 0]} - Opening order - Action: Sell, Price: {self.order_price}, Volume: {self.order_volume}")
-                print(f"Current balance: {self.balance}, Equity: {self.equity}, Number of closes: {self.num_closes}")
+                print(f"Current balance 2: {self.balance}, Equity: {self.equity}, Number of closes: {self.num_closes}")
                 print(f"Order Status after sell action: {self.order_status}")
 
             # Verify if minimum order time has passed before closing manually

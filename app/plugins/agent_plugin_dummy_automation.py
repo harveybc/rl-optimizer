@@ -82,7 +82,7 @@ class Plugin:
             self.order_price = info["close"]
             self.order_volume = info["equity"] * self.params['capital_risk'] * self.params['leverage']
             print(f"{current_date} - Opening order - Action: {'Buy' if action == 1 else 'Sell'}, Price: {self.order_price}, Volume: {self.order_volume}")
-            print(f"Current balance: {info['balance']}, Equity: {info['equity']}, Number of closes: {info['num_closes']}")
+            print(f"Current balance 3: {info['balance']}, Equity: {info['equity']}, Number of closes: {info['num_closes']}")
 
         # Calculate the desired balance when closing an order
         if info["order_status"] == 0 and self.order_status != 0:
