@@ -16,7 +16,7 @@ class Plugin:
         'sl': 0.001,
         'tp': 0.001,
         'rel_volume': 0.1,
-        'leverage': 1,
+        'leverage': 100,
         'pip_cost': 0.0001,
         'min_order_time': 2,
         'spread': 0.001  # Default spread value
