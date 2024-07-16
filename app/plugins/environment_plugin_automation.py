@@ -13,12 +13,12 @@ class Plugin:
         'max_steps': 500,
         'fitness_function': 'brute_profit',  # 'sharpe_ratio' can be another option
         'min_orders': 4,
-        'sl': 0.001,
-        'tp': 0.001,
+        'sl': 0.005,  # Adjusted Stop Loss
+        'tp': 0.005,  # Adjusted Take Profit
         'rel_volume': 0.1,
         'leverage': 100,
         'pip_cost': 0.0001,
-        'min_order_time': 2,
+        'min_order_time': 5,  # Adjusted Minimum Order Time
         'spread': 0.001  # Default spread value
     }
 
@@ -171,11 +171,11 @@ class AutomationEnv(gym.Env):
         # Calculate for existing BUY order (status=1)
         if self.order_status == 1:
             self.profit_pips = ((Low - self.order_price) / self.pip_cost)
-            self.real_profit = self.profit_pips * self.pip_cost * self.order_volume * 100000
+            self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
         # Calculate for existing SELL order (status=-1)
         if self.order_status == -1:
             self.profit_pips = ((self.order_price - (High + self.spread)) / self.pip_cost)
-            self.real_profit = self.profit_pips * self.pip_cost * self.order_volume * 100000
+            self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
 
         # Calculate equity
         self.equity = self.balance + self.real_profit
@@ -212,18 +212,18 @@ class AutomationEnv(gym.Env):
             if (self.order_status == 0) and action == 1:
                 self.order_status = 1
                 self.order_price = Close + self.spread
-                self.order_volume = self.equity * self.rel_volume * self.leverage / 100000
+                self.order_volume = self.equity * self.rel_volume * self.leverage
                 self.order_volume = max(0.01, round(self.order_volume, 2))
-                self.margin += (self.order_volume * 100000 / self.leverage)
+                self.margin += (self.order_volume / self.leverage)
                 self.order_time = self.current_step
 
             # Executes SELL action, order status = -1
             if (self.order_status == 0) and action == 2:
                 self.order_status = -1
                 self.order_price = Close
-                self.order_volume = self.equity * self.rel_volume * self.leverage / 100000
+                self.order_volume = self.equity * self.rel_volume * self.leverage
                 self.order_volume = max(0.01, round(self.order_volume, 2))
-                self.margin += (self.order_volume * 100000 / self.leverage)
+                self.margin += (self.order_volume / self.leverage)
                 self.order_time = self.current_step
 
             # Verify if minimum order time has passed before closing
