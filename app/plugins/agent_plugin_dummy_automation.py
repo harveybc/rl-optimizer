@@ -100,6 +100,7 @@ class Plugin:
 
             print(f"{current_date} - Closed order - Action: {'Buy' if self.order_status == 1 else 'Sell'}, Close Price: {info['close']}, Spread: {self.spread}")
             print(f"Profit pips: {profit_pips}, Profit: {real_profit}")
+            print(f"Initial balance: {self.initial_balance}, Real Profit: {real_profit}, Order Volume: {self.order_volume}, Pip Cost: {self.pip_cost}")
             print(f"New balance: {info['balance']}, Expected balance: {desired_balance}, Equity: {info['equity']}, Number of closes: {info['num_closes']}")
 
             if abs(desired_balance - info['balance']) > 1e-5:  # Allowing a small tolerance for floating-point arithmetic
