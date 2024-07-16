@@ -54,7 +54,7 @@ class Plugin:
         self.model = neat.nn.FeedForwardNetwork.create(genome, self.config)
 
     def predict(self, observation, info=None):
-        current_date = datetime.datetime.strptime(info["date"], '%Y-%m-%d %H:%M:%S')
+        current_date = datetime.datetime.strptime(info["date"], '%d/%m/%Y %H:%M')
         action = 0  # Default to hold
         
         # Check for buy or sell actions at specific dates
