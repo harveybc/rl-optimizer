@@ -95,6 +95,8 @@ class Plugin:
             else:
                 profit_pips = 0.0
 
+            print(f"Calculating Real Profit: profit_pips: {profit_pips}, pip_cost: {self.pip_cost}, order_volume: {self.order_volume}")
+
             real_profit = profit_pips * self.pip_cost * self.order_volume
             desired_balance = self.initial_balance + real_profit
 
