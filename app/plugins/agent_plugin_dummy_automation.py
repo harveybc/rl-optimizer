@@ -90,14 +90,16 @@ class Plugin:
         # Calculate the desired balance when closing an order
         if info["order_status"] == 0 and self.order_status != 0:
             if self.order_status == 1:  # Closing a buy order
-                profit_pips = ((info["close"] - self.order_price) / self.pip_cost) - self.spread
+                profit_pips = (info["low"] - self.order_price) / self.pip_cost
             elif self.order_status == 2:  # Closing a sell order
-                profit_pips = ((self.order_price - info["close"]) / self.pip_cost) - self.spread
+                profit_pips = (self.order_price - (info["high"] + self.spread)) / self.pip_cost
             else:
                 profit_pips = 0.0
 
             real_profit = profit_pips * self.pip_cost * self.order_volume
-            desired_balance = self.initial_balance + real_profit
+
+            # Match the environment's balance update logic
+            desired_balance = info['equity']
 
             print(f"{current_date} - Closed order - Action: {'Buy' if self.order_status == 1 else 'Sell'}, Close Price: {info['close']}, Spread: {self.spread}")
             print(f"Profit pips: {profit_pips}, Profit: {real_profit}")
