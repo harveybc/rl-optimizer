@@ -39,6 +39,17 @@ class Plugin:
     def predict(self, observation, info=None):
         if self.model is None:
             raise ValueError("Model has not been set.")
+        
+        # Convert observation to a numpy array if it is not already
+        if not isinstance(observation, np.ndarray):
+            observation = np.array(observation, dtype=np.float32)
+        
+        # Ensure observation contains only numeric data
+        if not np.issubdtype(observation.dtype, np.number):
+            raise ValueError("Observation contains non-numeric data")
+
+        print(f"Observation: {observation}")  # Print observation for debugging
+
         action_values = self.model.activate(observation)
         #print(f"Action values: {action_values}")
 
