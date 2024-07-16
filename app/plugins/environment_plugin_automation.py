@@ -227,15 +227,17 @@ class AutomationEnv(gym.Env):
                     self.equity = 0
             reward = reward / self.initial_balance
 
-        # Push values from timeseries into state
+        # Push values from timeseries into state (assumes all values are already normalized)
         for i in range(0, self.num_columns - 1):
-            obs_normalized = (2.0 * (self.x_train[self.current_step, i] - self.min[i]) / (self.max[i] - self.min[i])) - 1.0
+            # verify of y_train is none
+            if self.y_train is not None:
+                obs_normalized = self.y_train[self.current_step, i]
+            else:
+                obs_normalized = self.x_train[self.current_step, i]
             self.obs_matrix[i].append(obs_normalized)
 
         obs_normalized = self.order_status
         self.state[0].append(obs_normalized)
-        self.state[1].append((self.equity - self.equity_ant) / self.equity_ant)
-        self.state[2].append((self.equity - self.initial_balance) / self.initial_balance)
         ob = np.concatenate([self.obs_matrix, self.state])
 
         self.tick_count += 1
@@ -247,6 +249,11 @@ class AutomationEnv(gym.Env):
             self.done = True
 
         info = {
+            "date": self.x_train[self.current_step, 0],
+            "close": self.x_train[self.current_step, 4],
+            "high": self.x_train[self.current_step, 3],
+            "low": self.x_train[self.current_step, 2],
+            "open": self.x_train[self.current_step, 1],
             "action": action,
             "observation": ob,
             "episode_over": self.done,
