@@ -306,6 +306,7 @@ class AutomationEnv(gym.Env):
             "margin": self.margin,
             "initial_balance": self.initial_balance
         }
+        
 
         print(f"Info at the end of step: {info}")
         return ob, reward, self.done, info
