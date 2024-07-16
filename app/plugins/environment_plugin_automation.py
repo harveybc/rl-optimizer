@@ -271,11 +271,11 @@ class AutomationEnv(gym.Env):
             self.done = True
 
         info = {
-            "date": self.x_train[self.current_step, 0],
-            "close": self.x_train[self.current_step, 4],
-            "high": self.x_train[self.current_step, 3],
-            "low": self.x_train[self.current_step, 2],
-            "open": self.x_train[self.current_step, 1],
+            "date": self.x_train[self.current_step-1, 0],
+            "close": self.x_train[self.current_step-1, 4],
+            "high": self.x_train[self.current_step-1, 3],
+            "low": self.x_train[self.current_step-1, 2],
+            "open": self.x_train[self.current_step-1, 1],
             "action": action,
             "observation": ob,
             "episode_over": self.done,
