@@ -84,6 +84,9 @@ class AutomationEnv(gym.Env):
         self.initial_balance = initial_balance
         self.balance = initial_balance
         self.equity = initial_balance
+        # for equity variation calculus
+        self.balance_ant = self.balance
+        self.equity_ant = self.balance
         self.current_step = 0
         self.order_status = 0  # 0 = no order, 1 = buy, -1 = sell
         self.order_price = 0.0
