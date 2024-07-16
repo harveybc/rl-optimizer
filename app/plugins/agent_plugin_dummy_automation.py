@@ -38,7 +38,7 @@ class Plugin:
         self.order_status = 0
         self.order_price = 0.0
         self.order_volume = 0.0
-        self.initial_balance = 0.0
+        self.initial_balance = None  # Initialize to None
         self.spread = 0.001  # Default spread value, update as necessary
         self.pip_cost = 0.0001  # Default pip cost, update as necessary
         self.buy_dates = [datetime.datetime.strptime(date, '%d/%m/%Y %H:%M') for date in self.params['buy_dates']]
@@ -81,8 +81,11 @@ class Plugin:
             self.order_status = action
             self.order_price = info["close"]
             self.order_volume = info["equity"] * self.params['capital_risk'] * self.params['leverage']
+            self.initial_balance = info['balance']  # Capture the initial balance
             print(f"{current_date} - Opening order - Action: {'Buy' if action == 1 else 'Sell'}, Price: {self.order_price}, Volume: {self.order_volume}")
             print(f"Current balance: {info['balance']}, Equity: {info['equity']}, Number of closes: {info['num_closes']}")
+            print(f"Order Status after action: {self.order_status}")
+            return action
 
         # Calculate the desired balance when closing an order
         if info["order_status"] == 0 and self.order_status != 0:
@@ -93,10 +96,9 @@ class Plugin:
             else:
                 profit_pips = 0.0
 
-            real_profit = profit_pips * self.pip_cost * self.order_volume
+            real_profit = profit_pips * self.pip_cost * self.order_volume / self.params['leverage']
             desired_balance = self.initial_balance + real_profit
 
-            print(f"Calculating Real Profit: profit_pips: {profit_pips}, pip_cost: {self.pip_cost}, order_volume: {self.order_volume}")
             print(f"{current_date} - Closed order - Action: {'Buy' if self.order_status == 1 else 'Sell'}, Close Price: {info['close']}, Spread: {self.spread}")
             print(f"Profit pips: {profit_pips}, Profit: {real_profit}")
             print(f"Initial balance: {self.initial_balance}, Real Profit: {real_profit}, Order Volume: {self.order_volume}, Pip Cost: {self.pip_cost}")
