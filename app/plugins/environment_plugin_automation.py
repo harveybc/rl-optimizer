@@ -126,6 +126,12 @@ class AutomationEnv(gym.Env):
         self.order_volume = 0.0
         self.reward = 0.0
         self.done = False
+        self.num_closes = 0  # Track number of closes
+        self.c_c = 0  # Track closing cause
+        self.ant_c_c = 0  # Track previous closing cause
+        self.margin = 0.0
+        self.order_time = 0
+
         self.equity_curve = [self.initial_balance]
         observation = self.y_train[self.current_step] if self.y_train is not None else self.x_train[self.current_step]
         info = {
