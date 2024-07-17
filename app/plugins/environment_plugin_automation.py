@@ -93,7 +93,7 @@ class AutomationEnv(gym.Env):
         self.order_close = 0.0
         
 
-        self.order_profit_pips = 0.0
+        self.profit_pips = 0.0
         self.real_profit = 0.0
         
         self.order_volume = 0.0
@@ -194,7 +194,7 @@ class AutomationEnv(gym.Env):
         # Verify if Margin Call
         if self.equity < self.margin:
             self.order_status = 0
-            self.order_profit_pips = self.equity - self.balance
+            self.profit_pips = (self.equity - self.balance)/self.pip_cost
             self.real_profit = self.order_profit_pips * self.pip_cost * self.order_volume
             self.balance = 0.0
             self.equity = 0.0
@@ -221,6 +221,8 @@ class AutomationEnv(gym.Env):
                     self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
                     self.order_close = High + self.spread
                 self.order_status = 0
+                # Calculate equity
+                self.equity = self.balance + self.real_profit
                 self.balance = self.equity
                 self.margin = 0.0
                 self.c_c = 2  # Set closing cause to stop loss
@@ -244,6 +246,7 @@ class AutomationEnv(gym.Env):
                     self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
                     self.order_close = High + self.spread
                 self.order_status = 0
+                self.equity = self.balance + self.real_profit
                 self.balance = self.equity
                 self.margin = 0.0
                 self.c_c = 3  # Set closing cause to take profit
@@ -294,6 +297,7 @@ class AutomationEnv(gym.Env):
                         self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
                         self.order_close = High + self.spread
                     self.order_status = 0
+                    self.equity = self.balance + self.real_profit
                     self.balance = self.equity
                     self.margin = 0.0
                     self.c_c = 0  # Set closing cause to normal close
@@ -308,7 +312,7 @@ class AutomationEnv(gym.Env):
         equity_increment = self.equity - self.initial_balance 
         balance_increment = self.balance - self.initial_balance 
         reward = (balance_increment + equity_increment) / 2
-        reward = reward / self.initial_balance  # Normalize the reward
+        reward = (reward / self.initial_balance) / self.max_steps # Normalize the reward
 
         # set the observation as y_train if not None, else x_train
         ob = self.y_train[self.current_step] if self.y_train is not None else self.x_train[self.current_step]
@@ -317,7 +321,7 @@ class AutomationEnv(gym.Env):
         if (self.balance_ant != self.balance) and verbose:
             print(f"Step: {self.current_step}")
             print(f"Order Status: {self.order_status}, Action: {action}")
-            print(f"Low: {Low}, High: {High}, Close: {Close}, Spread: {self.spread}")
+            print(f"Low: {Low}, High: {High}, Spread: {self.spread}")
             print(f"Order Price: {self.order_price}, Order Volume: {self.order_volume}")
             print(f"Profit Pips: {self.profit_pips}, Real Profit: {self.real_profit}")
             print(f"Balance: {self.balance}, Equity: {self.equity}, Margin: {self.margin}")
