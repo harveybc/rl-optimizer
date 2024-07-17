@@ -308,8 +308,8 @@ class AutomationEnv(gym.Env):
                         print(f"Order Status after normal close: {self.order_status}")
 
         # Simplified reward calculation
-        equity_increment = self.equity - self.initial_balance 
-        balance_increment = self.balance - self.initial_balance 
+        equity_increment = self.equity - self.equity_ant
+        balance_increment = self.balance - self.balance_ant 
         reward = (balance_increment + equity_increment) / 2
         reward = (reward / self.initial_balance) / self.max_steps # Normalize the reward
 
@@ -318,7 +318,7 @@ class AutomationEnv(gym.Env):
         self.equity_ant = self.equity
         
         self.balance_ant = self.balance
-        self.reward += reward
+        self.reward = reward
 
         if self.current_step >= (self.num_ticks - 1):
             self.done = True
