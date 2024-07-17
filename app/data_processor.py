@@ -75,6 +75,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_agent(agent_plugin)
     optimizer_plugin.train(config['epochs'])
     
+    ##TODO: Verify why it trains until some threshold
+
+
     # Save the trained model
     if config['save_model']:
         optimizer_plugin.save(config['save_model'])
