@@ -76,7 +76,7 @@ class Plugin:
             pickle.dump(self.best_genome, f)
         
         # Print the champion genome
-        print(f"Champion Genome:\n{self.best_genome}")
+        # print(f"Champion Genome:\n{self.best_genome}")
 
 
     def evaluate_genome(self, genome, genome_id=None, config=None):
