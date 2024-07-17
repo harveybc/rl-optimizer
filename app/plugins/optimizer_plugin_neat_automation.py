@@ -78,15 +78,6 @@ class Plugin:
         # Print the champion genome
         print(f"Champion Genome:\n{self.best_genome}")
 
-        # Print the nodes and connections of the best genome
-        nodes = self.best_genome.nodes
-        connections = self.best_genome.connections
-        print("Nodes:")
-        for node_key, node in nodes.items():
-            print(f"Node {node_key}: {node}")
-        print("Connections:")
-        for conn_key, conn in connections.items():
-            print(f"Connection {conn_key}: {conn}")
 
     def evaluate_genome(self, genome, genome_id=None, config=None):
         self.agent.set_model(genome, config)  # Set the genome in the agent
