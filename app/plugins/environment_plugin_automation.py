@@ -205,8 +205,14 @@ class AutomationEnv(gym.Env):
             # Verify if close by SL
             if self.profit_pips <= (-1 * self.sl):
                 self.order_status = 0
-                self.order_profit_pips = self.equity-self.balance
-                self.order_profit_real = self.order_profit_pips * self.pip_cost * self.order_volume
+                        # Calculate for existing BUY order (status=1)
+                if self.order_status == 1:
+                    self.profit_pips = ((Low - self.order_price) / self.pip_cost)
+                    self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
+                # Calculate for existing SELL order (status=2)
+                if self.order_status == 2:
+                    self.profit_pips = ((self.order_price - (High + self.spread)) / self.pip_cost)
+                    self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
                 self.balance = self.equity
                 self.margin = 0.0
                 self.c_c = 2  # Set closing cause to stop loss
@@ -220,8 +226,14 @@ class AutomationEnv(gym.Env):
             # Verify if close by TP
             if self.profit_pips >= self.tp:
                 self.order_status = 0
-                self.order_profit_pips = self.equity-self.balance
-                self.order_profit_real = self.order_profit_pips * self.pip_cost * self.order_volume
+                        # Calculate for existing BUY order (status=1)
+                if self.order_status == 1:
+                    self.profit_pips = ((Low - self.order_price) / self.pip_cost)
+                    self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
+                # Calculate for existing SELL order (status=2)
+                if self.order_status == 2:
+                    self.profit_pips = ((self.order_price - (High + self.spread)) / self.pip_cost)
+                    self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
                 self.balance = self.equity
                 self.margin = 0.0
                 self.c_c = 3  # Set closing cause to take profit
@@ -261,9 +273,15 @@ class AutomationEnv(gym.Env):
             # Manual close by action (Buy -> Sell or Sell -> Buy) if min_order_time has passed
             if (self.order_status == 1 and action == 2) or (self.order_status == 2 and action == 1):
                 if (self.current_step - self.order_time) > self.min_order_time:
+                    # Calculate for existing BUY order (status=1)
+                    if self.order_status == 1:
+                        self.profit_pips = ((Low - self.order_price) / self.pip_cost)
+                        self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
+                    # Calculate for existing SELL order (status=2)
+                    if self.order_status == 2:
+                        self.profit_pips = ((self.order_price - (High + self.spread)) / self.pip_cost)
+                        self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
                     self.order_status = 0
-                    self.order_profit_pips = self.equity-self.balance
-                    self.order_profit_real = self.order_profit_pips * self.pip_cost * self.order_volume
                     self.balance = self.equity
                     self.margin = 0.0
                     self.c_c = 0  # Set closing cause to normal close
