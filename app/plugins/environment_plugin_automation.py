@@ -189,13 +189,7 @@ class AutomationEnv(gym.Env):
         # Calculate equity
         self.equity = self.balance + self.real_profit
 
-        if verbose:
-            print(f"Step: {self.current_step}")
-            print(f"Order Status: {self.order_status}, Action: {action}")
-            print(f"Low: {Low}, High: {High}, Close: {Close}, Spread: {self.spread}")
-            print(f"Order Price: {self.order_price}, Order Volume: {self.order_volume}")
-            print(f"Profit Pips: {self.profit_pips}, Real Profit: {self.real_profit}")
-            print(f"Balance: {self.balance}, Equity: {self.equity}, Margin: {self.margin}")
+        
 
         # Verify if Margin Call
         if self.equity < self.margin:
@@ -319,6 +313,15 @@ class AutomationEnv(gym.Env):
         # set the observation as y_train if not None, else x_train
         ob = self.y_train[self.current_step] if self.y_train is not None else self.x_train[self.current_step]
         self.equity_ant = self.equity
+        
+        if self.balance_ant != self.balance:
+            print(f"Step: {self.current_step}")
+            print(f"Order Status: {self.order_status}, Action: {action}")
+            print(f"Low: {Low}, High: {High}, Close: {Close}, Spread: {self.spread}")
+            print(f"Order Price: {self.order_price}, Order Volume: {self.order_volume}")
+            print(f"Profit Pips: {self.profit_pips}, Real Profit: {self.real_profit}")
+            print(f"Balance: {self.balance}, Equity: {self.equity}, Margin: {self.margin}")
+        
         self.balance_ant = self.balance
         self.reward += reward
 
