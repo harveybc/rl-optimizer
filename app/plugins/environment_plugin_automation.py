@@ -10,7 +10,6 @@ class Plugin:
 
     plugin_params = {
         'initial_balance': 10000,
-        'max_steps': 10000,
         'fitness_function': 'brute_profit',  # 'sharpe_ratio' can be another option
         'min_orders': 4,
         'sl': 100,  # Adjusted Stop Loss
@@ -309,17 +308,20 @@ class AutomationEnv(gym.Env):
                         print(f"Order Status after normal close: {self.order_status}")
 
         # Simplified reward calculation
-        equity_increment = self.equity - self.initial_balance 
-        balance_increment = self.balance - self.initial_balance 
-        reward = (balance_increment + equity_increment) / 2
-        reward = (reward / self.initial_balance) / self.max_steps # Normalize the reward
+        if self.current_step > 1:
+            equity_increment = self.equity - self.equity_ant
+            balance_increment = self.balance - self.balance_ant 
+            reward = (balance_increment + equity_increment) / 2
+            reward = (reward / self.initial_balance) / self.max_steps # Normalize the reward
+        else:
+            reward = 0
 
         # set the observation as y_train if not None, else x_train
         ob = self.y_train[self.current_step] if self.y_train is not None else self.x_train[self.current_step]
         self.equity_ant = self.equity
         
         self.balance_ant = self.balance
-        self.reward += reward
+        self.reward = reward
 
         if self.current_step >= (self.num_ticks - 1):
             self.done = True

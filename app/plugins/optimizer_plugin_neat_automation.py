@@ -10,9 +10,7 @@ class Plugin:
 
     plugin_params = {
         'config_file': 'tests/data/neat_50.ini',
-        'genome_file': 'winner.pkl',
-        'epochs': 1,
-        'batch_size': 256,
+        'genome_file': 'winner.pkl'
     }
 
     plugin_debug_vars = ['config_file', 'epochs', 'batch_size']
