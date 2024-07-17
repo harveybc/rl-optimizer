@@ -10,7 +10,7 @@ class Plugin:
 
     plugin_params = {
         'initial_balance': 10000,
-        'max_steps': 500,
+        'max_steps': 200,
         'fitness_function': 'brute_profit',  # 'sharpe_ratio' can be another option
         'min_orders': 4,
         'sl': 100,  # Adjusted Stop Loss
@@ -352,7 +352,7 @@ class AutomationEnv(gym.Env):
             "margin": self.margin,
             "initial_balance": self.initial_balance
         }
-        
+
         if self.order_status == 0:
             self.profit_pips = 0
             self.real_profit = 0
