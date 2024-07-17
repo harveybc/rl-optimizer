@@ -11,7 +11,7 @@ class Plugin:
     plugin_params = {
         'config_file': 'tests/data/neat_50.ini',
         'genome_file': 'winner.pkl',
-        'epochs': 10,
+        'epochs': 1,
         'batch_size': 256,
     }
 
@@ -65,9 +65,9 @@ class Plugin:
         population.add_reporter(stats)
 
         def eval_genomes(genomes, config):
+            i=0
             for genome_id, genome in genomes:
-                self.agent.set_model(genome, config)  # Set the genome in the agent
-                genome.fitness = self.evaluate_genome(genome)
+                genome.fitness = self.evaluate_genome(genome,genome_id,config)
 
         self.best_genome = population.run(eval_genomes, epochs)
 
@@ -76,19 +76,11 @@ class Plugin:
             pickle.dump(self.best_genome, f)
         
         # Print the champion genome
-        print(f"Champion Genome:\n{self.best_genome}")
+        # print(f"Champion Genome:\n{self.best_genome}")
 
-        # Print the nodes and connections of the best genome
-        nodes = self.best_genome.nodes
-        connections = self.best_genome.connections
-        print("Nodes:")
-        for node_key, node in nodes.items():
-            print(f"Node {node_key}: {node}")
-        print("Connections:")
-        for conn_key, conn in connections.items():
-            print(f"Connection {conn_key}: {conn}")
 
-    def evaluate_genome(self, genome):
+    def evaluate_genome(self, genome, genome_id=None, config=None, verbose=False):
+        self.agent.set_model(genome, config)  # Set the genome in the agent
         fitness = 0.0
         observation, info = self.environment.reset()
         done = False
@@ -110,11 +102,11 @@ class Plugin:
             else:
                 action_counts['hold'] += 1
 
-            observation, reward, done, info = self.environment.step(action)
+            observation, reward, done, info = self.environment.step(action, verbose=verbose)  # Take the action
 
             fitness += reward
-
-        #print(f"Action counts - Buy: {action_counts['buy']}, Sell: {action_counts['sell']}, Hold: {action_counts['hold']}")
+        if verbose:
+            print(f"genome_id: {genome_id}, balance: {info['balance']}, num_closes: {info['num_closes']}, fitness: {fitness}")
 
         return float(fitness)  # Explicitly return float
 

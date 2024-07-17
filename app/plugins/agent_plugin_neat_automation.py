@@ -39,6 +39,17 @@ class Plugin:
     def predict(self, observation, info=None):
         if self.model is None:
             raise ValueError("Model has not been set.")
+        
+        
+        # Print observation for debugging
+        #print(f"Observation before cleaning: {observation}")
+        
+        # Ensure observation contains only numeric data
+        
+        
+        
+        #print(f"Cleaned Observation: {cleaned_observation}")  # Print cleaned observation for debugging
+
         action_values = self.model.activate(observation)
         #print(f"Action values: {action_values}")
 

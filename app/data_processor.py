@@ -31,7 +31,7 @@ def process_data(config):
 
     # Ensure input data is numeric except for the first column of x_train asummed to contain the date
     #x_train_data = x_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
-    #y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
+    y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
     
     # Apply input offset and time horizon
     offset = config['input_offset'] + config['time_horizon']
@@ -75,27 +75,18 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_agent(agent_plugin)
     optimizer_plugin.train(config['epochs'])
     
+    ##TODO: Verify why it trains until some threshold
+
+
     # Save the trained model
     if config['save_model']:
         optimizer_plugin.save(config['save_model'])
         agent_plugin.load(config['save_model'])
         print(f"Model saved to {config['save_model']}")
 
-    # Predict using the trained model
-    predictions = agent_plugin.predict(x_train)
-
-    # Reshape predictions to match y_train shape
-    predictions = np.array(predictions).reshape(y_train.shape)
-
-    # Calculate fitness
-    fitness = environment_plugin.calculate_fitness(y_train, predictions)
+    # Show trades and calculate fitness for the best genome
+    fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
     print(f"Fitness: {fitness}")
-
-    # Convert predictions to a DataFrame and save to CSV
-    predictions_df = pd.DataFrame(predictions, columns=['Prediction'])
-    output_filename = config['output_file']
-    write_csv(output_filename, predictions_df, include_date=config['force_date'], headers=config['headers'])
-    print(f"Output written to {output_filename}")
 
     # Save final configuration and debug information
     end_time = time.time()
@@ -117,7 +108,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
     print(f"Execution time: {execution_time} seconds")
 
-    # Validate the model if validation data is provided
+    # Validate the model if validation data is provided : TODO: CORRECT THIS
     if config['x_validation_file'] and config['y_validation_file']:
         print("Validating model...")
         x_validation = load_csv(config['x_validation_file'], headers=config['headers']).to_numpy().astype(np.float32)
