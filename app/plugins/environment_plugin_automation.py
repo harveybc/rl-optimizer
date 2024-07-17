@@ -325,7 +325,7 @@ class AutomationEnv(gym.Env):
             print(f"Order Price: {self.order_price}, Order Volume: {self.order_volume}")
             print(f"Profit Pips: {self.profit_pips}, Real Profit: {self.real_profit}")
             print(f"Balance: {self.balance}, Equity: {self.equity}, Margin: {self.margin}")
-        
+                        
         self.balance_ant = self.balance
         self.reward += reward
 
@@ -352,7 +352,11 @@ class AutomationEnv(gym.Env):
             "margin": self.margin,
             "initial_balance": self.initial_balance
         }
-
+        
+        if self.order_status == 0:
+            self.profit_pips = 0
+            self.real_profit = 0
+        
         return ob, reward, self.done, info
 
 
