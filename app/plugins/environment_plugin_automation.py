@@ -308,10 +308,13 @@ class AutomationEnv(gym.Env):
                         print(f"Order Status after normal close: {self.order_status}")
 
         # Simplified reward calculation
-        equity_increment = self.equity - self.equity_ant
-        balance_increment = self.balance - self.balance_ant 
-        reward = (balance_increment + equity_increment) / 2
-        reward = (reward / self.initial_balance) / self.max_steps # Normalize the reward
+        if self.current_step > 1:
+            equity_increment = self.equity - self.equity_ant
+            balance_increment = self.balance - self.balance_ant 
+            reward = (balance_increment + equity_increment) / 2
+            reward = (reward / self.initial_balance) / self.max_steps # Normalize the reward
+        else:
+            reward = 0
 
         # set the observation as y_train if not None, else x_train
         ob = self.y_train[self.current_step] if self.y_train is not None else self.x_train[self.current_step]
