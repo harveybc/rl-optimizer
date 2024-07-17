@@ -102,7 +102,7 @@ class Plugin:
             else:
                 action_counts['hold'] += 1
 
-            observation, reward, done, info = self.environment.step(action,verbose=False)  # Take the action
+            observation, reward, done, info = self.environment.step(action, verbose=verbose)  # Take the action
 
             fitness += reward
         if verbose:
