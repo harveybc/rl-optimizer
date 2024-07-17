@@ -204,7 +204,7 @@ class AutomationEnv(gym.Env):
             self.done = True
             if verbose:
                 print(f"{self.x_train[self.current_step, 0]} - Closed order at {self.order_close} - Cause: Margin Call")
-                print(f"Current balance 7: {self.balance}, Profit: {self.real_profit}, Number of closes: {self.num_closes}")
+                print(f"Current balance 7: {self.balance}, Profit PIPS: {self.profit_pips}, Real Profit: {self.real_profit}, Number of closes: {self.num_closes}")
                 print(f"Order Status after margin call check: {self.order_status}")
 
         if not self.done:
@@ -230,7 +230,7 @@ class AutomationEnv(gym.Env):
                 self.num_closes += 1
                 if verbose:
                     print(f"{self.x_train[self.current_step, 0]} - Closed order at {self.order_close} - Cause: Stop Loss")
-                    print(f"Current balance 6: {self.balance}, Profit: {self.real_profit}, Number of closes: {self.num_closes}")
+                    print(f"Current balance 6: {self.balance}, Profit PIPS: {self.profit_pips}, Real Profit: {self.real_profit}, Number of closes: {self.num_closes}")
                     print(f"Order Status after stop loss check: {self.order_status}")
 
             # Verify if close by TP
@@ -254,7 +254,7 @@ class AutomationEnv(gym.Env):
                 self.num_closes += 1
                 if verbose:
                     print(f"{self.x_train[self.current_step, 0]} - Closed order at {self.order_close} - Cause: Take Profit")
-                    print(f"Current balance 5: {self.balance}, Profit: {self.real_profit}, Number of closes: {self.num_closes}")
+                    print(f"Current balance 5: {self.balance}, Profit PIPS: {self.profit_pips}, Real Profit: {self.real_profit}, Number of closes: {self.num_closes}")
                     print(f"Order Status after take profit check: {self.order_status}")
 
             # Executes BUY action, order status = 1
@@ -305,7 +305,7 @@ class AutomationEnv(gym.Env):
                     self.num_closes += 1
                     if verbose:
                         print(f"{self.x_train[self.current_step, 0]} - Closed order at {self.order_close} - Cause: Normal Close")
-                        print(f"Current balance 4: {self.balance}, Profit: {self.real_profit}, Number of closes: {self.num_closes}")
+                        print(f"Current balance 4: {self.balance}, Profit PIPS: {self.profit_pips}, Real Profit: {self.real_profit}, Number of closes: {self.num_closes}")
                         print(f"Order Status after normal close: {self.order_status}")
 
         # Simplified reward calculation
@@ -318,14 +318,6 @@ class AutomationEnv(gym.Env):
         ob = self.y_train[self.current_step] if self.y_train is not None else self.x_train[self.current_step]
         self.equity_ant = self.equity
         
-        if (self.balance_ant != self.balance) and verbose:
-            print(f"Step: {self.current_step}")
-            print(f"Order Status: {self.order_status}, Action: {action}")
-            print(f"Low: {Low}, High: {High}, Spread: {self.spread}")
-            print(f"Order Price: {self.order_price}, Order Volume: {self.order_volume}")
-            print(f"Profit Pips: {self.profit_pips}, Real Profit: {self.real_profit}")
-            print(f"Balance: {self.balance}, Equity: {self.equity}, Margin: {self.margin}")
-                        
         self.balance_ant = self.balance
         self.reward += reward
 
