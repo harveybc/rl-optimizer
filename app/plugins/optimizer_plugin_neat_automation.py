@@ -11,7 +11,7 @@ class Plugin:
     plugin_params = {
         'config_file': 'tests/data/neat_50.ini',
         'genome_file': 'winner.pkl',
-        'epochs': 100,
+        'epochs': 1,
         'batch_size': 256,
     }
 
