@@ -65,9 +65,9 @@ class Plugin:
         population.add_reporter(stats)
 
         def eval_genomes(genomes, config):
+            i=0
             for genome_id, genome in genomes:
-                self.agent.set_model(genome, config)  # Set the genome in the agent
-                genome.fitness = self.evaluate_genome(genome)
+                genome.fitness = self.evaluate_genome(genome,genome_id,config)
 
         self.best_genome = population.run(eval_genomes, epochs)
 
@@ -88,7 +88,8 @@ class Plugin:
         for conn_key, conn in connections.items():
             print(f"Connection {conn_key}: {conn}")
 
-    def evaluate_genome(self, genome):
+    def evaluate_genome(self, genome, genome_id=None, config=None):
+        self.agent.set_model(genome, config)  # Set the genome in the agent
         fitness = 0.0
         observation, info = self.environment.reset()
         done = False
@@ -114,7 +115,7 @@ class Plugin:
 
             fitness += reward
 
-        #print(f"Action counts - Buy: {action_counts['buy']}, Sell: {action_counts['sell']}, Hold: {action_counts['hold']}")
+        print(f"genome_id: {genome_id}, balance: {info['balance']}, num_closes: {info['num_closes']}, fitness: {fitness}")
 
         return float(fitness)  # Explicitly return float
 
