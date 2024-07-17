@@ -10,7 +10,6 @@ class Plugin:
 
     plugin_params = {
         'initial_balance': 10000,
-        'max_steps': 10000,
         'fitness_function': 'brute_profit',  # 'sharpe_ratio' can be another option
         'min_orders': 4,
         'sl': 100,  # Adjusted Stop Loss
