@@ -81,8 +81,8 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         agent_plugin.load(config['save_model'])
         print(f"Model saved to {config['save_model']}")
 
-    # Predict using the trained model
-    predictions = agent_plugin.predict(x_train)
+    # Predict using the trained model (using y_train if defined, else x_train)
+    predictions = agent_plugin.predict(y_train) if y_train is not None else agent_plugin.predict(x_train)
 
     # Reshape predictions to match y_train shape
     predictions = np.array(predictions).reshape(y_train.shape)
