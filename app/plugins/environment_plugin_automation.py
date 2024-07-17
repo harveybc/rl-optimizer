@@ -90,6 +90,9 @@ class AutomationEnv(gym.Env):
         self.current_step = 0
         self.order_status = 0  # 0 = no order, 1 = buy, 2 = sell
         self.order_price = 0.0
+        self.order_close = 0.0
+        
+
         self.order_profit_pips = 0.0
         self.real_profit = 0.0
         
@@ -111,7 +114,7 @@ class AutomationEnv(gym.Env):
         self.num_closes = 0  # Track number of closes
         self.c_c = 0  # Track closing cause
         self.ant_c_c = 0  # Track previous closing cause
-
+        
         if y_train is None:
             self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.x_train.shape[1],), dtype=np.float32)
         else:
@@ -194,10 +197,11 @@ class AutomationEnv(gym.Env):
             self.balance = 0.0
             self.equity = 0.0
             self.margin = 0.0
+            self.order_close = Close
             self.c_c = 1  # Set closing cause to margin call
             self.done = True
             if verbose:
-                print(f"{self.x_train[self.current_step-1, 0]} - Closed order - Cause: Margin Call")
+                print(f"{self.x_train[self.current_step-1, 0]} - Closed order at {self.order_close} - Cause: Margin Call")
                 print(f"Current balance 7: {self.balance}, Profit: {self.real_profit}, Number of closes: {self.num_closes}")                    
                 print(f"Order Status after margin call check: {self.order_status}")
 
@@ -208,10 +212,12 @@ class AutomationEnv(gym.Env):
                 if self.order_status == 1:
                     self.profit_pips = ((Low - self.order_price) / self.pip_cost)
                     self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
+                    self.order_close = Low
                 # Calculate for existing SELL order (status=2)
                 if self.order_status == 2:
                     self.profit_pips = ((self.order_price - (High + self.spread)) / self.pip_cost)
                     self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
+                    self.order_close = High + self.spread
                 self.order_status = 0
                 self.balance = self.equity
                 self.margin = 0.0
@@ -219,7 +225,7 @@ class AutomationEnv(gym.Env):
                 self.order_volume = 0.0
                 self.num_closes += 1
                 if verbose:
-                    print(f"{self.x_train[self.current_step-1, 0]} - Closed order - Cause: Stop Loss")
+                    print(f"{self.x_train[self.current_step-1, 0]} - Closed order at {self.order_close} - Cause: Stop Loss")
                     print(f"Current balance 6: {self.balance}, Profit: {self.real_profit}, Number of closes: {self.num_closes}")                    
                     print(f"Order Status after stop loss check: {self.order_status}")
 
@@ -229,10 +235,12 @@ class AutomationEnv(gym.Env):
                 if self.order_status == 1:
                     self.profit_pips = ((Low - self.order_price) / self.pip_cost)
                     self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
+                    self.order_close = Low
                 # Calculate for existing SELL order (status=2)
                 if self.order_status == 2:
                     self.profit_pips = ((self.order_price - (High + self.spread)) / self.pip_cost)
                     self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
+                    self.order_close = High + self.spread
                 self.order_status = 0
                 self.balance = self.equity
                 self.margin = 0.0
@@ -240,7 +248,7 @@ class AutomationEnv(gym.Env):
                 self.order_volume = 0.0
                 self.num_closes += 1
                 if verbose:
-                    print(f"{self.x_train[self.current_step-1, 0]} - Closed order - Cause: Take Profit")
+                    print(f"{self.x_train[self.current_step-1, 0]} - Closed order at {self.order_close} - Cause: Take Profit")
                     print(f"Current balance 5: {self.balance}, Profit: {self.real_profit}, Number of closes: {self.num_closes}")                    
                     print(f"Order Status after take profit check: {self.order_status}")
 
@@ -277,10 +285,12 @@ class AutomationEnv(gym.Env):
                     if self.order_status == 1:
                         self.profit_pips = ((Low - self.order_price) / self.pip_cost)
                         self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
+                        self.order_close = Low
                     # Calculate for existing SELL order (status=2)
                     if self.order_status == 2:
                         self.profit_pips = ((self.order_price - (High + self.spread)) / self.pip_cost)
                         self.real_profit = self.profit_pips * self.pip_cost * self.order_volume
+                        self.order_close = High + self.spread
                     self.order_status = 0
                     self.balance = self.equity
                     self.margin = 0.0
@@ -288,7 +298,7 @@ class AutomationEnv(gym.Env):
                     self.order_volume = 0.0
                     self.num_closes += 1
                     if verbose:                                     
-                        print(f"{self.x_train[self.current_step-1, 0]} - Closed order - Cause: Normal Close")
+                        print(f"{self.x_train[self.current_step-1, 0]} - Closed order at {self.order_close} - Cause: Normal Close")
                         print(f"Current balance 4: {self.balance}, Profit: {self.real_profit}, Number of closes: {self.num_closes}")
                         print(f"Order Status after normal close: {self.order_status}")
 
