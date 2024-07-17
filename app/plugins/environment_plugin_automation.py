@@ -314,7 +314,7 @@ class AutomationEnv(gym.Env):
         ob = self.y_train[self.current_step] if self.y_train is not None else self.x_train[self.current_step]
         self.equity_ant = self.equity
         
-        if self.balance_ant != self.balance:
+        if (self.balance_ant != self.balance) and verbose:
             print(f"Step: {self.current_step}")
             print(f"Order Status: {self.order_status}, Action: {action}")
             print(f"Low: {Low}, High: {High}, Close: {Close}, Spread: {self.spread}")
