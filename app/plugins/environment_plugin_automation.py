@@ -242,7 +242,7 @@ class AutomationEnv(gym.Env):
                 self.order_time = self.current_step
                 if verbose:                                
                     print(f"{self.x_train[self.current_step-1, 0]} - Opening order - Action: Buy, Price: {self.order_price}, Volume: {self.order_volume}")
-                    print(f"Current balance 1: {self.balance}, Profit: {self.order_profit_real}, Number of closes: {self.num_closes}")
+                    print(f"Current balance 1: {self.balance}, Number of closes: {self.num_closes}")
                     print(f"Order Status after buy action: {self.order_status}")
 
             # Executes SELL action, order status = 2
@@ -255,7 +255,7 @@ class AutomationEnv(gym.Env):
                 self.order_time = self.current_step
                 if verbose:
                     print(f"{self.x_train[self.current_step-1, 0]} - Opening order - Action: Sell, Price: {self.order_price}, Volume: {self.order_volume}")
-                    print(f"Current balance 2: {self.balance}, Profit: {self.order_profit_real}, Number of closes: {self.num_closes}")
+                    print(f"Current balance 2: {self.balance}, Number of closes: {self.num_closes}")
                     print(f"Order Status after sell action: {self.order_status}")
 
             # Manual close by action (Buy -> Sell or Sell -> Buy) if min_order_time has passed
