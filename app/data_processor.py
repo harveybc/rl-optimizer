@@ -7,7 +7,6 @@ from app.data_handler import load_csv, write_csv
 from app.config_handler import save_debug_info, remote_log
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-
 def process_data(config):
     print(f"Loading data from CSV file: {config['x_train_file']}")
     x_train_data = load_csv(config['x_train_file'], headers=config['headers'])
@@ -29,8 +28,7 @@ def process_data(config):
     else:
         raise ValueError("Either y_train_file or target_column must be specified in the configuration.")
 
-    # Ensure input data is numeric except for the first column of x_train asummed to contain the date
-    #x_train_data = x_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
+    # Ensure input data is numeric except for the first column of x_train assumed to contain the date
     y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
     
     # Apply input offset and time horizon
@@ -75,9 +73,6 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_agent(agent_plugin)
     optimizer_plugin.train(config['epochs'])
     
-    ##TODO: Verify why it trains until some threshold
-
-
     # Save the trained model
     if config['save_model']:
         optimizer_plugin.save(config['save_model'])
@@ -108,29 +103,60 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
     print(f"Execution time: {execution_time} seconds")
 
-    # Validate the model if validation data is provided : TODO: CORRECT THIS
+    # Validate the model if validation data is provided
     if config['x_validation_file'] and config['y_validation_file']:
         print("Validating model...")
-        x_validation = load_csv(config['x_validation_file'], headers=config['headers']).to_numpy().astype(np.float32)
-        y_validation = load_csv(config['y_validation_file'], headers=config['headers']).to_numpy().astype(np.float32)
-        
-        # Ensure x_validation is a 2D array
-        if x_validation.ndim == 1:
-            x_validation = x_validation.reshape(-1, 1)
-        
-        # Ensure y_validation matches the first dimension of x_validation
-        y_validation = y_validation[:len(x_validation)]
+        x_validation, y_validation = process_validation_data(config)
         
         print(f"x_validation shape: {x_validation.shape}")
         print(f"y_validation shape: {y_validation.shape}")
         
-        validation_predictions = agent_plugin.predict(x_validation)
-        validation_predictions = validation_predictions.reshape(y_validation.shape)
+        validation_predictions = agent_plugin.decide_action(x_validation)
+        validation_predictions = np.array(validation_predictions).reshape(y_validation.shape)
         
         validation_fitness = environment_plugin.calculate_fitness(y_validation, validation_predictions)
         print(f"Validation Fitness: {validation_fitness}")
 
+def process_validation_data(config):
+    print(f"Loading validation data from CSV file: {config['x_validation_file']}")
+    x_validation_data = load_csv(config['x_validation_file'], headers=config['headers'])
+    print(f"Validation data loaded with shape: {x_validation_data.shape}")
 
+    y_validation_file = config['y_validation_file']
+    target_column = config['target_column']
+
+    if isinstance(y_validation_file, str):
+        print(f"Loading y_validation data from CSV file: {y_validation_file}")
+        y_validation_data = load_csv(y_validation_file, headers=config['headers'])
+        print(f"y_validation data loaded with shape: {y_validation_data.shape}")
+    elif isinstance(y_validation_file, int):
+        y_validation_data = x_validation_data.iloc[:, y_validation_file]
+        print(f"Using y_validation data at column index: {y_validation_file}")
+    elif target_column is not None:
+        y_validation_data = x_validation_data.iloc[:, target_column]
+        print(f"Using target column at index: {target_column}")
+    else:
+        raise ValueError("Either y_validation_file or target_column must be specified in the configuration.")
+
+    # Ensure input data is numeric except for the first column of x_train assumed to contain the date
+    y_validation_data = y_validation_data.apply(pd.to_numeric, errors='coerce').fillna(0)
+    
+    # Apply input offset and time horizon
+    offset = config['input_offset'] + config['time_horizon']
+    y_validation_data = y_validation_data[offset:]
+    x_validation_data = x_validation_data[:-config['time_horizon']]
+
+    # Ensure the shapes match
+    min_length = min(len(x_validation_data), len(y_validation_data))
+    x_validation_data = x_validation_data[:min_length]
+    y_validation_data = y_validation_data[:min_length]
+
+    # Debugging messages to confirm types and shapes
+    print(f"Returning validation data of type: {type(x_validation_data)}, {type(y_validation_data)}")
+    print(f"x_validation_data shape after adjustments: {x_validation_data.shape}")
+    print(f"y_validation_data shape after adjustments: {y_validation_data.shape}")
+    
+    return x_validation_data, y_validation_data
 
 def load_and_evaluate_model(config, agent_plugin):
     # Load the model
@@ -140,7 +166,7 @@ def load_and_evaluate_model(config, agent_plugin):
     x_train, _ = process_data(config)
 
     # Predict using the loaded model
-    predictions = agent_plugin.predict(x_train.to_numpy())
+    predictions = agent_plugin.decide_action(x_train.to_numpy())
 
     # Save the predictions to CSV
     evaluate_filename = config['evaluate_file']
