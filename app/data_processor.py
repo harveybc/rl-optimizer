@@ -88,26 +88,6 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
     print(f"Fitness: {fitness}")
 
-    # Save final configuration and debug information
-    end_time = time.time()
-    execution_time = end_time - start_time
-    debug_info = {
-        'execution_time': float(execution_time),
-        'fitness': float(fitness)
-    }
-
-    # Save debug info
-    if config.get('save_log'):
-        save_debug_info(debug_info, config['save_log'])
-        print(f"Debug info saved to {config['save_log']}.")
-
-    # Remote log debug info and config
-    if config.get('remote_log'):
-        remote_log(config, debug_info, config['remote_log'], config['username'], config['password'])
-        print(f"Debug info saved to {config['remote_log']}.")
-
-    print(f"Execution time: {execution_time} seconds")
-
     # Validate the model if validation data is provided : TODO: CORRECT THIS
     if config['x_validation_file'] and config['y_validation_file']:
         print("Validating model...")
@@ -129,6 +109,27 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         
         validation_fitness = environment_plugin.calculate_fitness(y_validation, validation_predictions)
         print(f"Validation Fitness: {validation_fitness}")
+
+    # Save final configuration and debug information
+    end_time = time.time()
+    execution_time = end_time - start_time
+    debug_info = {
+        'execution_time': float(execution_time),
+        'fitness': float(fitness)
+    }
+
+    # Save debug info
+    if config.get('save_log'):
+        save_debug_info(debug_info, config['save_log'])
+        print(f"Debug info saved to {config['save_log']}.")
+
+    # Remote log debug info and config
+    if config.get('remote_log'):
+        remote_log(config, debug_info, config['remote_log'], config['username'], config['password'])
+        print(f"Debug info saved to {config['remote_log']}.")
+
+    print(f"Execution time: {execution_time} seconds")
+
 
 
 
