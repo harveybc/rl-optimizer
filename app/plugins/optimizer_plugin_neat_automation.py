@@ -21,7 +21,7 @@ class Plugin:
         self.agent = None
         self.best_genome = None
         self.num_inputs = 0
-        self.
+   
 
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
