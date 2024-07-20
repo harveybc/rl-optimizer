@@ -124,10 +124,10 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     validation_fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
     
     # Print the final balance and fitness
-    
-    print(f"Training Fitness: {training_fitness}")
-    print(f"Validation Fitness: {validation_fitness}")
-
+    print(f"*****************************************************************")
+    print(f"TRAINIG FITNESS: {training_fitness}")
+    print(f"VVALIDATION_FITNESS: {validation_fitness}")
+    print(f"*****************************************************************")
     # Save final configuration and debug information
     end_time = time.time()
     execution_time = end_time - start_time
