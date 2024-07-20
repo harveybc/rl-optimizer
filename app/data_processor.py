@@ -67,7 +67,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_params(**optimizer_params)
     optimizer_plugin.set_environment(environment_plugin.env)
     optimizer_plugin.set_agent(agent_plugin)
+
     neat_config = optimizer_plugin.train(config['epochs'])
+
 
     # Save the trained model
     if config['save_model']:
@@ -79,6 +81,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False)
     training_fitness = fitness
     print(f"Training Fitness: {training_fitness}")
+
 
     # Validate the model if validation data is provided
     if config['x_validation_file'] and config['y_validation_file']:
@@ -123,11 +126,14 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         # Calculate fitness for the best genome using the same method as in training
         validation_fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
         
+
         # Print the final balance and fitness
         print(f"*****************************************************************")
         print(f"TRAINING FITNESS: {training_fitness}")
         print(f"VALIDATION FITNESS: {validation_fitness}")
         print(f"*****************************************************************")
+
+
         
         # Save final configuration and debug information
         end_time = time.time()
@@ -143,6 +149,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         save_debug_info(debug_info, config['save_log'])
         print(f"Debug info saved to {config['save_log']}.")
 
+
     # Remote log debug info and config
     if config.get('remote_log'):
         remote_log(config, debug_info, config['remote_log'], config['username'], config['password'])
@@ -157,7 +164,7 @@ def load_and_evaluate_model(config, agent_plugin):
     # Load the input data
     x_train, _ = process_data(config)
 
-    # Predict using the loaded model
+
     predictions = agent_plugin.decide_action(pd.DataFrame(x_train.to_numpy()))
 
     # Save the predictions to CSV
