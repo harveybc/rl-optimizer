@@ -104,38 +104,39 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         print(f"y_validation shape: {y_validation.shape}")
 
         # Set the model to use the best genome for evaluation
-        agent_plugin.set_model(optimizer_plugin.best_genome, agent_plugin.config)
+        agent_plugin.set_model(optimizer_plugin.best_genome, config)
         
         environment_plugin.build_environment(x_validation, y_validation, config)
         
         observation, info = environment_plugin.reset()
         done = False
-       # Initialize total_reward
-    total_reward = []
+        # Initialize total_reward
+        total_reward = []
 
-    # Reset the environment for validation
-    observation, info = environment_plugin.reset()
-    done = False
+        # Set the best genome for the agent
+        agent_plugin.set_model(optimizer_plugin.best_genome, agent_plugin.config)
 
-    # Set the best genome for the agent
-    agent_plugin.set_model(optimizer_plugin.best_genome, agent_plugin.config)
+        # Set the environment and agent for the optimizer
+        optimizer_plugin.set_environment(environment_plugin.env)
+        optimizer_plugin.set_agent(agent_plugin)
 
-    # Calculate fitness for the best genome using the same method as in training
-    validation_fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
-    
-    # Print the final balance and fitness
-    print(f"*****************************************************************")
-    print(f"TRAINIG FITNESS: {training_fitness}")
-    print(f"VVALIDATION_FITNESS: {validation_fitness}")
-    print(f"*****************************************************************")
-    # Save final configuration and debug information
-    end_time = time.time()
-    execution_time = end_time - start_time
-    debug_info = {
-        'execution_time': float(execution_time),
-        'training_fitness': float(training_fitness),
-        'validation_fitness': float(validation_fitness)
-    }
+        # Calculate fitness for the best genome using the same method as in training
+        validation_fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
+        
+        # Print the final balance and fitness
+        print(f"*****************************************************************")
+        print(f"TRAINING FITNESS: {training_fitness}")
+        print(f"VALIDATION FITNESS: {validation_fitness}")
+        print(f"*****************************************************************")
+        
+        # Save final configuration and debug information
+        end_time = time.time()
+        execution_time = end_time - start_time
+        debug_info = {
+            'execution_time': float(execution_time),
+            'training_fitness': float(training_fitness),
+            'validation_fitness': float(validation_fitness)
+        }
 
     # Save debug info
     if config.get('save_log'):
