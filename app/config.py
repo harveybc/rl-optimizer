@@ -10,9 +10,9 @@ DEFAULT_VALUES = {
     'save_model': './model.keras',
     'load_model': None,
     'evaluate_file': './model_eval.csv',
-    'optimizer_plugin': 'neat',
-    'environment_plugin': 'prediction',
-    'agent_plugin': 'neat',
+    'optimizer_plugin': 'neat_automation',
+    'environment_plugin': 'automation',
+    'agent_plugin': 'neat_automation',
     'remote_log': None,
     'remote_load_config': None,
     'remote_save_config': None,
@@ -29,7 +29,7 @@ DEFAULT_VALUES = {
     'epochs': 100,
     'input_offset': 128,
     'mse_threshold': 0.001,
-    'time_horizon': 12
+    'time_horizon': 0
 }
 
 # mapping of short-form to long-form arguments

@@ -14,11 +14,13 @@ class Plugin:
         'min_orders': 4,
         'sl': 100,  # Adjusted Stop Loss
         'tp': 100,  # Adjusted Take Profit
-        'rel_volume': 0.1,
+        'rel_volume': 0.1, # size of the new orders relative to the current balance
+        'max_order_volume': 1000000, # Maximum order volume = 10 lots (1 lot = 100,000 units)
+        'min_order_volume': 10000, # Minimum order volume = 0.1 lots (1 lot = 100,000 units)
         'leverage': 100,
         'pip_cost': 0.0001,
         'min_order_time': 5,  #  Minimum Order Time to allow manual closing by an action inverse to the current order.
-        'spread': 0.001  # Default spread value
+        'spread': 0.002  # Default spread value
     }
 
     plugin_debug_vars = ['initial_balance', 'max_steps', 'fitness_function', 'final_balance', 'final_fitness']
@@ -50,8 +52,10 @@ class Plugin:
         self.pip_cost = config.get('pip_cost', self.params['pip_cost'])
         self.min_order_time = config.get('min_order_time', self.params['min_order_time'])
         self.spread = config.get('spread', self.params['spread'])
+        self.max_order_volume = config.get('max_order_volume', self.params['max_order_volume'])
+        self.min_order_volume = config.get('min_order_volume', self.params['min_order_volume'])
         self.env = AutomationEnv(x_train, y_train, self.initial_balance, self.max_steps, self.fitness_function,
-                                 self.min_orders, self.sl, self.tp, self.rel_volume, self.leverage, self.pip_cost, self.min_order_time, self.spread)
+                                 self.min_orders, self.sl, self.tp, self.rel_volume, self.leverage, self.pip_cost, self.min_order_time, self.spread, self.max_order_volume, self.min_order_volume)
 
     def reset(self):
         observation, info = self.env.reset()
@@ -76,7 +80,7 @@ class Plugin:
 
 class AutomationEnv(gym.Env):
     def __init__(self, x_train, y_train, initial_balance, max_steps, fitness_function,
-                 min_orders, sl, tp, rel_volume, leverage, pip_cost, min_order_time, spread):
+                 min_orders, sl, tp, rel_volume, leverage, pip_cost, min_order_time, spread, max_order_volume, min_order_volume):
         super(AutomationEnv, self).__init__()
         self.max_steps = max_steps
         self.x_train = x_train.to_numpy() if isinstance(x_train, pd.DataFrame) else x_train
@@ -113,7 +117,8 @@ class AutomationEnv(gym.Env):
         self.num_closes = 0  # Track number of closes
         self.c_c = 0  # Track closing cause
         self.ant_c_c = 0  # Track previous closing cause
-        
+        self.max_order_volume = max_order_volume
+        self.min_order_volume = min_order_volume
         if y_train is None:
             self.observation_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(self.x_train.shape[1],), dtype=np.float32)
         else:
@@ -261,12 +266,15 @@ class AutomationEnv(gym.Env):
                 self.order_status = 1
                 self.order_price = High + self.spread
                 self.order_volume = self.equity * self.rel_volume * self.leverage
-                self.order_volume = max(0.01, round(self.order_volume, 2))
+                if self.order_volume > self.max_order_volume:
+                    self.order_volume = self.max_order_volume
+                if self.order_volume < self.min_order_volume:
+                    self.order_volume = self.min_order_volume    
                 self.margin += (self.order_volume / self.leverage)
                 self.order_time = self.current_step
                 if verbose:
                     print(f"{self.x_train[self.current_step, 0]} - Opening order - Action: Buy, Price: {self.order_price}, Volume: {self.order_volume}")
-                    print(f"Current balance 1: {self.balance}, Number of closes: {self.num_closes}")
+                    print(f"Current balance (after BUY action): {self.balance}, Number of closes: {self.num_closes}")
                     print(f"Order Status after buy action: {self.order_status}")
 
             # Executes SELL action, order status = 2
@@ -274,12 +282,15 @@ class AutomationEnv(gym.Env):
                 self.order_status = 2
                 self.order_price = Low
                 self.order_volume = self.equity * self.rel_volume * self.leverage
-                self.order_volume = max(0.01, round(self.order_volume, 2))
+                if self.order_volume > self.max_order_volume:
+                    self.order_volume = self.max_order_volume
+                if self.order_volume < self.min_order_volume:
+                    self.order_volume = self.min_order_volume    
                 self.margin += (self.order_volume / self.leverage)
                 self.order_time = self.current_step
                 if verbose:
                     print(f"{self.x_train[self.current_step, 0]} - Opening order - Action: Sell, Price: {self.order_price}, Volume: {self.order_volume}")
-                    print(f"Current balance 2: {self.balance}, Number of closes: {self.num_closes}")
+                    print(f"Current balance (after SELL action): {self.balance}, Number of closes: {self.num_closes}")
                     print(f"Order Status after sell action: {self.order_status}")
 
             # Manual close by action (Buy -> Sell or Sell -> Buy) if min_order_time has passed

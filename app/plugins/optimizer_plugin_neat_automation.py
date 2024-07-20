@@ -21,6 +21,7 @@ class Plugin:
         self.agent = None
         self.best_genome = None
         self.num_inputs = 0
+   
 
     def set_params(self, **kwargs):
         for key, value in kwargs.items():
@@ -75,9 +76,11 @@ class Plugin:
         
         # Print the champion genome
         # print(f"Champion Genome:\n{self.best_genome}")
+        return config
 
 
     def evaluate_genome(self, genome, genome_id=None, config=None, verbose=False):
+           
         self.agent.set_model(genome, config)  # Set the genome in the agent
         fitness = 0.0
         observation, info = self.environment.reset()
