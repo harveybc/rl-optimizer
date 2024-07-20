@@ -109,19 +109,24 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         
         observation, info = environment_plugin.reset()
         done = False
-        total_reward = 0
-        while not done:
-            action = agent_plugin.predict(observation)
-            observation, reward, done, info = environment_plugin.step(action)
-            total_reward += reward
-        
-        validation_fitness = environment_plugin.calculate_fitness(np.array(total_reward))
-        print(f"Validation Fitness: {validation_fitness}")
+       # Initialize total_reward
+    total_reward = []
 
-        # Print the final balance and fitness
-        final_info = environment_plugin.env.calculate_final_debug_vars()
-        print(f"Final Balance: {final_info['final_balance']}")
-        print(f"Validation Fitness: {validation_fitness}")
+    # Reset the environment for validation
+    observation, info = environment_plugin.reset()
+    done = False
+
+    # Set the best genome for the agent
+    agent_plugin.set_model(optimizer_plugin.best_genome, agent_plugin.config)
+
+    # Calculate fitness for the best genome using the same method as in training
+    validation_fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
+    print(f"Validation Fitness: {validation_fitness}")
+
+    # Print the final balance and fitness
+    final_info = environment_plugin.env.calculate_final_debug_vars()
+    print(f"Final Balance: {final_info['final_balance']}")
+    print(f"Validation Fitness: {validation_fitness}")
 
     # Save final configuration and debug information
     end_time = time.time()
