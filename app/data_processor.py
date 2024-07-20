@@ -13,7 +13,6 @@ def process_data(config):
     print(f"Data loaded with shape: {x_train_data.shape}")
 
     y_train_file = config['y_train_file']
-    target_column = config['target_column']
 
     if isinstance(y_train_file, str):
         print(f"Loading y_train data from CSV file: {y_train_file}")
@@ -22,11 +21,8 @@ def process_data(config):
     elif isinstance(y_train_file, int):
         y_train_data = x_train_data.iloc[:, y_train_file]
         print(f"Using y_train data at column index: {y_train_file}")
-    elif target_column is not None:
-        y_train_data = x_train_data.iloc[:, target_column]
-        print(f"Using target column at index: {target_column}")
     else:
-        raise ValueError("Either y_train_file or target_column must be specified in the configuration.")
+        raise ValueError("Either y_train_file  must be specified in the configuration.")
 
     # Ensure input data is numeric except for the first column of x_train assumed to contain the date
     y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
