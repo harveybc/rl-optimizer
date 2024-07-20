@@ -102,12 +102,15 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         # Set up validation environment
         environment_plugin.build_environment(x_validation_data, y_validation_data, config)
         
+        # Load the best genome into the agent
+        agent_plugin.set_model(optimizer_plugin.best_genome, agent_plugin.config)
+        
         # Reset the environment and evaluate the agent
         observation, info = environment_plugin.reset()
         done = False
         total_reward = 0
         while not done:
-            action = agent_plugin.decide_action(pd.DataFrame([observation]))
+            action = agent_plugin.predict(observation)
             observation, reward, done, info = environment_plugin.step(action)
             total_reward += reward
         
