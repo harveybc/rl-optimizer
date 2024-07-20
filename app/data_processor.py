@@ -7,7 +7,6 @@ from app.data_handler import load_csv, write_csv
 from app.config_handler import save_debug_info, remote_log
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
-
 def process_data(config):
     print(f"Loading data from CSV file: {config['x_train_file']}")
     x_train_data = load_csv(config['x_train_file'], headers=config['headers'])
@@ -29,8 +28,7 @@ def process_data(config):
     else:
         raise ValueError("Either y_train_file or target_column must be specified in the configuration.")
 
-    # Ensure input data is numeric except for the first column of x_train asummed to contain the date
-    #x_train_data = x_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
+    # Ensure input data is numeric except for the first column of x_train assumed to contain the date
     y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
     
     # Apply input offset and time horizon
@@ -74,9 +72,6 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_environment(environment_plugin.env)
     optimizer_plugin.set_agent(agent_plugin)
     optimizer_plugin.train(config['epochs'])
-    
-    ##TODO: Verify why it trains until some threshold
-
 
     # Save the trained model
     if config['save_model']:
@@ -88,11 +83,16 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
     print(f"Fitness: {fitness}")
 
-    # Validate the model if validation data is provided : TODO: CORRECT THIS
+    # Validate the model if validation data is provided
     if config['x_validation_file'] and config['y_validation_file']:
         print("Validating model...")
-        x_validation = load_csv(config['x_validation_file'], headers=config['headers']).to_numpy().astype(np.float32)
-        y_validation = load_csv(config['y_validation_file'], headers=config['headers']).to_numpy().astype(np.float32)
+        x_validation, y_validation = process_data({
+            'x_train_file': config['x_validation_file'],
+            'y_train_file': config['y_validation_file'],
+            'input_offset': config['input_offset'],
+            'time_horizon': config['time_horizon'],
+            'headers': config['headers']
+        })
         
         # Ensure x_validation is a 2D array
         if x_validation.ndim == 1:
@@ -104,10 +104,14 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         print(f"x_validation shape: {x_validation.shape}")
         print(f"y_validation shape: {y_validation.shape}")
         
-        validation_predictions = agent_plugin.predict(x_validation)
-        validation_predictions = validation_predictions.reshape(y_validation.shape)
+        validation_predictions = agent_plugin.decide_action(pd.DataFrame(y_validation))
         
-        validation_fitness = environment_plugin.calculate_fitness(y_validation, validation_predictions)
+        validation_fitness = environment_plugin.calculate_fitness(np.array(validation_predictions), y_validation)
+        print(f"Validation Fitness: {validation_fitness}")
+
+        # Print the final balance and fitness
+        final_info = environment_plugin.env.calculate_final_debug_vars()
+        print(f"Final Balance: {final_info['final_balance']}")
         print(f"Validation Fitness: {validation_fitness}")
 
     # Save final configuration and debug information
@@ -130,9 +134,6 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
     print(f"Execution time: {execution_time} seconds")
 
-
-
-
 def load_and_evaluate_model(config, agent_plugin):
     # Load the model
     agent_plugin.load(config['load_model'])
@@ -141,7 +142,7 @@ def load_and_evaluate_model(config, agent_plugin):
     x_train, _ = process_data(config)
 
     # Predict using the loaded model
-    predictions = agent_plugin.predict(x_train.to_numpy())
+    predictions = agent_plugin.decide_action(pd.DataFrame(x_train.to_numpy()))
 
     # Save the predictions to CSV
     evaluate_filename = config['evaluate_file']
