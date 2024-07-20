@@ -77,7 +77,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
     # Show trades and calculate fitness for the best genome
     fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False)
-    training_fitness = training_fitness
+    training_fitness = fitness
     print(f"Training Fitness: {training_fitness}")
 
     # Validate the model if validation data is provided
