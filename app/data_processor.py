@@ -76,8 +76,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         print(f"Model saved to {config['save_model']}")
 
     # Show trades and calculate fitness for the best genome
-    fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
-    print(f"Fitness: {fitness}")
+    fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False)
+    training_fitness = training_fitness
+    print(f"Training Fitness: {training_fitness}")
 
     # Validate the model if validation data is provided
     if config['x_validation_file'] and config['y_validation_file']:
@@ -121,11 +122,10 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
     # Calculate fitness for the best genome using the same method as in training
     validation_fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
-    print(f"Validation Fitness: {validation_fitness}")
-
+    
     # Print the final balance and fitness
-    final_info = environment_plugin.env.calculate_final_debug_vars()
-    print(f"Final Balance: {final_info['final_balance']}")
+    
+    print(f"Training Fitness: {training_fitness}")
     print(f"Validation Fitness: {validation_fitness}")
 
     # Save final configuration and debug information
@@ -133,7 +133,8 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     execution_time = end_time - start_time
     debug_info = {
         'execution_time': float(execution_time),
-        'fitness': float(fitness)
+        'training_fitness': float(training_fitness),
+        'validation_fitness': float(validation_fitness)
     }
 
     # Save debug info
