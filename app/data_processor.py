@@ -86,27 +86,33 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     # Validate the model if validation data is provided
     if config['x_validation_file'] and config['y_validation_file']:
         print("Validating model...")
-        x_validation, y_validation = process_data({
-            'x_train_file': config['x_validation_file'],
-            'y_train_file': config['y_validation_file'],
-            'input_offset': config['input_offset'],
-            'time_horizon': config['time_horizon'],
-            'headers': config['headers']
-        })
+        x_validation_data = load_csv(config['x_validation_file'], headers=config['headers'])
+        print(f"Validation data loaded with shape: {x_validation_data.shape}")
         
-        # Ensure x_validation is a 2D array
-        if x_validation.ndim == 1:
-            x_validation = x_validation.reshape(-1, 1)
+        y_validation_file = config['y_validation_file']
+        print(f"Loading y_validation data from CSV file: {y_validation_file}")
+        y_validation_data = load_csv(y_validation_file, headers=config['headers'])
+        print(f"y_validation data loaded with shape: {y_validation_data.shape}")
+
+        # Ensure the shapes match
+        min_length = min(len(x_validation_data), len(y_validation_data))
+        x_validation_data = x_validation_data[:min_length]
+        y_validation_data = y_validation_data[:min_length]
         
-        # Ensure y_validation matches the first dimension of x_validation
-        y_validation = y_validation[:len(x_validation)]
+        # Set up validation environment
+        environment_plugin.build_environment(x_validation_data, y_validation_data, config)
         
-        print(f"x_validation shape: {x_validation.shape}")
-        print(f"y_validation shape: {y_validation.shape}")
+        # Reset the environment and evaluate the agent
+        observation, info = environment_plugin.reset()
+        done = False
+        total_reward = 0
+        while not done:
+            action = agent_plugin.decide_action(pd.DataFrame([observation]))
+            observation, reward, done, info = environment_plugin.step(action)
+            total_reward += reward
         
-        validation_predictions = agent_plugin.decide_action(pd.DataFrame(y_validation))
-        
-        validation_fitness = environment_plugin.calculate_fitness(np.array(validation_predictions), y_validation)
+        # Calculate validation fitness
+        validation_fitness = environment_plugin.calculate_fitness(np.array([total_reward]), y_validation_data)
         print(f"Validation Fitness: {validation_fitness}")
 
         # Print the final balance and fitness
