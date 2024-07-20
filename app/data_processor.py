@@ -67,7 +67,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_params(**optimizer_params)
     optimizer_plugin.set_environment(environment_plugin.env)
     optimizer_plugin.set_agent(agent_plugin)
-    optimizer_plugin.train(config['epochs'])
+    neat_config = optimizer_plugin.train(config['epochs'])
 
     # Save the trained model
     if config['save_model']:
@@ -104,7 +104,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         print(f"y_validation shape: {y_validation.shape}")
 
         # Set the model to use the best genome for evaluation
-        agent_plugin.set_model(optimizer_plugin.best_genome, config)
+        agent_plugin.set_model(optimizer_plugin.best_genome, neat_config)
         
         environment_plugin.build_environment(x_validation, y_validation, config)
         
