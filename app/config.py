@@ -29,7 +29,7 @@ DEFAULT_VALUES = {
     'epochs': 100,
     'input_offset': 128,
     'mse_threshold': 0.001,
-    'time_horizon': 12
+    'time_horizon': 0
 }
 
 # mapping of short-form to long-form arguments

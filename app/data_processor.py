@@ -32,9 +32,9 @@ def process_data(config):
     y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
     
     # Apply input offset and time horizon
-    offset = config['input_offset'] + config['time_horizon']
-    y_train_data = y_train_data[offset:]
-    x_train_data = x_train_data[:-config['time_horizon']]
+    offset = config['input_offset']
+    #y_train_data = y_train_data[offset:]
+    x_train_data = x_train_data[offset-1:]
 
     # Ensure the shapes match
     min_length = min(len(x_train_data), len(y_train_data))
@@ -86,26 +86,31 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     # Validate the model if validation data is provided
     if config['x_validation_file'] and config['y_validation_file']:
         print("Validating model...")
-        x_validation_data = load_csv(config['x_validation_file'], headers=config['headers'])
-        print(f"Validation data loaded with shape: {x_validation_data.shape}")
+        x_validation, y_validation = process_data({
+            'x_train_file': config['x_validation_file'],
+            'y_train_file': config['y_validation_file'],
+            'input_offset': config['input_offset'],
+            'time_horizon': config['time_horizon'],
+            'headers': config['headers']
+        })
         
-        y_validation_file = config['y_validation_file']
-        print(f"Loading y_validation data from CSV file: {y_validation_file}")
-        y_validation_data = load_csv(y_validation_file, headers=config['headers'])
-        print(f"y_validation data loaded with shape: {y_validation_data.shape}")
+        print(f"Validation data loaded with shape: {x_validation.shape}")
+        
+        # Ensure x_validation is a 2D array
+        if x_validation.ndim == 1:
+            x_validation = x_validation.reshape(-1, 1)
+        
+        # Ensure y_validation matches the first dimension of x_validation
+        y_validation = y_validation[:len(x_validation)]
+        
+        print(f"x_validation shape: {x_validation.shape}")
+        print(f"y_validation shape: {y_validation.shape}")
 
-        # Ensure the shapes match
-        min_length = min(len(x_validation_data), len(y_validation_data))
-        x_validation_data = x_validation_data[:min_length]
-        y_validation_data = y_validation_data[:min_length]
-        
-        # Set up validation environment
-        environment_plugin.build_environment(x_validation_data, y_validation_data, config)
-        
-        # Load the best genome into the agent
+        # Set the model to use the best genome for evaluation
         agent_plugin.set_model(optimizer_plugin.best_genome, agent_plugin.config)
         
-        # Reset the environment and evaluate the agent
+        environment_plugin.build_environment(x_validation, y_validation, config)
+        
         observation, info = environment_plugin.reset()
         done = False
         total_reward = 0
@@ -114,8 +119,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
             observation, reward, done, info = environment_plugin.step(action)
             total_reward += reward
         
-        # Calculate validation fitness
-        validation_fitness = environment_plugin.calculate_fitness(np.array([total_reward]), y_validation_data)
+        validation_fitness = environment_plugin.calculate_fitness(np.array(total_reward))
         print(f"Validation Fitness: {validation_fitness}")
 
         # Print the final balance and fitness
