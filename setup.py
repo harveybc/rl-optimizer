@@ -9,17 +9,12 @@ setup(
             'rl_optimizer=app.main:main'
         ],
         'rl_optimizer.optimizers': [
-            'neat_prediction=app.plugins.optimizer_plugin_neat_prediction:Plugin',
-            'neat_automation=app.plugins.optimizer_plugin_neat_automation:Plugin',
             'openrl=app.plugins.optimizer_plugin_openrl:Plugin'
         ],
         'rl_optimizer.environments': [
             'prediction=app.plugins.environment_plugin_prediction:Plugin',
-            'automation=app.plugins.environment_plugin_automation:Plugin'
         ],
         'rl_optimizer.agents': [
-            'neat_prediction=app.plugins.agent_plugin_neat_prediction:Plugin',
-            'neat_automation=app.plugins.agent_plugin_neat_automation:Plugin',
             'openrl_ppo=app.plugins.agent_plugin_openrl_ppo:Plugin',
             'dummy_automation=app.plugins.agent_plugin_dummy_automation:Plugin'
         ]
