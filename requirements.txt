@@ -5,10 +5,8 @@ scipy
 build
 pytest
 pdoc3
-keras-multi-head
 openrl
 neat-python
-keras-multi-head
 stable-baselines3
 scikit-learn
 gym
