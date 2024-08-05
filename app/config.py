@@ -1,10 +1,10 @@
 # config.py
 
 DEFAULT_VALUES = {
-    'x_train_file': 'tests\\data\\x_training_EURUSD_5m_2002_2011.csv',
-    'y_train_file': '..\\Documents\\encoder_eval_training_close_EURUSD_5m_2002_2011.csv',
-    'x_validation_file': 'tests\\data\\x_validation_EURUSD_5m_2011_2020.csv',
-    'y_validation_file': '..\\Documents\\encoder_eval_validation_close_EURUSD_5m_2002_2011.csv',
+    'x_train_file': 'tests\\data\\x_training_EURUSD_1h_2005_2012.csv',
+    'y_train_file': '..\\Documents\\encoder_eval_y_training_close_EURUSD_1h_2005_2012.csv',
+    'x_validation_file': 'tests\\data\\x_validation_EURUSD_1h_2012_2020.csv',
+    'y_validation_file': '..\\Documents\\encoder_eval_y_validation_cluse_EURUSD_1h_2012_2020.csv',
     'target_column': None,
     'output_file': 'csv_output.csv',
     'save_model': 'model.keras',
@@ -24,10 +24,10 @@ DEFAULT_VALUES = {
     'quiet_mode': False,
     'force_date': False,
     'headers': True,
-    'max_steps': 1000000,
-    'batch_size': 512,
+    'max_steps': 20000,
+    'batch_size': 256,
     'epochs': 100,
-    'input_offset': 512,
+    'input_offset': 128,
     'mse_threshold': 0.001,
     'time_horizon': 0
 }
