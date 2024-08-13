@@ -1,10 +1,10 @@
 # config.py
 
 DEFAULT_VALUES = {
-    'x_train_file': 'tests\\data\\x_training_EURUSD_1h_2005_2012.csv',
-    'y_train_file': '..\\Documents\\encoder_eval_y_training_close_EURUSD_1h_2005_2012.csv',
-    'x_validation_file': 'tests\\data\\x_validation_EURUSD_1h_2012_2020.csv',
-    'y_validation_file': '..\\Documents\\encoder_eval_y_validation_cluse_EURUSD_1h_2012_2020.csv',
+    'x_train_file': 'tests\\data\\x_d2_original.csv',
+    'y_train_file': '..\\Documents\\encoder_d2.csv',
+    'x_validation_file': 'tests\\data\\ x_d3_original.csv',
+    'y_validation_file': '..\\Documents\\encoder_d3.csv',
     'target_column': None,
     'output_file': 'csv_output.csv',
     'save_model': 'model.keras',
