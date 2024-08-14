@@ -26,7 +26,7 @@ DEFAULT_VALUES = {
     'headers': True,
     'max_steps': 5000,
     'batch_size': 256,
-    'epochs': 100,
+    'epochs': 10,
     'input_offset': 128,
     'mse_threshold': 0.001,
     'time_horizon': 0
