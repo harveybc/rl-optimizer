@@ -24,7 +24,7 @@ DEFAULT_VALUES = {
     'quiet_mode': False,
     'force_date': False,
     'headers': True,
-    'max_steps': 5000,
+    'max_steps': 1000000,
     'batch_size': 256,
     'epochs': 20,
     'input_offset': 128,
