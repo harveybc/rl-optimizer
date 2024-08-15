@@ -58,6 +58,8 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
     # Prepare environment
     environment_plugin.set_params(**env_params)
+    # set the genome in the config variable
+    config['genome'] = optimizer_plugin.current_genome 
     environment_plugin.build_environment(x_train, y_train, config)
 
     # Prepare agent
