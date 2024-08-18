@@ -2,9 +2,9 @@
 
 DEFAULT_VALUES = {
     'x_train_file': 'tests\\data\\x_d2_original.csv',
-    'y_train_file': '..\\Documents\\encoder_eval_d2_2.csv',
+    'y_train_file': '..\\Documents\\encoder_eval_d2_8.csv',
     'x_validation_file': 'tests\\data\\x_d3_original.csv',
-    'y_validation_file': '..\\Documents\\encoder_eval_d3_2.csv',
+    'y_validation_file': '..\\Documents\\encoder_eval_d3_8.csv',
     'target_column': None,
     'output_file': 'csv_output.csv',
     'save_model': 'model.keras',
@@ -26,7 +26,7 @@ DEFAULT_VALUES = {
     'headers': True,
     'max_steps': 10000,
     'batch_size': 32,
-    'epochs': 100,
+    'epochs': 150,
     'input_offset': 128,
     'mse_threshold': 0.001,
     'time_horizon': 0
