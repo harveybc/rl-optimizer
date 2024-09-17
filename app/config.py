@@ -1,9 +1,9 @@
 # config.py
 
 DEFAULT_VALUES = {
-    'x_train_file': 'tests\\data\\x_d2_original.csv',
+    'x_train_file': 'tests\\data\\x_d2.csv',
     'y_train_file': '..\\Documents\\encoder_eval_d2_16co.csv',
-    'x_validation_file': 'tests\\data\\x_d3_original.csv',
+    'x_validation_file': 'tests\\data\\x_d3.csv',
     'y_validation_file': '..\\Documents\\encoder_eval_d3_16co.csv',
     'target_column': None,
     'output_file': 'csv_output.csv',
