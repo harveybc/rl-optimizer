@@ -10,7 +10,7 @@ DEFAULT_VALUES = {
     'save_model': 'model.keras',
     'load_model': None,
     'evaluate_file': 'model_eval.csv',
-    'optimizer_plugin': 'neat_a',
+    'optimizer_plugin': 'neat_a_nomc',
     'environment_plugin': 'gym-fx-env-nomc',
     'agent_plugin': 'neat_a',
     'remote_log': None,
