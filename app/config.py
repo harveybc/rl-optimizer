@@ -11,7 +11,7 @@ DEFAULT_VALUES = {
     'load_model': None,
     'evaluate_file': 'model_eval.csv',
     'optimizer_plugin': 'neat_a',
-    'environment_plugin': 'gym-fx-env',
+    'environment_plugin': 'gym-fx-env-nomc',
     'agent_plugin': 'neat_a',
     'remote_log': None,
     'remote_load_config': None,
