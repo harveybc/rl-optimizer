@@ -19,14 +19,14 @@ def main():
 
     file_config = {}
     # remote config file load
-    if args.remote_load_config:
-        file_config = remote_load_config(args.remote_load_config, args.username, args.password)
-        print(f"Loaded remote config: {file_config}")
+    #if args.remote_load_config:
+    #    file_config = remote_load_config(args.remote_load_config, args.username, args.password)
+    #    print(f"Loaded remote config: {file_config}")
 
     # local config file load
-    if args.load_config:
-        file_config = load_config(args.load_config)
-        print(f"Loaded local config: {file_config}")
+    #if args.load_config:
+    #    file_config = load_config(args.load_config)
+    #    print(f"Loaded local config: {file_config}")
 
     print("Merging configuration with CLI arguments and unknown args...")
     unknown_args_dict = process_unknown_args(unknown_args)
