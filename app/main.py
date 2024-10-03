@@ -9,6 +9,7 @@ from app.plugin_loader import load_plugin
 from config_merger import merge_config, process_unknown_args
 
 def main():
+    print("Initial sys.path:", sys.path)
     print("Parsing initial arguments...")
     args, unknown_args = parse_args()
 
@@ -33,6 +34,12 @@ def main():
     config = merge_config(config, {}, file_config, cli_args, unknown_args_dict)
 
     # Load and set optimizer plugin
+
+
+    # Remove neat-test from sys.path if it exists
+    if 'C:\\Users\\harve\\neat-test' in sys.path:
+        sys.path.remove('C:\\Users\\harve\\neat-test')
+
     optimizer_plugin_name = config['optimizer_plugin']
     print(f"Loading optimizer plugin: {optimizer_plugin_name}")
     optimizer_class, _ = load_plugin('rl_optimizer.optimizers', optimizer_plugin_name)

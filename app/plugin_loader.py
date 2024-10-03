@@ -1,11 +1,15 @@
 from importlib.metadata import entry_points
+import sys 
 
 def load_plugin(plugin_group, plugin_name):
     print(f"Attempting to load plugin: {plugin_name} from group: {plugin_group}")
+    # Print sys.path for debugging
+    print(f"sys.path before loading plugin: {sys.path}")
     try:
         group_entries = entry_points().get(plugin_group, [])
         entry_point = next(ep for ep in group_entries if ep.name == plugin_name)
         plugin_class = entry_point.load()
+        print(f"sys.path after loading plugin: {sys.path}")
         required_params = list(plugin_class.plugin_params.keys())
         print(f"Successfully loaded plugin: {plugin_name} with params: {plugin_class.plugin_params}")
         return plugin_class, required_params
