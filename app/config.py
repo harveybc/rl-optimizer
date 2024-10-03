@@ -10,7 +10,7 @@ DEFAULT_VALUES = {
     'save_model': 'model.keras',
     'load_model': None,
     'evaluate_file': 'model_eval.csv',
-    'optimizer_plugin': 'neat_a_nomc_o_p2',
+    'optimizer_plugin': 'neat_a_nomc',
     'environment_plugin': 'gym_fx_env_nomc_o_p2',
     'agent_plugin': 'neat_a',
     'remote_log': None,
@@ -26,7 +26,7 @@ DEFAULT_VALUES = {
     'headers': True,
     'max_steps': 5000,
     'batch_size': 32,
-    'epochs': 100,
+    'epochs': 200,
     'input_offset': 128,
     'mse_threshold': 0.001,
     'time_horizon': 0
