@@ -9,7 +9,7 @@ from app.plugin_loader import load_plugin
 from config_merger import merge_config, process_unknown_args
 
 def main():
-    print("Initial sys.path:", sys.path)
+    #print("Initial sys.path:", sys.path)
     print("Parsing initial arguments...")
     args, unknown_args = parse_args()
 
