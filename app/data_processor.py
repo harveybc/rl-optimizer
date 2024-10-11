@@ -29,8 +29,13 @@ def process_data(config):
     
     # Apply input offset and time horizon
     offset = config['input_offset']
+    print(f"Applying input offset: {offset}")
     #y_train_data = y_train_data[offset:]
-    x_train_data = x_train_data[offset-1:]
+    x_train_data = x_train_data[offset:]
+    print(f"Data shape after applying offset: {x_train_data.shape}, {y_train_data.shape}")
+    # if the first dimension of x_train and y_train do not match, exit
+    if len(x_train_data) != len(y_train_data):
+        raise ValueError("x_train_data (market observation) and y_train_data(data observation) data shapes do not match.")
 
     # Ensure the shapes match
     min_length = min(len(x_train_data), len(y_train_data))
