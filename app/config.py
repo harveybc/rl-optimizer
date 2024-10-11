@@ -27,9 +27,9 @@ DEFAULT_VALUES = {
     'max_steps': 5000,
     'batch_size': 32,
     'epochs': 125,
-    'input_offset': 128,
+    'input_offset': 127,
     'mse_threshold': 0.001,
-    'time_horizon': 1
+    'time_horizon': 0
 }
 
 # mapping of short-form to long-form arguments
