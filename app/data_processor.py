@@ -93,25 +93,30 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     # Validate the model if validation data is provided
     if config['x_validation_file'] and config['y_validation_file']:
         print("Validating model...")
-        x_validation, y_validation = process_data({
-            'x_train_file': config['x_validation_file'],
-            'y_train_file': config['y_validation_file'],
-            'input_offset': config['input_offset'],
-            'time_horizon': config['time_horizon'],
-            'headers': config['headers']
-        })
-        
-        print(f"Validation data loaded with shape: {x_validation.shape}")
+        x_validation = load_csv(config['x_validation_file'], headers=config['headers'])
+        y_validation = load_csv(config['y_validation_file'], headers=config['headers'])
+
+        print(f"Validation market data loaded with shape: {x_validation.shape}")
+        print(f"Validation processed data loaded with shape: {y_validation.shape}")
         
         # Ensure x_validation is a 2D array
         if x_validation.ndim == 1:
             x_validation = x_validation.reshape(-1, 1)
         
-        # Ensure y_validation matches the first dimension of x_validation
-        y_validation = y_validation[:len(x_validation)]
+        # Ensure input data is numeric except for the first column of x_train assumed to contain the date
+        y_validation = y_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
+        x_validation = x_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
+
+        # Apply the  input_offset to the x validation data
+        x_validation = x_validation[config['input_offset']:]
+        
+
         
         print(f"x_validation shape: {x_validation.shape}")
         print(f"y_validation shape: {y_validation.shape}")
+        # if sizes do not match, exit
+        if len(x_validation) != len(y_validation):
+            raise ValueError("x_validation and y_validation data shapes do not match.")
 
         # Set the model to use the best genome for evaluation
         agent_plugin.set_model(optimizer_plugin.best_genome, neat_config)
