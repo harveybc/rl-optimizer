@@ -153,6 +153,13 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         # Print complexity
         kolmogorov_c = optimizer_plugin.kolmogorov_complexity(optimizer_plugin.best_genome)
         print(f"Kolmogorov Complexity (bits): {kolmogorov_c*8}")
+        # Print number of connections of the champion genome
+        num_connections = len(optimizer_plugin.best_genome.connections)
+        print(f"Number of connections: {num_connections}")
+        # Print number of nodes of the champion genome
+        num_nodes = len(optimizer_plugin.best_genome.nodes)
+        print(f"Number of nodes: {num_nodes}")
+        
         print(f"*****************************************************************")
         # Print training information for input and output
         # calculate the total input training information y_train 
