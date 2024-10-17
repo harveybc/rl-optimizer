@@ -142,6 +142,8 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         # Calculate fitness for the best genome using the same method as in training
         validation_fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
         validation_outputs = optimizer_plugin.outputs
+        # validation_outputs is a list of lists (table of 4 columns), print the first 5 files
+        print(f"Validation outputs: {validation_outputs[:5]}")
 
         # Print the final balance and fitness
         print(f"*****************************************************************")
