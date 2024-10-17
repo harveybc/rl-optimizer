@@ -159,7 +159,11 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         # Print number of nodes of the champion genome
         num_nodes = len(optimizer_plugin.best_genome.nodes)
         print(f"Number of nodes: {num_nodes}")
-        
+        # Convert the genome to a string representation
+        genome_bytes = pickle.dumps(optimizer_plugin.best_genome)
+        # print the lenght of the genome
+        print(f"Genome length: {len(genome_bytes)}")
+
         print(f"*****************************************************************")
         # Print training information for input and output
         # calculate the total input training information y_train 
