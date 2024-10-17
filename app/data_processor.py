@@ -6,6 +6,8 @@ import json
 from app.data_handler import load_csv, write_csv
 from app.config_handler import save_debug_info, remote_log
 from sklearn.metrics import mean_squared_error, mean_absolute_error
+import pickle
+import zlib
 
 def process_data(config):
     print(f"Loading data from CSV file: {config['x_train_file']}")
@@ -88,6 +90,8 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False)
     training_fitness = fitness
     print(f"Training Fitness: {training_fitness}")
+    training_outputs = optimizer_plugin.outputs
+    
 
 
     # Validate the model if validation data is provided
@@ -137,7 +141,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
         # Calculate fitness for the best genome using the same method as in training
         validation_fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
-        
+        validation_outputs = optimizer_plugin.outputs
 
         # Print the final balance and fitness
         print(f"*****************************************************************")
@@ -145,7 +149,28 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         print(f"VALIDATION FITNESS: {validation_fitness}")
         print(f"*****************************************************************")
 
-
+        # Calculate kolmogorov complexity of the best genome
+        kolmogorov_c = optimizer_plugin.kolmogorov_complexity(optimizer_plugin.best_genome)
+        # calculate the total input training information y_train 
+        training_input_information = shannon_hartley_information(y_train, config['periodicity_minutes'])
+        # calculate the total training_outputs information
+        training_output_information = shannon_hartley_information(training_outputs, config['periodicity_minutes'])
+        
+        # calculate the total input validation information y_validation
+        input_information_validation = shannon_hartley_information(y_validation, config['periodicity_minutes'])
+        # calculate total validation_outputs information
+        output_information_validation = shannon_hartley_information(validation_outputs, config['periodicity_minutes'])
+        # Print complexity
+        print(f"Kolmogorov Complexity: {kolmogorov_c}")
+        print(f"*****************************************************************")
+        # Print training information for input and output
+        print(f"Training Input Information: {training_input_information}")
+        print(f"Training Output Information: {training_output_information}")
+        print(f"*****************************************************************")
+        # Print validation information for input and output
+        print(f"Validation Input Information: {input_information_validation}")
+        print(f"Validation Output Information: {output_information_validation}")
+        print(f"*****************************************************************")
         
         # Save final configuration and debug information
         end_time = time.time()
@@ -184,3 +209,36 @@ def load_and_evaluate_model(config, agent_plugin):
     predictions_df = pd.DataFrame(predictions, columns=['Prediction'])
     write_csv(evaluate_filename, predictions_df, include_date=config['force_date'], headers=config['headers'])
     print(f"Predicted data saved to {evaluate_filename}")
+
+
+def kolmogorov_complexity(genome):
+        # Convert the genome to a string representation
+        genome_bytes = pickle.dumps(genome)
+        # Compress the genome
+        compressed_data = zlib.compress(genome_bytes)
+        # Return the length of the compressed data as an estimate of Kolmogorov complexity
+        return len(compressed_data)
+
+def shannon_hartley_information(input, period_minutes):
+    # calculate the total input information by concatenating vertically each column of the input and calculating the mean and std dev of the single resulting concatenated column    
+    input_concat = np.concatenate(input, axis=0)
+    input_mean = np.mean(input_concat)
+    input_std = np.std(input_concat)
+    # calculate SNR as (mean/std)^2
+    input_SNR = (input_mean/input_std)**2
+    # calculate the sampling frequency in Hz
+    sampling_frequency = 1/(period_minutes*60)
+    # calculate the total Capacity in bits per second with the Shannon-Hartley formula C = B * log2(1+SNR)
+    input_capacity = sampling_frequency * np.log2(1 + input_SNR)
+    # calculate the total input information in bits by multiplying the capacity by the total time in seconds
+    input_information = input_capacity * len(input_concat)
+    return input_information
+
+
+      
+
+    
+
+
+    
+
