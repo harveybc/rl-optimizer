@@ -74,7 +74,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
     # Prepare optimizer
     optimizer_plugin.set_params(**optimizer_params)
-    optimizer_plugin.set_environment(environment_plugin.env)
+    optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
     optimizer_plugin.set_agent(agent_plugin)
 
     neat_config = optimizer_plugin.train(config['epochs'])
@@ -137,7 +137,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         agent_plugin.set_model(optimizer_plugin.best_genome, agent_plugin.config)
 
         # Set the environment and agent for the optimizer
-        optimizer_plugin.set_environment(environment_plugin.env)
+        optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
         optimizer_plugin.set_agent(agent_plugin)
 
         # Calculate fitness for the best genome using the same method as in training

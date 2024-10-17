@@ -32,7 +32,8 @@ DEFAULT_VALUES = {
     'input_offset': 127,
     'mse_threshold': 0.001,
     'time_horizon': 0,
-    'periodicity_minutes': 60
+    'periodicity_minutes': 60,
+    'num_hidden': 8
 }
 
 # mapping of short-form to long-form arguments
