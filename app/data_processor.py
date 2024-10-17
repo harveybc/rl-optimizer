@@ -165,6 +165,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         genome_bytes = pickle.dumps(optimizer_plugin.best_genome)
         # print the lenght of the genome
         print(f"Genome length (bits): {len(genome_bytes)*8}")
+        # Print the Shannon entropy of the weights
+        weights_entropy = calculate_weights_entropy(optimizer_plugin.best_genome)
+        print(f"Weights entropy (bits): {weights_entropy}")
 
         print(f"*****************************************************************")
         # Print training information for input and output
@@ -177,6 +180,12 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         # calculate the total training_node_values_information
         training_node_values_information = shannon_hartley_information(training_node_values, config['periodicity_minutes'])
         print(f"Total Training Node Values Information (bits): {training_node_values_information}")
+        # print the total training information as the entropy multiplied by the training_node_values_information
+        training_total_information = (weights_entropy*config['max_steps']) + training_node_values_information
+        print(f"Total Training Information (bits): {training_total_information}")
+
+
+
         print(f"*****************************************************************")
         # Print validation information for input and output
         # calculate the total input validation information y_validation
@@ -188,6 +197,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         # calculate total validation_node_values_information
         node_values_information_validation = shannon_hartley_information(validation_node_values, config['periodicity_minutes'])
         print(f"Total Validation Node Values Information (bits): {node_values_information_validation}")
+        # print the total validation information as the entropy multiplied by the node_values_information
+        validation_total_information = (weights_entropy*config['max_steps']) + node_values_information_validation
+        print(f"Total Validation Information (bits): {validation_total_information}")
         print(f"*****************************************************************")
         
         # Save final configuration and debug information
@@ -285,7 +297,37 @@ def shannon_hartley_information(input, period_minutes):
     
     return input_information
 
+import math
 
+def calculate_weights_entropy(genome, num_bins=50):
+    """
+    Calculate the Shannon entropy of the weights of a NEAT genome.
+    
+    Parameters:
+        genome: The NEAT genome containing connection weights.
+        num_bins: The number of bins to use for discretizing the weight values.
+
+    Returns:
+        entropy: The Shannon entropy of the weight distribution in bits.
+    """
+    # Extract the weights from the genome's connections
+    weights = [conn.weight for conn in genome.connections.values() if conn.enabled]
+    
+    # Normalize the weights to be between 0 and 1
+    min_weight = min(weights)
+    max_weight = max(weights)
+    normalized_weights = [(w - min_weight) / (max_weight - min_weight) for w in weights]
+    
+    # Create a histogram to get the probability distribution
+    hist, bin_edges = np.histogram(normalized_weights, bins=num_bins, range=(0, 1), density=True)
+    
+    # Calculate the probabilities for each bin
+    probabilities = hist / np.sum(hist)
+    
+    # Calculate the Shannon entropy
+    entropy = -np.sum([p * math.log2(p) for p in probabilities if p > 0])
+    
+    return entropy
 
       
 
