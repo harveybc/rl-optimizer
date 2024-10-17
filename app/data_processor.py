@@ -223,11 +223,12 @@ def load_and_evaluate_model(config, agent_plugin):
 
 def kolmogorov_complexity(genome):
         # Convert the genome to a string representation
-        genome_connections_bytes = pickle.dumps(genome.connections)
-        genome_nodes_bytes = pickle.dumps(genome.nodes)
-        genome_bytes = genome_connections_bytes + genome_nodes_bytes
-        # Compress the genome
-        compressed_data = zlib.compress(genome_bytes)
+        #genome_connections_bytes = pickle.dumps(genome.connections)
+        #genome_nodes_bytes = pickle.dumps(genome.nodes)
+        #genome_bytes = genome_connections_bytes + genome_nodes_bytes
+        genome_bytes = pickle.dumps(genome)
+        # Compress the genome, using the highest compression level, with no header or trailing checksum
+        compressed_data = zlib.compress(genome_bytes,level=9, wbits=-15)
         # Return the length of the compressed data as an estimate of Kolmogorov complexity
         return len(compressed_data)
 
