@@ -152,23 +152,23 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         print(f"*****************************************************************")
         # Print complexity
         kolmogorov_c = optimizer_plugin.kolmogorov_complexity(optimizer_plugin.best_genome)
-        print(f"Kolmogorov Complexity: {kolmogorov_c}")
+        print(f"Kolmogorov Complexity (bits): {kolmogorov_c*8}")
         print(f"*****************************************************************")
         # Print training information for input and output
         # calculate the total input training information y_train 
         training_input_information = shannon_hartley_information(y_train, config['periodicity_minutes'])
-        print(f"Training Input Information: {training_input_information}")
+        print(f"Training Input Information (bits): {training_input_information}")
         # calculate the total training_outputs information
         training_output_information = shannon_hartley_information(training_outputs, config['periodicity_minutes'])
-        print(f"Training Output Information: {training_output_information}")
+        print(f"Training Output Information (bits): {training_output_information}")
         print(f"*****************************************************************")
         # Print validation information for input and output
         # calculate the total input validation information y_validation
         input_information_validation = shannon_hartley_information(y_validation, config['periodicity_minutes'])
-        print(f"Validation Input Information: {input_information_validation}")
+        print(f"Validation Input Information (bits): {input_information_validation}")
         # calculate total validation_outputs information
         output_information_validation = shannon_hartley_information(validation_outputs, config['periodicity_minutes'])
-        print(f"Validation Output Information: {output_information_validation}")
+        print(f"Validation Output Information (bits): {output_information_validation}")
         print(f"*****************************************************************")
         
         # Save final configuration and debug information
