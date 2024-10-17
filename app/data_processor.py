@@ -220,6 +220,12 @@ def kolmogorov_complexity(genome):
         return len(compressed_data)
 
 def shannon_hartley_information(input, period_minutes):
+    # Convertir el DataFrame a un arreglo de NumPy antes de concatenar
+    if isinstance(input, pd.DataFrame):
+        input = input.to_numpy()
+
+    input_concat = np.concatenate(input, axis=0)
+
     # calculate the total input information by concatenating vertically each column of the input and calculating the mean and std dev of the single resulting concatenated column    
     input_concat = np.concatenate(input, axis=0)
     input_mean = np.mean(input_concat)
