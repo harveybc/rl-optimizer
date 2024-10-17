@@ -91,6 +91,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     training_fitness = fitness
     print(f"Training Fitness: {training_fitness}")
     training_outputs = optimizer_plugin.outputs
+    training_node_values = optimizer_plugin.node_values
     
 
 
@@ -142,6 +143,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         # Calculate fitness for the best genome using the same method as in training
         validation_fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
         validation_outputs = optimizer_plugin.outputs
+        validation_node_values = optimizer_plugin.node_values
         # validation_outputs is a list of lists (table of 4 columns), print the first 5 files
         print(f"Validation outputs: {validation_outputs[:5]}")
 
@@ -172,6 +174,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         # calculate the total training_outputs information
         training_output_information = shannon_hartley_information(training_outputs, config['periodicity_minutes'])
         print(f"Training Output Information (bits): {training_output_information}")
+        # calculate the total training_node_values_information
+        training_node_values_information = shannon_hartley_information(training_node_values, config['periodicity_minutes'])
+        print(f"Total Training Node Values Information (bits): {training_node_values_information}")
         print(f"*****************************************************************")
         # Print validation information for input and output
         # calculate the total input validation information y_validation
@@ -180,6 +185,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         # calculate total validation_outputs information
         output_information_validation = shannon_hartley_information(validation_outputs, config['periodicity_minutes'])
         print(f"Validation Output Information (bits): {output_information_validation}")
+        # calculate total validation_node_values_information
+        node_values_information_validation = shannon_hartley_information(validation_node_values, config['periodicity_minutes'])
+        print(f"Total Validation Node Values Information (bits): {node_values_information_validation}")
         print(f"*****************************************************************")
         
         # Save final configuration and debug information
