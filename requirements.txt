@@ -1,4 +1,5 @@
-numpy
+numpy==1.24.3
+tensorflow
 pandas
 h5py
 scipy
@@ -10,4 +11,3 @@ neat-python
 stable-baselines3
 scikit-learn
 gym
-zlib
