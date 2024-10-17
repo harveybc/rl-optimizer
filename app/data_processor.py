@@ -218,7 +218,7 @@ def kolmogorov_complexity(genome):
 
 def shannon_hartley_information(input, period_minutes):
     # Convertir el DataFrame a un arreglo de NumPy antes de concatenar
-    if isinstance(input, pd.DataFrame):
+    if not isinstance(input, pd.DataFrame):
         input = input.to_numpy()
     # print input shape
     print(f"Shape: {input.shape}")
