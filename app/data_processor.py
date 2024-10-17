@@ -229,7 +229,11 @@ def shannon_hartley_information(input, period_minutes):
     # Verificar que np_input es ahora un arreglo de NumPy
     if not isinstance(np_input, np.ndarray):
         raise ValueError("The input must be a pandas DataFrame, a list of lists, or a NumPy array.")
-    
+    # normaliza cada columna entre 0 y 1
+    min_vals = np.min(np_input, axis=0)
+    max_vals = np.max(np_input, axis=0)
+    np_input = (np_input - min_vals) / (max_vals - min_vals)
+
     # print input shape
     print(f"Shape: {np_input.shape}")
 
