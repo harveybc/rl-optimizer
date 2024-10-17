@@ -33,7 +33,8 @@ DEFAULT_VALUES = {
     'mse_threshold': 0.001,
     'time_horizon': 0,
     'periodicity_minutes': 60,
-    'num_hidden': 8
+    'num_hidden': 64
+    
 }
 
 # mapping of short-form to long-form arguments
