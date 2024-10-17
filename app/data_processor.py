@@ -162,7 +162,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         # Convert the genome to a string representation
         genome_bytes = pickle.dumps(optimizer_plugin.best_genome)
         # print the lenght of the genome
-        print(f"Genome length: {len(genome_bytes)}")
+        print(f"Genome length(bits): {len(genome_bytes)*8}")
 
         print(f"*****************************************************************")
         # Print training information for input and output
