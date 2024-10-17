@@ -217,29 +217,46 @@ def kolmogorov_complexity(genome):
         return len(compressed_data)
 
 def shannon_hartley_information(input, period_minutes):
-    # Convertir el DataFrame a un arreglo de NumPy antes de concatenar
+    # Convertir el input a un arreglo de NumPy si es necesario
     if isinstance(input, pd.DataFrame):
         np_input = input.to_numpy()
+    elif isinstance(input, list):
+        # Convertir la lista a un arreglo de NumPy
+        np_input = np.array(input)
     else:
         np_input = input
+    
+    # Verificar que np_input es ahora un arreglo de NumPy
+    if not isinstance(np_input, np.ndarray):
+        raise ValueError("The input must be a pandas DataFrame, a list of lists, or a NumPy array.")
+    
     # print input shape
     print(f"Shape: {np_input.shape}")
+
+    # Concatenar las columnas verticalmente
     input_concat = np.concatenate(np_input, axis=0)
-    # print input shape
-    print(f"Concat Shahape: {np_input.shape}")
     
-    # calculate the total input information by concatenating vertically each column of the input and calculating the mean and std dev of the single resulting concatenated column    
+    # print concatenated shape
+    print(f"Concat Shape: {input_concat.shape}")
+    
+    # Calcular la media y desviación estándar del input concatenado
     input_mean = np.mean(input_concat)
     input_std = np.std(input_concat)
-    # calculate SNR as (mean/std)^2
-    input_SNR = (input_mean/input_std)**2
-    # calculate the sampling frequency in Hz
-    sampling_frequency = 1/(period_minutes*60)
-    # calculate the total Capacity in bits per second with the Shannon-Hartley formula C = B * log2(1+SNR)
+    
+    # Calcular SNR como (mean/std)^2
+    input_SNR = (input_mean / input_std) ** 2
+    
+    # Calcular la frecuencia de muestreo en Hz
+    sampling_frequency = 1 / (period_minutes * 60)
+    
+    # Calcular la capacidad total en bits por segundo con la fórmula de Shannon-Hartley
     input_capacity = sampling_frequency * np.log2(1 + input_SNR)
-    # calculate the total input information in bits by multiplying the capacity by the total time in seconds
+    
+    # Calcular la información total de entrada en bits multiplicando la capacidad por el tiempo total en segundos
     input_information = input_capacity * len(input_concat)
+    
     return input_information
+
 
 
       
