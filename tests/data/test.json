@@ -1,0 +1,224 @@
+{
+    "cells": [
+     {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+       "# Análisis de Fuga de Clientes en Telecomunicaciones\n",
+       "Este cuaderno utilizará el dataset disponible en [Kaggle](https://www.kaggle.com/datasets/blastchar/telco-customer-churn?datasetId=13996&sortBy=voteCount) para predecir la fuga de clientes utilizando varios modelos de Machine Learning.\n"
+      ]
+     },
+     {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+       "# Importar las bibliotecas necesarias\n",
+       "import pandas as pd\n",
+       "import numpy as np\n",
+       "from sklearn.model_selection import train_test_split\n",
+       "from sklearn.preprocessing import MinMaxScaler\n",
+       "from sklearn.ensemble import RandomForestClassifier\n",
+       "from sklearn.neural_network import MLPClassifier\n",
+       "from sklearn.svm import SVC\n",
+       "from sklearn.tree import DecisionTreeClassifier\n",
+       "from xgboost import XGBClassifier\n",
+       "from sklearn.metrics import classification_report, confusion_matrix\n",
+       "import matplotlib.pyplot as plt\n",
+       "import seaborn as sns\n"
+      ]
+     },
+     {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+       "## Cargar el dataset"
+      ]
+     },
+     {
+      "cell_type": "code",
+      "execution_count": 2,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+       "# Cargar el dataset directamente desde Kaggle\n",
+       "url = 'https://raw.githubusercontent.com/dsrscientist/DSData/master/Telecom_customer_churn.csv'\n",
+       "df = pd.read_csv(url)\n",
+       "df.head()"
+      ]
+     },
+     {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+       "## Listar las características numéricas y categóricas"
+      ]
+     },
+     {
+      "cell_type": "code",
+      "execution_count": 3,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+       "# Identificar características numéricas y categóricas\n",
+       "numeric_features = df.select_dtypes(include=[np.number]).columns.tolist()\n",
+       "categorical_features = df.select_dtypes(include=[np.object, 'category']).columns.tolist()\n",
+       "print(f'Características numéricas: {numeric_features}')\n",
+       "print(f'Características categóricas: {categorical_features}')"
+      ]
+     },
+     {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+       "## Manejo de valores nulos en la columna `totalCharges`"
+      ]
+     },
+     {
+      "cell_type": "code",
+      "execution_count": 4,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+       "# Verificar valores nulos en la columna totalCharges\n",
+       "df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')\n",
+       "null_values = df['TotalCharges'].isnull().sum()\n",
+       "print(f'Valores nulos en TotalCharges: {null_values}')\n",
+       "\n",
+       "# Remover filas con valores nulos\n",
+       "df = df.dropna(subset=['TotalCharges'])\n",
+       "df.shape"
+      ]
+     },
+     {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+       "## División del dataset en conjunto de entrenamiento y validación"
+      ]
+     },
+     {
+      "cell_type": "code",
+      "execution_count": 5,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+       "# Dividir el dataset en conjunto de entrenamiento y validación\n",
+       "X = df.drop(columns=['Churn'])\n",
+       "y = df['Churn'].apply(lambda x: 1 if x == 'Yes' else 0)\n",
+       "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)\n",
+       "X_train.shape, X_test.shape"
+      ]
+     },
+     {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+       "## Balanceo de clases"
+      ]
+     },
+     {
+      "cell_type": "code",
+      "execution_count": 6,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+       "# Balanceo de clases usando sobremuestreo de la clase minoritaria\n",
+       "from imblearn.over_sampling import SMOTE\n",
+       "smote = SMOTE(random_state=42)\n",
+       "X_train_balanced, y_train_balanced = smote.fit_resample(X_train, y_train)\n",
+       "print(f'Nueva distribución de clases: {np.bincount(y_train_balanced)}')"
+      ]
+     },
+     {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+       "## Normalización de las características"
+      ]
+     },
+     {
+      "cell_type": "code",
+      "execution_count": 7,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+       "# Normalización de las características numéricas en el conjunto de entrenamiento\n",
+       "scaler = MinMaxScaler()\n",
+       "X_train_balanced[numeric_features] = scaler.fit_transform(X_train_balanced[numeric_features])\n",
+       "\n",
+       "# Aplicar el escalador ajustado al conjunto de prueba\n",
+       "X_test[numeric_features] = scaler.transform(X_test[numeric_features])"
+      ]
+     },
+     {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+       "## Entrenamiento y evaluación de modelos de Machine Learning"
+      ]
+     },
+     {
+      "cell_type": "code",
+      "execution_count": 8,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+       "# Definir una función para entrenar y evaluar modelos\n",
+       "def train_and_evaluate_model(model, X_train, y_train, X_test, y_test):\n",
+       "    model.fit(X_train, y_train)\n",
+       "    y_pred = model.predict(X_test)\n",
+       "    print(confusion_matrix(y_test, y_pred))\n",
+       "    print(classification_report(y_test, y_pred))\n",
+       "    return model\n",
+       "\n",
+       "# Entrenar y evaluar Random Forest\n",
+       "print('Random Forest')\n",
+       "rf = RandomForestClassifier(random_state=42)\n",
+       "train_and_evaluate_model(rf, X_train_balanced, y_train_balanced, X_test, y_test)\n",
+       "\n",
+       "# Entrenar y evaluar Red Neuronal Artificial (ANN)\n",
+       "print('Red Neuronal Artificial')\n",
+       "ann = MLPClassifier(random_state=42)\n",
+       "train_and_evaluate_model(ann, X_train_balanced, y_train_balanced, X_test, y_test)\n",
+       "\n",
+       "# Entrenar y evaluar Support Vector Machine (SVM)\n",
+       "print('Support Vector Machine')\n",
+       "svm = SVC(random_state=42)\n",
+       "train_and_evaluate_model(svm, X_train_balanced, y_train_balanced, X_test, y_test)\n",
+       "\n",
+       "# Entrenar y evaluar Árbol de Decisión\n",
+       "print('Árbol de Decisión')\n",
+       "dt = DecisionTreeClassifier(random_state=42)\n",
+       "train_and_evaluate_model(dt, X_train_balanced, y_train_balanced, X_test, y_test)\n",
+       "\n",
+       "# Entrenar y evaluar XGBoost\n",
+       "print('XGBoost')\n",
+       "xgb = XGBClassifier(random_state=42)\n",
+       "train_and_evaluate_model(xgb, X_train_balanced, y_train_balanced, X_test, y_test)"
+      ]
+     }
+    ],
+    "metadata": {
+     "kernelspec": {
+      "display_name": "Python 3",
+      "language": "python",
+      "name": "python3"
+     },
+     "language_info": {
+      "codemirror_mode": {
+       "name": "ipython",
+       "version": 3
+      },
+      "file_extension": ".py",
+      "mimetype": "text/x-python",
+      "name": "python",
+      "nbconvert_exporter": "python",
+      "version": "3.8.10"
+     }
+    },
+    "nbformat": 4,
+    "nbformat_minor": 4
+   }
+   

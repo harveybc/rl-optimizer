@@ -6,6 +6,8 @@ import json
 from app.data_handler import load_csv, write_csv
 from app.config_handler import save_debug_info, remote_log
 from sklearn.metrics import mean_squared_error, mean_absolute_error
+import pickle
+import zlib
 
 def process_data(config):
     print(f"Loading data from CSV file: {config['x_train_file']}")
@@ -29,26 +31,67 @@ def process_data(config):
     
     # Apply input offset and time horizon
     offset = config['input_offset']
+    print(f"Applying input offset: {offset}")
     #y_train_data = y_train_data[offset:]
-    x_train_data = x_train_data[offset-1:]
+    x_train_data = x_train_data[offset:]
+    print(f"Data shape after applying offset: {x_train_data.shape}, {y_train_data.shape}")
+    # if the first dimension of x_train and y_train do not match, exit
+    if len(x_train_data) != len(y_train_data):
+        raise ValueError("x_train_data (market observation) and y_train_data(data observation) data shapes do not match.")
 
     # Ensure the shapes match
     min_length = min(len(x_train_data), len(y_train_data))
     x_train_data = x_train_data[:min_length]
     y_train_data = y_train_data[:min_length]
+    # Divide the data into halves
+    half_index = min_length // 2
+    x_prunning_data = x_train_data[half_index:]
+    y_prunning_data = y_train_data[half_index:]
+    x_train_data = x_train_data[:half_index]
+    y_train_data = y_train_data[:half_index]
 
-    # Debugging messages to confirm types and shapes
+    if config['x_validation_file'] and config['y_validation_file']:
+        print("loading Validation data...")
+        x_validation = load_csv(config['x_validation_file'], headers=config['headers'])
+        y_validation = load_csv(config['y_validation_file'], headers=config['headers'])
+
+        print(f"Validation market data loaded with shape: {x_validation.shape}")
+        print(f"Validation processed data loaded with shape: {y_validation.shape}")
+        
+        # Ensure x_validation is a 2D array
+        if x_validation.ndim == 1:
+            x_validation = x_validation.reshape(-1, 1)
+        
+        # Ensure input data is numeric except for the first column of x_train assumed to contain the date
+        y_validation = y_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
+        x_validation = x_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
+
+        # Apply the  input_offset to the x validation data
+        x_validation = x_validation[config['input_offset']:]
+        
+        print(f"x_validation shape: {x_validation.shape}")
+        print(f"y_validation shape: {y_validation.shape}")
+        # if sizes do not match, exit
+        if len(x_validation) != len(y_validation):
+            raise ValueError("x_validation and y_validation data shapes do not match.")
+
+
+# Debugging messages to confirm types and shapes
     print(f"Returning data of type: {type(x_train_data)}, {type(y_train_data)}")
     print(f"x_train_data shape after adjustments: {x_train_data.shape}")
     print(f"y_train_data shape after adjustments: {y_train_data.shape}")
-    
-    return x_train_data, y_train_data
+    print(f"x_prunning_data shape: {x_prunning_data.shape}")
+    print(f"y_prunning_data shape: {y_prunning_data.shape}")
+    print(f"x_validation_data shape after adjustments: {x_train_data.shape}")
+    print(f"y_validation_data shape after adjustments: {y_train_data.shape}")
+
+    return x_train_data, y_train_data, x_prunning_data, y_prunning_data, x_validation, y_validation
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
     start_time = time.time()
     
     print("Running process_data...")
-    x_train, y_train = process_data(config)
+    x_train, y_train, x_prunning, y_prunning, x_validation, y_validation = process_data(config)
     print(f"Processed data received of type: {type(x_train)} and shape: {x_train.shape}")
 
     # Plugin-specific parameters
@@ -67,10 +110,10 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
     # Prepare optimizer
     optimizer_plugin.set_params(**optimizer_params)
-    optimizer_plugin.set_environment(environment_plugin.env)
+    optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
     optimizer_plugin.set_agent(agent_plugin)
 
-    neat_config = optimizer_plugin.train(config['epochs'])
+    neat_config = optimizer_plugin.train(config['epochs'],x_train, y_train, x_prunning, y_prunning, x_validation,y_validation, config, environment_plugin)
 
 
     # Save the trained model
@@ -79,34 +122,27 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         agent_plugin.load(config['save_model'])
         print(f"Model saved to {config['save_model']}")
 
+
+    # sets the environment data as the training data, since the optimizer changes it to the validation data for debugging 
+    environment_plugin.build_environment(x_train, y_train, config)
+    optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
+
     # Show trades and calculate fitness for the best genome
     fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False)
     training_fitness = fitness
-    print(f"Training Fitness: {training_fitness}")
+    training_outputs = optimizer_plugin.outputs
+    training_node_values = optimizer_plugin.node_values
+    
 
 
     # Validate the model if validation data is provided
     if config['x_validation_file'] and config['y_validation_file']:
         print("Validating model...")
-        x_validation, y_validation = process_data({
-            'x_train_file': config['x_validation_file'],
-            'y_train_file': config['y_validation_file'],
-            'input_offset': config['input_offset'],
-            'time_horizon': config['time_horizon'],
-            'headers': config['headers']
-        })
-        
-        print(f"Validation data loaded with shape: {x_validation.shape}")
-        
-        # Ensure x_validation is a 2D array
-        if x_validation.ndim == 1:
-            x_validation = x_validation.reshape(-1, 1)
-        
-        # Ensure y_validation matches the first dimension of x_validation
-        y_validation = y_validation[:len(x_validation)]
-        
         print(f"x_validation shape: {x_validation.shape}")
         print(f"y_validation shape: {y_validation.shape}")
+        # if sizes do not match, exit
+        if len(x_validation) != len(y_validation):
+            raise ValueError("x_validation and y_validation data shapes do not match.")
 
         # Set the model to use the best genome for evaluation
         agent_plugin.set_model(optimizer_plugin.best_genome, neat_config)
@@ -122,20 +158,70 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         agent_plugin.set_model(optimizer_plugin.best_genome, agent_plugin.config)
 
         # Set the environment and agent for the optimizer
-        optimizer_plugin.set_environment(environment_plugin.env)
+        optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
         optimizer_plugin.set_agent(agent_plugin)
 
         # Calculate fitness for the best genome using the same method as in training
         validation_fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
-        
+        validation_outputs = optimizer_plugin.outputs
+        validation_node_values = optimizer_plugin.node_values
+        # validation_outputs is a list of lists (table of 4 columns), print the first 5 files
+        print(f"Validation outputs: {validation_outputs[:5]}")
 
         # Print the final balance and fitness
         print(f"*****************************************************************")
         print(f"TRAINING FITNESS: {training_fitness}")
         print(f"VALIDATION FITNESS: {validation_fitness}")
         print(f"*****************************************************************")
+        # Print complexity
+        kolmogorov_c = optimizer_plugin.kolmogorov_complexity(optimizer_plugin.best_genome)
+        print(f"Kolmogorov Complexity (bits): {kolmogorov_c*8}")
+        # Print number of connections of the champion genome
+        num_connections = len(optimizer_plugin.best_genome.connections)
+        print(f"Number of connections: {num_connections}")
+        # Print number of nodes of the champion genome
+        num_nodes = len(optimizer_plugin.best_genome.nodes)
+        print(f"Number of nodes: {num_nodes}")
+        # Convert the genome to a string representation
+        genome_bytes = pickle.dumps(optimizer_plugin.best_genome)
+        # print the lenght of the genome
+        print(f"Genome length (bits): {len(genome_bytes)*8}")
+        # Print the Shannon entropy of the weights
+        weights_entropy = calculate_weights_entropy(optimizer_plugin.best_genome)
+        print(f"Weights entropy (bits): {weights_entropy}")
+
+        print(f"*****************************************************************")
+        # Print training information for input and output
+        # calculate the total input training information y_train 
+        training_input_information = shannon_hartley_information(y_train, config['periodicity_minutes'])
+        print(f"Training Input Information (bits): {training_input_information}")
+        # calculate the total training_outputs information
+        training_output_information = shannon_hartley_information(training_outputs, config['periodicity_minutes'])
+        print(f"Training Output Information (bits): {training_output_information}")
+        # calculate the total training_node_values_information
+        training_node_values_information = shannon_hartley_information(training_node_values, config['periodicity_minutes'])
+        print(f"Total Training Node Values Information (bits): {training_node_values_information}")
+        # print the total training information as the entropy multiplied by the training_node_values_information
+        training_total_information = num_connections*weights_entropy + training_node_values_information
+        print(f"Total Training Information (bits): {training_total_information}")
 
 
+
+        print(f"*****************************************************************")
+        # Print validation information for input and output
+        # calculate the total input validation information y_validation
+        input_information_validation = shannon_hartley_information(y_validation, config['periodicity_minutes'])
+        print(f"Validation Input Information (bits): {input_information_validation}")
+        # calculate total validation_outputs information
+        output_information_validation = shannon_hartley_information(validation_outputs, config['periodicity_minutes'])
+        print(f"Validation Output Information (bits): {output_information_validation}")
+        # calculate total validation_node_values_information
+        node_values_information_validation = shannon_hartley_information(validation_node_values, config['periodicity_minutes'])
+        print(f"Total Validation Node Values Information (bits): {node_values_information_validation}")
+        # print the total validation information as the entropy multiplied by the node_values_information
+        validation_total_information = num_connections*weights_entropy + node_values_information_validation
+        print(f"Total Validation Information (bits): {validation_total_information}")
+        print(f"*****************************************************************")
         
         # Save final configuration and debug information
         end_time = time.time()
@@ -174,3 +260,135 @@ def load_and_evaluate_model(config, agent_plugin):
     predictions_df = pd.DataFrame(predictions, columns=['Prediction'])
     write_csv(evaluate_filename, predictions_df, include_date=config['force_date'], headers=config['headers'])
     print(f"Predicted data saved to {evaluate_filename}")
+
+
+def kolmogorov_complexity(genome):
+        # Convert the genome to a string representation
+        #genome_connections_bytes = pickle.dumps(genome.connections)
+        #genome_nodes_bytes = pickle.dumps(genome.nodes)
+        #genome_bytes = genome_connections_bytes + genome_nodes_bytes
+        genome_bytes = pickle.dumps(genome)
+        # Compress the genome, using the highest compression level, with no header or trailing checksum
+        compressed_data = zlib.compress(genome_bytes,level=9, wbits=-15)
+        # Return the length of the compressed data as an estimate of Kolmogorov complexity
+        return len(compressed_data)
+
+import numpy as np
+import pandas as pd
+
+def shannon_hartley_information(input, period_minutes):
+    # Convertir el input a un arreglo de NumPy si es necesario
+    if isinstance(input, pd.DataFrame):
+        np_input = input.to_numpy()
+    elif isinstance(input, list):
+        # Verificar el tamaño de cada elemento en la lista
+        input_lengths = [len(i) if hasattr(i, '__len__') else 1 for i in input]
+        print(f"Detected input lengths: {input_lengths}")
+        
+        # Check if all elements are of the same length
+        if len(set(input_lengths)) != 1:
+            print(f"Found inhomogeneous lengths in input: {input_lengths}")
+            raise ValueError(f"Inhomogeneous input lengths: {input_lengths}")
+        
+        # Convertir la lista a un arreglo de NumPy
+        try:
+            np_input = np.array(input)
+        except ValueError as e:
+            raise ValueError(f"Error converting input list to NumPy array: {e}")
+    else:
+        np_input = input
+    
+    # Verificar que np_input es ahora un arreglo de NumPy
+    if not isinstance(np_input, np.ndarray):
+        raise ValueError("The input must be a pandas DataFrame, a list of lists, or a NumPy array.")
+    
+    # Comprobar si np_input tiene dimensiones consistentes
+    if np_input.ndim != 2:
+        raise ValueError(f"Input array must be 2D (rows, columns). Got {np_input.ndim}D.")
+    
+    # Verificar que el array no esté vacío y que todas las columnas tengan datos
+    if np_input.shape[1] == 0:
+        raise ValueError("Input array must have at least one column.")
+
+    # Normaliza cada columna entre 0 y 1
+    min_vals = np.min(np_input, axis=0)
+    max_vals = np.max(np_input, axis=0)
+    
+    # Verificar que min_vals y max_vals no causen división por cero
+    if np.any(max_vals - min_vals == 0):
+        raise ValueError("One or more columns have constant values, which causes division by zero in normalization.")
+
+    np_input = (np_input - min_vals) / (max_vals - min_vals)
+
+    # print input shape
+    print(f"Shape: {np_input.shape}")
+
+    # Concatenar las columnas verticalmente
+    input_concat = np.concatenate(np_input, axis=0)
+    
+    # print concatenated shape
+    print(f"Concat Shape: {input_concat.shape}")
+    
+    # Calcular la media y desviación estándar del input concatenado
+    input_mean = np.mean(input_concat)
+    input_std = np.std(input_concat)
+    
+    # Verificar que la desviación estándar no sea cero (evitar división por cero)
+    if input_std == 0:
+        raise ValueError("Standard deviation of the input is zero, cannot calculate SNR.")
+    
+    # Calcular SNR como (mean/std)^2
+    input_SNR = (input_mean / input_std) ** 2
+    
+    # Calcular la frecuencia de muestreo en Hz
+    sampling_frequency = 1 / (period_minutes * 60)
+    
+    # Calcular la capacidad total en bits por segundo con la fórmula de Shannon-Hartley
+    input_capacity = sampling_frequency * np.log2(1 + input_SNR)
+    
+    # Calcular la información total de entrada en bits multiplicando la capacidad por el tiempo total en segundos
+    input_information = input_capacity * len(input_concat)
+    
+    return input_information
+
+
+
+import math
+
+def calculate_weights_entropy(genome, num_bins=50):
+    """
+    Calculate the Shannon entropy of the weights of a NEAT genome.
+    
+    Parameters:
+        genome: The NEAT genome containing connection weights.
+        num_bins: The number of bins to use for discretizing the weight values.
+
+    Returns:
+        entropy: The Shannon entropy of the weight distribution in bits.
+    """
+    # Extract the weights from the genome's connections
+    weights = [conn.weight for conn in genome.connections.values() if conn.enabled]
+    
+    # Normalize the weights to be between 0 and 1
+    min_weight = min(weights)
+    max_weight = max(weights)
+    normalized_weights = [(w - min_weight) / (max_weight - min_weight) for w in weights]
+    
+    # Create a histogram to get the probability distribution
+    hist, bin_edges = np.histogram(normalized_weights, bins=num_bins, range=(0, 1), density=True)
+    
+    # Calculate the probabilities for each bin
+    probabilities = hist / np.sum(hist)
+    
+    # Calculate the Shannon entropy
+    entropy = -np.sum([p * math.log2(p) for p in probabilities if p > 0])
+    
+    return entropy
+
+      
+
+    
+
+
+    
+
