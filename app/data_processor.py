@@ -50,20 +50,48 @@ def process_data(config):
     x_train_data = x_train_data[:half_index]
     y_train_data = y_train_data[:half_index]
 
-    # Debugging messages to confirm types and shapes
+    if config['x_validation_file'] and config['y_validation_file']:
+        print("loading Validation data...")
+        x_validation = load_csv(config['x_validation_file'], headers=config['headers'])
+        y_validation = load_csv(config['y_validation_file'], headers=config['headers'])
+
+        print(f"Validation market data loaded with shape: {x_validation.shape}")
+        print(f"Validation processed data loaded with shape: {y_validation.shape}")
+        
+        # Ensure x_validation is a 2D array
+        if x_validation.ndim == 1:
+            x_validation = x_validation.reshape(-1, 1)
+        
+        # Ensure input data is numeric except for the first column of x_train assumed to contain the date
+        y_validation = y_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
+        x_validation = x_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
+
+        # Apply the  input_offset to the x validation data
+        x_validation = x_validation[config['input_offset']:]
+        
+        print(f"x_validation shape: {x_validation.shape}")
+        print(f"y_validation shape: {y_validation.shape}")
+        # if sizes do not match, exit
+        if len(x_validation) != len(y_validation):
+            raise ValueError("x_validation and y_validation data shapes do not match.")
+
+
+# Debugging messages to confirm types and shapes
     print(f"Returning data of type: {type(x_train_data)}, {type(y_train_data)}")
     print(f"x_train_data shape after adjustments: {x_train_data.shape}")
     print(f"y_train_data shape after adjustments: {y_train_data.shape}")
     print(f"x_prunning_data shape: {x_prunning_data.shape}")
     print(f"y_prunning_data shape: {y_prunning_data.shape}")
+    print(f"x_validation_data shape after adjustments: {x_train_data.shape}")
+    print(f"y_validation_data shape after adjustments: {y_train_data.shape}")
 
-    return x_train_data, y_train_data, x_prunning_data, y_prunning_data
+    return x_train_data, y_train_data, x_prunning_data, y_prunning_data, x_validation, y_validation
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
     start_time = time.time()
     
     print("Running process_data...")
-    x_train, y_train, x_prunning, y_prunning = process_data(config)
+    x_train, y_train, x_prunning, y_prunning, x_validation, y_validation = process_data(config)
     print(f"Processed data received of type: {type(x_train)} and shape: {x_train.shape}")
 
     # Plugin-specific parameters
@@ -85,7 +113,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
     optimizer_plugin.set_agent(agent_plugin)
 
-    neat_config = optimizer_plugin.train(config['epochs'],x_train, y_train, x_prunning, y_prunning, config, environment_plugin)
+    neat_config = optimizer_plugin.train(config['epochs'],x_train, y_train, x_prunning, y_prunning, x_validation,y_validation, config, environment_plugin)
 
 
     # Save the trained model
@@ -106,25 +134,6 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     # Validate the model if validation data is provided
     if config['x_validation_file'] and config['y_validation_file']:
         print("Validating model...")
-        x_validation = load_csv(config['x_validation_file'], headers=config['headers'])
-        y_validation = load_csv(config['y_validation_file'], headers=config['headers'])
-
-        print(f"Validation market data loaded with shape: {x_validation.shape}")
-        print(f"Validation processed data loaded with shape: {y_validation.shape}")
-        
-        # Ensure x_validation is a 2D array
-        if x_validation.ndim == 1:
-            x_validation = x_validation.reshape(-1, 1)
-        
-        # Ensure input data is numeric except for the first column of x_train assumed to contain the date
-        y_validation = y_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
-        x_validation = x_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
-
-        # Apply the  input_offset to the x validation data
-        x_validation = x_validation[config['input_offset']:]
-        
-
-        
         print(f"x_validation shape: {x_validation.shape}")
         print(f"y_validation shape: {y_validation.shape}")
         # if sizes do not match, exit
