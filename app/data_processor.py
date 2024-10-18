@@ -122,10 +122,14 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         agent_plugin.load(config['save_model'])
         print(f"Model saved to {config['save_model']}")
 
+
+    # sets the environment data as the training data, since the optimizer changes it to the validation data for debugging 
+    environment_plugin.build_environment(x_train, y_train, config)
+    optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
+
     # Show trades and calculate fitness for the best genome
     fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False)
     training_fitness = fitness
-    print(f"Training Fitness: {training_fitness}")
     training_outputs = optimizer_plugin.outputs
     training_node_values = optimizer_plugin.node_values
     
