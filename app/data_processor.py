@@ -273,12 +273,24 @@ def kolmogorov_complexity(genome):
         # Return the length of the compressed data as an estimate of Kolmogorov complexity
         return len(compressed_data)
 
+import numpy as np
+import pandas as pd
+
 def shannon_hartley_information(input, period_minutes):
     # Convertir el input a un arreglo de NumPy si es necesario
     if isinstance(input, pd.DataFrame):
         np_input = input.to_numpy()
     elif isinstance(input, list):
-        # Verificar que cada elemento en la lista tenga la misma longitud
+        # Verificar el tamaño de cada elemento en la lista
+        input_lengths = [len(i) if hasattr(i, '__len__') else 1 for i in input]
+        print(f"Detected input lengths: {input_lengths}")
+        
+        # Check if all elements are of the same length
+        if len(set(input_lengths)) != 1:
+            print(f"Found inhomogeneous lengths in input: {input_lengths}")
+            raise ValueError(f"Inhomogeneous input lengths: {input_lengths}")
+        
+        # Convertir la lista a un arreglo de NumPy
         try:
             np_input = np.array(input)
         except ValueError as e:
@@ -338,6 +350,7 @@ def shannon_hartley_information(input, period_minutes):
     input_information = input_capacity * len(input_concat)
     
     return input_information
+
 
 
 import math
