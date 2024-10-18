@@ -274,15 +274,18 @@ def shannon_hartley_information(input, period_minutes):
     if isinstance(input, pd.DataFrame):
         np_input = input.to_numpy()
     elif isinstance(input, list):
-        # Convert the list to a NumPy array
-        np_input = np.array(input)
+        # Convert the list to a NumPy array if it's a list of lists or arrays
+        try:
+            np_input = np.array(input)
+        except ValueError as e:
+            raise ValueError(f"Error converting input list to NumPy array: {e}")
     else:
         np_input = input
     
-    # Verify that np_input is now a NumPy array
-    if not isinstance(np_input, np.ndarray):
-        raise ValueError("The input must be a pandas DataFrame, a list of lists, or a NumPy array.")
-    
+    # Verify that np_input is now a 2D NumPy array
+    if not isinstance(np_input, np.ndarray) or np_input.ndim != 2:
+        raise ValueError("The input must be a 2D array, pandas DataFrame, or list of lists with uniform length.")
+
     # Normalize each column between 0 and 1, handling division by zero
     min_vals = np.min(np_input, axis=0)
     max_vals = np.max(np_input, axis=0)
@@ -320,6 +323,7 @@ def shannon_hartley_information(input, period_minutes):
     input_information = input_capacity * len(input_concat)
     
     return input_information
+
 
 
 import math
