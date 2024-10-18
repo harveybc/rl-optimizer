@@ -270,49 +270,57 @@ def kolmogorov_complexity(genome):
         return len(compressed_data)
 
 def shannon_hartley_information(input, period_minutes):
-    # Convertir el input a un arreglo de NumPy si es necesario
+    # Convert input to NumPy array if needed
     if isinstance(input, pd.DataFrame):
         np_input = input.to_numpy()
     elif isinstance(input, list):
-        # Convertir la lista a un arreglo de NumPy
+        # Convert the list to a NumPy array
         np_input = np.array(input)
     else:
         np_input = input
     
-    # Verificar que np_input es ahora un arreglo de NumPy
+    # Verify that np_input is now a NumPy array
     if not isinstance(np_input, np.ndarray):
         raise ValueError("The input must be a pandas DataFrame, a list of lists, or a NumPy array.")
-    # normaliza cada columna entre 0 y 1
+    
+    # Normalize each column between 0 and 1, handling division by zero
     min_vals = np.min(np_input, axis=0)
     max_vals = np.max(np_input, axis=0)
-    np_input = (np_input - min_vals) / (max_vals - min_vals)
+    
+    # Avoid division by zero by adjusting for columns with no variation
+    range_vals = max_vals - min_vals
+    range_vals[range_vals == 0] = 1  # Set range to 1 where min == max to avoid division by zero
+    
+    # Normalize the input
+    np_input = (np_input - min_vals) / range_vals
 
-    # print input shape
+    # Print input shape
     print(f"Shape: {np_input.shape}")
 
-    # Concatenar las columnas verticalmente
+    # Concatenate the columns vertically
     input_concat = np.concatenate(np_input, axis=0)
     
-    # print concatenated shape
+    # Print concatenated shape
     print(f"Concat Shape: {input_concat.shape}")
     
-    # Calcular la media y desviación estándar del input concatenado
+    # Calculate the mean and standard deviation of the concatenated input
     input_mean = np.mean(input_concat)
     input_std = np.std(input_concat)
     
-    # Calcular SNR como (mean/std)^2
-    input_SNR = (input_mean / input_std) ** 2
+    # Calculate SNR as (mean/std)^2
+    input_SNR = (input_mean / input_std) ** 2 if input_std != 0 else float('inf')  # Handle std == 0 case
     
-    # Calcular la frecuencia de muestreo en Hz
+    # Calculate the sampling frequency in Hz
     sampling_frequency = 1 / (period_minutes * 60)
     
-    # Calcular la capacidad total en bits por segundo con la fórmula de Shannon-Hartley
+    # Calculate the total capacity in bits per second using the Shannon-Hartley formula
     input_capacity = sampling_frequency * np.log2(1 + input_SNR)
     
-    # Calcular la información total de entrada en bits multiplicando la capacidad por el tiempo total en segundos
+    # Calculate the total input information in bits by multiplying capacity by the total time in seconds
     input_information = input_capacity * len(input_concat)
     
     return input_information
+
 
 import math
 
