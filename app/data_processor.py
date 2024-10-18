@@ -270,11 +270,11 @@ def kolmogorov_complexity(genome):
         return len(compressed_data)
 
 def shannon_hartley_information(input, period_minutes):
-    # Convert input to NumPy array if needed
+    # Convertir el input a un arreglo de NumPy si es necesario
     if isinstance(input, pd.DataFrame):
         np_input = input.to_numpy()
     elif isinstance(input, list):
-        # Convert the list to a NumPy array if it's a list of lists or arrays
+        # Verificar que cada elemento en la lista tenga la misma longitud
         try:
             np_input = np.array(input)
         except ValueError as e:
@@ -282,48 +282,58 @@ def shannon_hartley_information(input, period_minutes):
     else:
         np_input = input
     
-    # Verify that np_input is now a 2D NumPy array
-    if not isinstance(np_input, np.ndarray) or np_input.ndim != 2:
-        raise ValueError("The input must be a 2D array, pandas DataFrame, or list of lists with uniform length.")
+    # Verificar que np_input es ahora un arreglo de NumPy
+    if not isinstance(np_input, np.ndarray):
+        raise ValueError("The input must be a pandas DataFrame, a list of lists, or a NumPy array.")
+    
+    # Comprobar si np_input tiene dimensiones consistentes
+    if np_input.ndim != 2:
+        raise ValueError(f"Input array must be 2D (rows, columns). Got {np_input.ndim}D.")
+    
+    # Verificar que el array no esté vacío y que todas las columnas tengan datos
+    if np_input.shape[1] == 0:
+        raise ValueError("Input array must have at least one column.")
 
-    # Normalize each column between 0 and 1, handling division by zero
+    # Normaliza cada columna entre 0 y 1
     min_vals = np.min(np_input, axis=0)
     max_vals = np.max(np_input, axis=0)
     
-    # Avoid division by zero by adjusting for columns with no variation
-    range_vals = max_vals - min_vals
-    range_vals[range_vals == 0] = 1  # Set range to 1 where min == max to avoid division by zero
-    
-    # Normalize the input
-    np_input = (np_input - min_vals) / range_vals
+    # Verificar que min_vals y max_vals no causen división por cero
+    if np.any(max_vals - min_vals == 0):
+        raise ValueError("One or more columns have constant values, which causes division by zero in normalization.")
 
-    # Print input shape
+    np_input = (np_input - min_vals) / (max_vals - min_vals)
+
+    # print input shape
     print(f"Shape: {np_input.shape}")
 
-    # Concatenate the columns vertically
+    # Concatenar las columnas verticalmente
     input_concat = np.concatenate(np_input, axis=0)
     
-    # Print concatenated shape
+    # print concatenated shape
     print(f"Concat Shape: {input_concat.shape}")
     
-    # Calculate the mean and standard deviation of the concatenated input
+    # Calcular la media y desviación estándar del input concatenado
     input_mean = np.mean(input_concat)
     input_std = np.std(input_concat)
     
-    # Calculate SNR as (mean/std)^2
-    input_SNR = (input_mean / input_std) ** 2 if input_std != 0 else float('inf')  # Handle std == 0 case
+    # Verificar que la desviación estándar no sea cero (evitar división por cero)
+    if input_std == 0:
+        raise ValueError("Standard deviation of the input is zero, cannot calculate SNR.")
     
-    # Calculate the sampling frequency in Hz
+    # Calcular SNR como (mean/std)^2
+    input_SNR = (input_mean / input_std) ** 2
+    
+    # Calcular la frecuencia de muestreo en Hz
     sampling_frequency = 1 / (period_minutes * 60)
     
-    # Calculate the total capacity in bits per second using the Shannon-Hartley formula
+    # Calcular la capacidad total en bits por segundo con la fórmula de Shannon-Hartley
     input_capacity = sampling_frequency * np.log2(1 + input_SNR)
     
-    # Calculate the total input information in bits by multiplying capacity by the total time in seconds
+    # Calcular la información total de entrada en bits multiplicando la capacidad por el tiempo total en segundos
     input_information = input_capacity * len(input_concat)
     
     return input_information
-
 
 
 import math
