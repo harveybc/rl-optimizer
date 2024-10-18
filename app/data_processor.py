@@ -43,19 +43,27 @@ def process_data(config):
     min_length = min(len(x_train_data), len(y_train_data))
     x_train_data = x_train_data[:min_length]
     y_train_data = y_train_data[:min_length]
+    # Divide the data into halves
+    half_index = min_length // 2
+    x_prunning_data = x_train_data[half_index:]
+    y_prunning_data = y_train_data[half_index:]
+    x_train_data = x_train_data[:half_index]
+    y_train_data = y_train_data[:half_index]
 
     # Debugging messages to confirm types and shapes
     print(f"Returning data of type: {type(x_train_data)}, {type(y_train_data)}")
     print(f"x_train_data shape after adjustments: {x_train_data.shape}")
     print(f"y_train_data shape after adjustments: {y_train_data.shape}")
-    
-    return x_train_data, y_train_data
+    print(f"x_prunning_data shape: {x_prunning_data.shape}")
+    print(f"y_prunning_data shape: {y_prunning_data.shape}")
+
+    return x_train_data, y_train_data, x_prunning_data, y_prunning_data
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
     start_time = time.time()
     
     print("Running process_data...")
-    x_train, y_train = process_data(config)
+    x_train, y_train, x_prunning, y_prunning = process_data(config)
     print(f"Processed data received of type: {type(x_train)} and shape: {x_train.shape}")
 
     # Plugin-specific parameters
@@ -77,7 +85,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
     optimizer_plugin.set_agent(agent_plugin)
 
-    neat_config = optimizer_plugin.train(config['epochs'])
+    neat_config = optimizer_plugin.train(config['epochs'],x_train, y_train, x_prunning, y_prunning, config, environment_plugin)
 
 
     # Save the trained model
