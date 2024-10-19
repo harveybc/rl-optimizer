@@ -276,9 +276,6 @@ def kolmogorov_complexity(genome):
 import numpy as np
 import pandas as pd
 
-dimport numpy as np
-import pandas as pd
-
 def shannon_hartley_information(input, period_minutes):
     try:
         # Convert input to NumPy array if necessary
