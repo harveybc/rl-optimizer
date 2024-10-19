@@ -202,7 +202,11 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         training_node_values_information = shannon_hartley_information(training_node_values, config['periodicity_minutes'])
         print(f"Total Training Node Values Information (bits): {training_node_values_information}")
         # print the total training information as the entropy multiplied by the training_node_values_information
-        training_total_information = num_connections*weights_entropy + training_node_values_information
+        #veryfy for None o NoneType
+        if training_node_values_information is None:
+            training_total_information = num_connections*weights_entropy
+        else:
+            training_total_information = num_connections*weights_entropy + training_node_values_information
         print(f"Total Training Information (bits): {training_total_information}")
 
 
@@ -219,7 +223,10 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         node_values_information_validation = shannon_hartley_information(validation_node_values, config['periodicity_minutes'])
         print(f"Total Validation Node Values Information (bits): {node_values_information_validation}")
         # print the total validation information as the entropy multiplied by the node_values_information
-        validation_total_information = num_connections*weights_entropy + node_values_information_validation
+        if node_values_information_validation is None:
+            validation_total_information = num_connections*weights_entropy
+        else:
+            validation_total_information = num_connections*weights_entropy + node_values_information_validation
         print(f"Total Validation Information (bits): {validation_total_information}")
         print(f"*****************************************************************")
         
