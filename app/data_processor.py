@@ -24,7 +24,7 @@ def process_data(config):
         y_train_data = x_train_data.iloc[:, y_train_file]
         print(f"Using y_train data at column index: {y_train_file}")
     else:
-        raise ValueError("Either y_train_file must be specified in the configuration.")
+        raise ValueError("Either y_train_file  must be specified in the configuration.")
 
     # Ensure input data is numeric except for the first column of x_train assumed to contain the date
     y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
@@ -32,10 +32,10 @@ def process_data(config):
     # Apply input offset and time horizon
     offset = config['input_offset']
     print(f"Applying input offset: {offset}")
+    #y_train_data = y_train_data[offset:]
     x_train_data = x_train_data[offset:]
-    y_train_data = y_train_data[offset:]
     print(f"Data shape after applying offset: {x_train_data.shape}, {y_train_data.shape}")
-
+    # if the first dimension of x_train and y_train do not match, exit
     if len(x_train_data) != len(y_train_data):
         raise ValueError("x_train_data (market observation) and y_train_data(data observation) data shapes do not match.")
 
@@ -43,13 +43,11 @@ def process_data(config):
     min_length = min(len(x_train_data), len(y_train_data))
     x_train_data = x_train_data[:min_length]
     y_train_data = y_train_data[:min_length]
-
     # Divide the data into three parts: training, pruning, and stabilization
     third_index = min_length // 3
 
-    # Keep the original x_train_data and y_train_data intact for future splits
-    x_train_split = x_train_data[:third_index]  # First third for training
-    y_train_split = y_train_data[:third_index]
+    x_train_data_split = x_train_data[:third_index]  # First third for training
+    y_train_data_split = y_train_data[:third_index]
 
     x_prunning_data = x_train_data[third_index:2*third_index]  # Second third for pruning
     y_prunning_data = y_train_data[third_index:2*third_index]
@@ -58,7 +56,7 @@ def process_data(config):
     y_stabilization_data = y_train_data[2*third_index:]
 
     # Verify the sizes of each dataset after splitting
-    print(f"Training data size: {len(x_train_split)}")
+    print(f"Training data size: {len(x_train_data_split)}")
     print(f"Pruning data size: {len(x_prunning_data)}")
     print(f"Stabilization data size: {len(x_stabilization_data)}")
 
@@ -70,31 +68,41 @@ def process_data(config):
         print(f"Validation market data loaded with shape: {x_validation.shape}")
         print(f"Validation processed data loaded with shape: {y_validation.shape}")
         
+        # Ensure x_validation is a 2D array
+        if x_validation.ndim == 1:
+            x_validation = x_validation.reshape(-1, 1)
+        
         # Ensure input data is numeric except for the first column of x_train assumed to contain the date
         y_validation = y_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
         x_validation = x_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
 
-        # Apply the input_offset to the x_validation data
+        # Apply the  input_offset to the x validation data
         x_validation = x_validation[config['input_offset']:]
         
         print(f"x_validation shape: {x_validation.shape}")
         print(f"y_validation shape: {y_validation.shape}")
+        # if sizes do not match, exit
         if len(x_validation) != len(y_validation):
             raise ValueError("x_validation and y_validation data shapes do not match.")
 
+    
+
     # Debugging messages to confirm types and shapes
-    print(f"Returning data of type: {type(x_train_split)}, {type(y_train_split)}")
-    print(f"x_train_split shape after adjustments: {x_train_split.shape}")
-    print(f"y_train_split shape after adjustments: {y_train_split.shape}")
+    print(f"Returning data of type: {type(x_train_data)}, {type(y_train_data)}")
+    print(f"x_train_data shape after adjustments: {x_train_data_split.shape}")
+    print(f"y_train_data shape after adjustments: {x_train_data_split.shape}")
     print(f"x_prunning_data shape: {x_prunning_data.shape}")
     print(f"y_prunning_data shape: {y_prunning_data.shape}")
+    print(f"x_validation_data shape after adjustments: {x_train_data.shape}")
+    print(f"y_validation_data shape after adjustments: {y_train_data.shape}")
     print(f"x_stabilization_data shape: {x_stabilization_data.shape}")
     print(f"y_stabilization_data shape: {y_stabilization_data.shape}")
 
-    if len(x_train_split) == 0:
-        raise ValueError("x_train_split is empty.")
-    if len(y_train_split) == 0:
-        raise ValueError("y_train_split is empty.")
+    # if any of the data to be returned is zero, exit with erro showing the exact dataset that have zero size
+    if len(x_train_data) == 0:
+        raise ValueError("x_train_data is empty.")
+    if len(y_train_data) == 0:
+        raise ValueError("y_train_data is empty.")
     if len(x_prunning_data) == 0:
         raise ValueError("x_prunning_data is empty.")
     if len(y_prunning_data) == 0:
@@ -109,7 +117,7 @@ def process_data(config):
         if len(y_validation) == 0:
             raise ValueError("y_validation is empty.")
     
-    return x_train_split, y_train_split, x_prunning_data, y_prunning_data, x_validation, y_validation, x_stabilization_data, y_stabilization_data
+    return x_train_data_split, x_train_data_split, x_prunning_data, y_prunning_data, x_validation, y_validation, x_stabilization_data, y_stabilization_data
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
     start_time = time.time()
