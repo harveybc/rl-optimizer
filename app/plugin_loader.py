@@ -1,7 +1,9 @@
 from importlib.metadata import entry_points
+import sys 
 
 def load_plugin(plugin_group, plugin_name):
     print(f"Attempting to load plugin: {plugin_name} from group: {plugin_group}")
+    # Print sys.path for debugging
     try:
         group_entries = entry_points().get(plugin_group, [])
         entry_point = next(ep for ep in group_entries if ep.name == plugin_name)
