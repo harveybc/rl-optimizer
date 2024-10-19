@@ -145,7 +145,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
     optimizer_plugin.set_agent(agent_plugin)
 
-    neat_config = optimizer_plugin.train(config['epochs'],x_stabilization, y_stabilization, x_prunning, y_prunning, x_validation,y_validation, config, environment_plugin)
+    neat_config = optimizer_plugin.train(config['epochs'], x_train, y_train, x_stabilization, y_stabilization, x_prunning, y_prunning, x_validation,y_validation, config, environment_plugin)
 
 
     # Save the trained model
