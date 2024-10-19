@@ -154,9 +154,12 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         agent_plugin.load(config['save_model'])
         print(f"Model saved to {config['save_model']}")
 
+    # for the final training performance, concatenate (vertically) the training, prunning and stabilization datasets
+    x_train_full = pd.concat([x_train, x_prunning, x_stabilization], axis=0)
+    y_train_full = pd.concat([y_train, y_prunning, y_stabilization], axis=0)
 
     # sets the environment data as the training data, since the optimizer changes it to the validation data for debugging 
-    environment_plugin.build_environment(x_train, y_train, config)
+    environment_plugin.build_environment(x_train_full, y_train_full, config)
     optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
 
     # Show trades and calculate fitness for the best genome
