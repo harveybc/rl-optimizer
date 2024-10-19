@@ -276,80 +276,87 @@ def kolmogorov_complexity(genome):
 import numpy as np
 import pandas as pd
 
+dimport numpy as np
+import pandas as pd
+
 def shannon_hartley_information(input, period_minutes):
-    # Convertir el input a un arreglo de NumPy si es necesario
-    if isinstance(input, pd.DataFrame):
-        np_input = input.to_numpy()
-    elif isinstance(input, list):
-        # Verificar el tamaño de cada elemento en la lista
-        input_lengths = [len(i) if hasattr(i, '__len__') else 1 for i in input]
-        print(f"Detected input lengths: {input_lengths}")
-        
-        # Check if all elements are of the same length
-        if len(set(input_lengths)) != 1:
-            print(f"Found inhomogeneous lengths in input: {input_lengths}")
-            raise ValueError(f"Inhomogeneous input lengths: {input_lengths}")
-        
-        # Convertir la lista a un arreglo de NumPy
-        try:
+    try:
+        # Convert input to NumPy array if necessary
+        if isinstance(input, pd.DataFrame):
+            np_input = input.to_numpy()
+        elif isinstance(input, list):
+            # Verify the size of each element in the list
+            input_lengths = [len(i) if hasattr(i, '__len__') else 1 for i in input]
+            if len(set(input_lengths)) != 1:
+                print(f"Warning: Found inhomogeneous lengths in input: {input_lengths}")
+                return None  # Early exit
+            # Convert list to NumPy array
             np_input = np.array(input)
-        except ValueError as e:
-            raise ValueError(f"Error converting input list to NumPy array: {e}")
-    else:
-        np_input = input
-    
-    # Verificar que np_input es ahora un arreglo de NumPy
-    if not isinstance(np_input, np.ndarray):
-        raise ValueError("The input must be a pandas DataFrame, a list of lists, or a NumPy array.")
-    
-    # Comprobar si np_input tiene dimensiones consistentes
-    if np_input.ndim != 2:
-        raise ValueError(f"Input array must be 2D (rows, columns). Got {np_input.ndim}D.")
-    
-    # Verificar que el array no esté vacío y que todas las columnas tengan datos
-    if np_input.shape[1] == 0:
-        raise ValueError("Input array must have at least one column.")
+        else:
+            np_input = input
+        
+        # Verify that np_input is a NumPy array
+        if not isinstance(np_input, np.ndarray):
+            print("Warning: The input must be a pandas DataFrame, a list of lists, or a NumPy array.")
+            return None
+        
+        # Check if np_input has consistent dimensions
+        if np_input.ndim != 2:
+            print(f"Warning: Input array must be 2D (rows, columns). Got {np_input.ndim}D.")
+            return None
+        
+        # Ensure array is not empty and all columns have data
+        if np_input.shape[1] == 0:
+            print("Warning: Input array must have at least one column.")
+            return None
+        
+        # Normalize each column between 0 and 1
+        min_vals = np.min(np_input, axis=0)
+        max_vals = np.max(np_input, axis=0)
+        
+        # Check for division by zero
+        if np.any(max_vals - min_vals == 0):
+            print("Warning: One or more columns have constant values, which causes division by zero in normalization.")
+            return None
+        else:
+            np_input = (np_input - min_vals) / (max_vals - min_vals)
+        
+        # Print input shape
+        print(f"Shape: {np_input.shape}")
+        
+        # Concatenate columns vertically
+        input_concat = np.concatenate(np_input, axis=0)
+        
+        # Print concatenated shape
+        print(f"Concat Shape: {input_concat.shape}")
+        
+        # Calculate mean and standard deviation of concatenated input
+        input_mean = np.mean(input_concat)
+        input_std = np.std(input_concat)
+        
+        # Check that standard deviation is not zero (avoid division by zero)
+        if input_std == 0:
+            print("Warning: Standard deviation of the input is zero, cannot calculate SNR.")
+            return None
+        
+        # Calculate SNR as (mean/std)^2
+        input_SNR = (input_mean / input_std) ** 2
+        
+        # Calculate the sampling frequency in Hz
+        sampling_frequency = 1 / (period_minutes * 60)
+        
+        # Calculate total capacity in bits per second using Shannon-Hartley formula
+        input_capacity = sampling_frequency * np.log2(1 + input_SNR)
+        
+        # Calculate total input information in bits by multiplying capacity by total time in seconds
+        input_information = input_capacity * len(input_concat)
+        
+        return input_information
 
-    # Normaliza cada columna entre 0 y 1
-    min_vals = np.min(np_input, axis=0)
-    max_vals = np.max(np_input, axis=0)
-    
-    # Verificar que min_vals y max_vals no causen división por cero
-    if np.any(max_vals - min_vals == 0):
-        raise ValueError("One or more columns have constant values, which causes division by zero in normalization.")
-
-    np_input = (np_input - min_vals) / (max_vals - min_vals)
-
-    # print input shape
-    print(f"Shape: {np_input.shape}")
-
-    # Concatenar las columnas verticalmente
-    input_concat = np.concatenate(np_input, axis=0)
-    
-    # print concatenated shape
-    print(f"Concat Shape: {input_concat.shape}")
-    
-    # Calcular la media y desviación estándar del input concatenado
-    input_mean = np.mean(input_concat)
-    input_std = np.std(input_concat)
-    
-    # Verificar que la desviación estándar no sea cero (evitar división por cero)
-    if input_std == 0:
-        raise ValueError("Standard deviation of the input is zero, cannot calculate SNR.")
-    
-    # Calcular SNR como (mean/std)^2
-    input_SNR = (input_mean / input_std) ** 2
-    
-    # Calcular la frecuencia de muestreo en Hz
-    sampling_frequency = 1 / (period_minutes * 60)
-    
-    # Calcular la capacidad total en bits por segundo con la fórmula de Shannon-Hartley
-    input_capacity = sampling_frequency * np.log2(1 + input_SNR)
-    
-    # Calcular la información total de entrada en bits multiplicando la capacidad por el tiempo total en segundos
-    input_information = input_capacity * len(input_concat)
-    
-    return input_information
+    except Exception as e:
+        # Catch any unexpected errors and continue
+        print(f"Warning: An error occurred: {e}")
+        return None
 
 
 
