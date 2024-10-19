@@ -43,12 +43,19 @@ def process_data(config):
     min_length = min(len(x_train_data), len(y_train_data))
     x_train_data = x_train_data[:min_length]
     y_train_data = y_train_data[:min_length]
-    # Divide the data into halves
-    half_index = min_length // 2
-    x_prunning_data = x_train_data[half_index:]
-    y_prunning_data = y_train_data[half_index:]
-    x_train_data = x_train_data[:half_index]
-    y_train_data = y_train_data[:half_index]
+    # Calcula los índices para dividir los datos en tres partes iguales
+    third_index = min_length // 3
+    two_third_index = 2 * third_index
+
+    # Asigna los datos a cada etapa
+    x_train_data = x_train_data[:third_index]
+    y_train_data = y_train_data[:third_index]
+
+    x_prunning_data = x_train_data[third_index:two_third_index]
+    y_prunning_data = y_train_data[third_index:two_third_index]
+
+    x_stabilization_data = x_train_data[two_third_index:]
+    y_stabilization_data = y_train_data[two_third_index:]
 
     if config['x_validation_file'] and config['y_validation_file']:
         print("loading Validation data...")
@@ -75,8 +82,9 @@ def process_data(config):
         if len(x_validation) != len(y_validation):
             raise ValueError("x_validation and y_validation data shapes do not match.")
 
+    
 
-# Debugging messages to confirm types and shapes
+    # Debugging messages to confirm types and shapes
     print(f"Returning data of type: {type(x_train_data)}, {type(y_train_data)}")
     print(f"x_train_data shape after adjustments: {x_train_data.shape}")
     print(f"y_train_data shape after adjustments: {y_train_data.shape}")
@@ -84,14 +92,16 @@ def process_data(config):
     print(f"y_prunning_data shape: {y_prunning_data.shape}")
     print(f"x_validation_data shape after adjustments: {x_train_data.shape}")
     print(f"y_validation_data shape after adjustments: {y_train_data.shape}")
+    print(f"x_stabilization_data shape: {x_stabilization_data.shape}")
+    print(f"y_stabilization_data shape: {y_stabilization_data.shape}")
 
-    return x_train_data, y_train_data, x_prunning_data, y_prunning_data, x_validation, y_validation
+    return x_train_data, y_train_data, x_prunning_data, y_prunning_data, x_validation, y_validation, x_stabilization_data, y_stabilization_data
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
     start_time = time.time()
     
     print("Running process_data...")
-    x_train, y_train, x_prunning, y_prunning, x_validation, y_validation = process_data(config)
+    x_train, y_train, x_prunning, y_prunning, x_validation, y_validation, x_stabilization, y_stabilization = process_data(config)
     print(f"Processed data received of type: {type(x_train)} and shape: {x_train.shape}")
 
     # Plugin-specific parameters
@@ -113,7 +123,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
     optimizer_plugin.set_agent(agent_plugin)
 
-    neat_config = optimizer_plugin.train(config['epochs'],x_train, y_train, x_prunning, y_prunning, x_validation,y_validation, config, environment_plugin)
+    neat_config = optimizer_plugin.train(config['epochs'],x_stabilization, y_stabilization, x_prunning, y_prunning, x_validation,y_validation, config, environment_plugin)
 
 
     # Save the trained model
