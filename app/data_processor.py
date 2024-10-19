@@ -117,7 +117,7 @@ def process_data(config):
         if len(y_validation) == 0:
             raise ValueError("y_validation is empty.")
     
-    return x_train_data_split, x_train_data_split, x_prunning_data, y_prunning_data, x_validation, y_validation, x_stabilization_data, y_stabilization_data
+    return x_train_data_split, y_train_data_split, x_prunning_data, y_prunning_data, x_validation, y_validation, x_stabilization_data, y_stabilization_data
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
     start_time = time.time()
