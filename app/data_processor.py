@@ -43,19 +43,22 @@ def process_data(config):
     min_length = min(len(x_train_data), len(y_train_data))
     x_train_data = x_train_data[:min_length]
     y_train_data = y_train_data[:min_length]
-    # Calcula los índices para dividir los datos en tres partes iguales
+    # Divide the data into three parts: training, pruning, and stabilization
     third_index = min_length // 3
-    two_third_index = 2 * third_index
 
-    # Asigna los datos a cada etapa
-    x_train_data = x_train_data[:third_index]
+    x_train_data = x_train_data[:third_index]  # First third for training
     y_train_data = y_train_data[:third_index]
 
-    x_prunning_data = x_train_data[third_index:two_third_index]
-    y_prunning_data = y_train_data[third_index:two_third_index]
+    x_prunning_data = x_train_data[third_index:2*third_index]  # Second third for pruning
+    y_prunning_data = y_train_data[third_index:2*third_index]
 
-    x_stabilization_data = x_train_data[two_third_index:]
-    y_stabilization_data = y_train_data[two_third_index:]
+    x_stabilization_data = x_train_data[2*third_index:]  # Last third for stabilization
+    y_stabilization_data = y_train_data[2*third_index:]
+
+    # Verify the sizes of each dataset after splitting
+    print(f"Training data size: {len(x_train_data)}")
+    print(f"Pruning data size: {len(x_prunning_data)}")
+    print(f"Stabilization data size: {len(x_stabilization_data)}")
 
     if config['x_validation_file'] and config['y_validation_file']:
         print("loading Validation data...")
@@ -95,6 +98,25 @@ def process_data(config):
     print(f"x_stabilization_data shape: {x_stabilization_data.shape}")
     print(f"y_stabilization_data shape: {y_stabilization_data.shape}")
 
+    # if any of the data to be returned is zero, exit with erro showing the exact dataset that have zero size
+    if len(x_train_data) == 0:
+        raise ValueError("x_train_data is empty.")
+    if len(y_train_data) == 0:
+        raise ValueError("y_train_data is empty.")
+    if len(x_prunning_data) == 0:
+        raise ValueError("x_prunning_data is empty.")
+    if len(y_prunning_data) == 0:
+        raise ValueError("y_prunning_data is empty.")
+    if len(x_stabilization_data) == 0:
+        raise ValueError("x_stabilization_data is empty.")
+    if len(y_stabilization_data) == 0:
+        raise ValueError("y_stabilization_data is empty.")
+    if config['x_validation_file'] and config['y_validation_file']:
+        if len(x_validation) == 0:
+            raise ValueError("x_validation is empty.")
+        if len(y_validation) == 0:
+            raise ValueError("y_validation is empty.")
+    
     return x_train_data, y_train_data, x_prunning_data, y_prunning_data, x_validation, y_validation, x_stabilization_data, y_stabilization_data
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
