@@ -163,7 +163,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
 
     # Show trades and calculate fitness for the best genome
-    fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False)
+    fitness, info = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False)
     training_fitness = fitness
     training_outputs = optimizer_plugin.outputs
     training_node_values = optimizer_plugin.node_values
@@ -197,7 +197,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         optimizer_plugin.set_agent(agent_plugin)
 
         # Calculate fitness for the best genome using the same method as in training
-        validation_fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
+        validation_fitness, info = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
         validation_outputs = optimizer_plugin.outputs
         validation_node_values = optimizer_plugin.node_values
         # validation_outputs is a list of lists (table of 4 columns), print the first 5 files
