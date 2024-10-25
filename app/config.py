@@ -38,7 +38,6 @@ DEFAULT_VALUES = {
     'number_of_segments': 5,
     'overfitting_threshold': 0.5
 
-
 }
 
 # mapping of short-form to long-form arguments
