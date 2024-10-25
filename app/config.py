@@ -37,6 +37,7 @@ DEFAULT_VALUES = {
     'stabilization_cycles': 0,
     'number_of_segments': 5,
     'overfitting_threshold': 0.5
+    
 }
 
 # mapping of short-form to long-form arguments
