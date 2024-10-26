@@ -93,8 +93,8 @@ def process_data(config):
     print(f"y_train_data shape after adjustments: {x_train_data_split.shape}")
     print(f"x_prunning_data shape: {x_prunning_data.shape}")
     print(f"y_prunning_data shape: {y_prunning_data.shape}")
-    print(f"x_validation_data shape after adjustments: {x_train_data.shape}")
-    print(f"y_validation_data shape after adjustments: {y_train_data.shape}")
+    print(f"x_validation_data shape after adjustments: {x_validation.shape}")
+    print(f"y_validation_data shape after adjustments: {y_validation.shape}")
     print(f"x_stabilization_data shape: {x_stabilization_data.shape}")
     print(f"y_stabilization_data shape: {y_stabilization_data.shape}")
 
