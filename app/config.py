@@ -33,7 +33,7 @@ DEFAULT_VALUES = {
     'mse_threshold': 0.001,
     'time_horizon': 0,
     'periodicity_minutes': 60,
-    'num_hidden': 1,
+    'num_hidden': 0,
     'stabilization_cycles': 0,
     'number_of_segments': 5,
     'overfitting_threshold': 0.5
