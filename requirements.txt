@@ -1,5 +1,5 @@
 numpy
-tensorflow
+tensorflow-gpu
 pandas
 h5py
 scipy
