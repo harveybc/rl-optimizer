@@ -29,7 +29,7 @@ DEFAULT_VALUES = {
     'max_steps': 6300,
     'batch_size': 32,
     'epochs': 140,
-    'input_offset': 280,
+    'input_offset': 127,
     'mse_threshold': 0.001,
     'time_horizon': 0,
     'periodicity_minutes': 60,
