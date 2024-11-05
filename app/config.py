@@ -12,7 +12,7 @@ DEFAULT_VALUES = {
     'save_model': 'model.keras',
     'load_model': None,
     'evaluate_file': 'model_eval.csv',
-    'optimizer_plugin': 'neat_a_nomc_fb',
+    'optimizer_plugin': 'neat_a_nomc_v2',
     'environment_plugin': 'gym_fx_env_nomc_o_volume',
     'agent_plugin': 'neat_a_volume_v2',
     'remote_log': None,
@@ -35,7 +35,7 @@ DEFAULT_VALUES = {
     'periodicity_minutes': 60,
     'num_hidden': 0,
     'stabilization_cycles': 0,
-    'number_of_segments': 2,
+    'number_of_segments': 5,
     'overfitting_threshold': 0.5
 
 }
