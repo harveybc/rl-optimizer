@@ -390,7 +390,7 @@ def shannon_hartley_information(input, period_minutes):
         input_capacity = sampling_frequency * np.log2(1 + input_SNR)
         
         # Calculate total input information in bits by multiplying capacity by total time in seconds
-        input_information = input_capacity * len(input_concat)
+        input_information = input_capacity * len(input_concat) * period_minutes * 60
         
         return input_information
 
