@@ -12,9 +12,9 @@ DEFAULT_VALUES = {
     'save_model': 'model.keras',
     'load_model': None,
     'evaluate_file': 'model_eval.csv',
-    'optimizer_plugin': 'neat_a_nomc_o_volume',
+    'optimizer_plugin': 'neat_a_nomc_fb',
     'environment_plugin': 'gym_fx_env_nomc_o_volume',
-    'agent_plugin': 'neat_a_volume',
+    'agent_plugin': 'neat_a_volume_v2',
     'remote_log': None,
     'remote_load_config': None,
     'remote_save_config': None,
@@ -28,12 +28,15 @@ DEFAULT_VALUES = {
     'headers': True,
     'max_steps': 6300,
     'batch_size': 32,
-    'epochs': 10,
+    'epochs': 315,
     'input_offset': 127,
     'mse_threshold': 0.001,
     'time_horizon': 0,
     'periodicity_minutes': 60,
-    'num_hidden': 0
+    'num_hidden': 0,
+    'stabilization_cycles': 0,
+    'number_of_segments': 3,
+    'overfitting_threshold': 0.5
 
 }
 

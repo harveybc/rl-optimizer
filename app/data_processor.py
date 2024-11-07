@@ -93,8 +93,8 @@ def process_data(config):
     print(f"y_train_data shape after adjustments: {x_train_data_split.shape}")
     print(f"x_prunning_data shape: {x_prunning_data.shape}")
     print(f"y_prunning_data shape: {y_prunning_data.shape}")
-    print(f"x_validation_data shape after adjustments: {x_train_data.shape}")
-    print(f"y_validation_data shape after adjustments: {y_train_data.shape}")
+    print(f"x_validation_data shape after adjustments: {x_validation.shape}")
+    print(f"y_validation_data shape after adjustments: {y_validation.shape}")
     print(f"x_stabilization_data shape: {x_stabilization_data.shape}")
     print(f"y_stabilization_data shape: {y_stabilization_data.shape}")
 
@@ -144,7 +144,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_params(**optimizer_params)
     optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
     optimizer_plugin.set_agent(agent_plugin)
+    #print the config max steps
 
+    print(f"Max steps: {config['max_steps']}")
     neat_config = optimizer_plugin.train(config['epochs'], x_train, y_train, x_stabilization, y_stabilization, x_prunning, y_prunning, x_validation,y_validation, config, environment_plugin)
 
 
@@ -163,7 +165,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
 
     # Show trades and calculate fitness for the best genome
-    fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False)
+    fitness, info = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False)
     training_fitness = fitness
     training_outputs = optimizer_plugin.outputs
     training_node_values = optimizer_plugin.node_values
@@ -197,7 +199,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         optimizer_plugin.set_agent(agent_plugin)
 
         # Calculate fitness for the best genome using the same method as in training
-        validation_fitness = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
+        validation_fitness, info = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
         validation_outputs = optimizer_plugin.outputs
         validation_node_values = optimizer_plugin.node_values
         # validation_outputs is a list of lists (table of 4 columns), print the first 5 files
@@ -388,7 +390,7 @@ def shannon_hartley_information(input, period_minutes):
         input_capacity = sampling_frequency * np.log2(1 + input_SNR)
         
         # Calculate total input information in bits by multiplying capacity by total time in seconds
-        input_information = input_capacity * len(input_concat)
+        input_information = input_capacity * len(input_concat) * period_minutes * 60
         
         return input_information
 
