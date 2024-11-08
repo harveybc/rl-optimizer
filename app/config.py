@@ -35,7 +35,7 @@ DEFAULT_VALUES = {
     'periodicity_minutes': 60,
     'num_hidden': 0,
     'stabilization_cycles': 0,
-    'number_of_segments': 2,
+    'number_of_segments': 3,
     'overfitting_threshold': 0.5
 
 }
