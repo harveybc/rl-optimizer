@@ -161,7 +161,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     y_train_full = pd.concat([y_train, y_prunning, y_stabilization], axis=0)
 
     # sets the environment data as the training data, since the optimizer changes it to the validation data for debugging 
-    environment_plugin.build_environment(x_train_full, y_train_full, config)
+    temp_config = config.copy()
+    temp_config['max_steps'] = config['max_steps'] * 3
+    environment_plugin.build_environment(x_train_full, y_train_full, temp_config)
     optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
 
     # Show trades and calculate fitness for the best genome
