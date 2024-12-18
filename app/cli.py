@@ -2,7 +2,7 @@ import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser(description="RL-Optimizer: A tool with optimizer, environment, and agent plugin support.")
-    parser.add_argument('x_train_file', type=str, help='Path to the input CSV file that is used for training the model (x_train).')
+    parser.add_argument('--x_train_file', type=str, help='Path to the input CSV file that is used for training the model (x_train).')
     parser.add_argument('-ytf', '--y_train_file', type=str, help='Path to the input CSV file that is used for training the model (y_train), IMPORTANT: it is not shifted, must coincide 1 to 1 with the training data.')
     parser.add_argument('-xvf', '--x_validation_file', type=str, help='Path to the input CSV file that is used for validation (x_validation).')
     parser.add_argument('-yvf', '--y_validation_file', type=str, help='Path to the input CSV file that is used for validation (y_validation), IMPORTANT: it is not shifted, must coincide 1 to 1 with the validation data.')
