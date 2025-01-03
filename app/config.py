@@ -24,7 +24,7 @@ DEFAULT_VALUES = {
     'save_config': 'config_out.json',
     'save_log': 'debug_out.json',
     'quiet_mode': False,
-    'force_date': False,
+    'force_date': True,
     'headers': True,
     'max_steps': 6300,
     'batch_size': 32,
