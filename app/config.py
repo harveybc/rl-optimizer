@@ -3,10 +3,10 @@
 DEFAULT_VALUES = {
     'x_train_file': 'tests\\data\\base_d2.csv',
     #'y_train_file': '..\\Documents\\encoder_eval_d2.csv',
-    'y_train_file': 'tests\\data\\normalized_d2_target.csv',
+    'y_train_file': 'tests\\data\\normalized_d2.csv',
     'x_validation_file': 'tests\\data\\base_d3.csv',
     #'y_validation_file': '..\\Documents\\encoder_eval_d3.csv',
-    'y_validation_file': 'tests\\data\\normalized_d3_target.csv',
+    'y_validation_file': 'tests\\data\\normalized_d3.csv',
     'target_column': None,
     'output_file': 'csv_output.csv',
     'save_model': 'model.keras',
