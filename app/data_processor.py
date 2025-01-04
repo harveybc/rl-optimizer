@@ -14,22 +14,28 @@ import pandas as pd  # Ensure pandas is imported
 
 def process_data(config):
     print(f"Loading data from CSV file: {config['x_train_file']}")
-    # Load x_train_data without parsing the first column as dates
-    x_train_data = load_csv(
+    # Load x_train_data with 'date' column
+    x_train_data_full = load_csv(
         config['x_train_file'],
         headers=config['headers']
     )
-    print(f"Data loaded with shape: {x_train_data.shape}")
+    print(f"Data loaded with shape: {x_train_data_full.shape}")
+
+    # Separate 'date' from x_train_data
+    dates = x_train_data_full['date'].values
+    x_train_data = x_train_data_full.drop(columns=['date'])
 
     y_train_file = config['y_train_file']
 
     if isinstance(y_train_file, str):
         print(f"Loading y_train data from CSV file: {y_train_file}")
-        y_train_data = load_csv(
+        y_train_data_full = load_csv(
             y_train_file,
             headers=config['headers']
         )
-        print(f"y_train data loaded with shape: {y_train_data.shape}")
+        print(f"y_train data loaded with shape: {y_train_data_full.shape}")
+        # Assuming y_train also has a 'date' column; adjust if necessary
+        y_train_data = y_train_data_full.drop(columns=['date'])
     elif isinstance(y_train_file, int):
         y_train_data = x_train_data.iloc[:, y_train_file]
         print(f"Using y_train data at column index: {y_train_file}")
@@ -44,6 +50,7 @@ def process_data(config):
     print(f"Applying input offset: {offset}")
     x_train_data = x_train_data.iloc[offset:]
     y_train_data = y_train_data.iloc[offset:]
+    dates = dates[offset:]
     print(f"Data shape after applying offset: {x_train_data.shape}, {y_train_data.shape}")
 
     # Verify matching lengths
@@ -54,18 +61,22 @@ def process_data(config):
     min_length = min(len(x_train_data), len(y_train_data))
     x_train_data = x_train_data.iloc[:min_length]
     y_train_data = y_train_data.iloc[:min_length]
+    dates = dates[:min_length]
 
     # Divide the data into three parts: training, pruning, and stabilization
     third_index = min_length // 3
 
     x_train_data_split = x_train_data.iloc[:third_index]  # First third for training
     y_train_data_split = y_train_data.iloc[:third_index]
+    dates_train_split = dates[:third_index]
 
     x_prunning_data = x_train_data.iloc[third_index:2*third_index]  # Second third for pruning
     y_prunning_data = y_train_data.iloc[third_index:2*third_index]
+    dates_prunning = dates[third_index:2*third_index]
 
     x_stabilization_data = x_train_data.iloc[2*third_index:]  # Last third for stabilization
     y_stabilization_data = y_train_data.iloc[2*third_index:]
+    dates_stabilization = dates[2*third_index:]
 
     # Verify the sizes of each dataset after splitting
     print(f"Training data size: {len(x_train_data_split)}")
@@ -74,17 +85,22 @@ def process_data(config):
 
     if config.get('x_validation_file') and config.get('y_validation_file'):
         print("Loading Validation data...")
-        x_validation = load_csv(
+        x_validation_full = load_csv(
             config['x_validation_file'],
             headers=config['headers']
         )
-        y_validation = load_csv(
+        y_validation_full = load_csv(
             config['y_validation_file'],
             headers=config['headers']
         )
 
-        print(f"Validation market data loaded with shape: {x_validation.shape}")
-        print(f"Validation processed data loaded with shape: {y_validation.shape}")
+        print(f"Validation market data loaded with shape: {x_validation_full.shape}")
+        print(f"Validation processed data loaded with shape: {y_validation_full.shape}")
+
+        # Separate 'date' from x_validation_data
+        dates_validation = x_validation_full['date'].values
+        x_validation = x_validation_full.drop(columns=['date'])
+        y_validation = y_validation_full.drop(columns=['date'])
 
         # Ensure x_validation is a DataFrame
         if isinstance(x_validation, pd.Series):
@@ -97,9 +113,11 @@ def process_data(config):
         # Apply the input_offset to the x validation data
         x_validation = x_validation.iloc[offset:]
         y_validation = y_validation.iloc[offset:]
+        dates_validation = dates_validation[offset:]
 
         print(f"x_validation shape after applying offset: {x_validation.shape}")
         print(f"y_validation shape after applying offset: {y_validation.shape}")
+        print(f"dates_validation shape after applying offset: {len(dates_validation)}")
 
         # Verify matching lengths
         if len(x_validation) != len(y_validation):
@@ -111,9 +129,6 @@ def process_data(config):
     print(f"y_train_data shape after adjustments: {y_train_data_split.shape}")
     print(f"x_prunning_data shape: {x_prunning_data.shape}")
     print(f"y_prunning_data shape: {y_prunning_data.shape}")
-    if config.get('x_validation_file') and config.get('y_validation_file'):
-        print(f"x_validation_data shape after adjustments: {x_validation.shape}")
-        print(f"y_validation_data shape after adjustments: {y_validation.shape}")
     print(f"x_stabilization_data shape: {x_stabilization_data.shape}")
     print(f"y_stabilization_data shape: {y_stabilization_data.shape}")
 
@@ -140,31 +155,35 @@ def process_data(config):
         return (
             x_train_data_split,
             y_train_data_split,
+            dates_train_split,
             x_prunning_data,
             y_prunning_data,
+            dates_prunning,
             x_validation,
             y_validation,
+            dates_validation,
             x_stabilization_data,
-            y_stabilization_data
+            y_stabilization_data,
+            dates_stabilization
         )
     else:
         return (
             x_train_data_split,
             y_train_data_split,
+            dates_train_split,
             x_prunning_data,
             y_prunning_data,
+            dates_prunning,
             pd.DataFrame(),  # Empty DataFrame for x_validation
             pd.Series(),     # Empty Series for y_validation
+            np.array([]),    # Empty array for dates_validation
             x_stabilization_data,
-            y_stabilization_data
+            y_stabilization_data,
+            dates_stabilization
         )
 
 
-import numpy as np
-import pandas as pd
-import csv
-import pickle
-import time
+
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
     """
