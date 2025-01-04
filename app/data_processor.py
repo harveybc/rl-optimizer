@@ -14,11 +14,10 @@ import pandas as pd  # Ensure pandas is imported
 
 def process_data(config):
     print(f"Loading data from CSV file: {config['x_train_file']}")
-    # Assuming the first column is tick numbers, not dates
+    # Load x_train_data without parsing the first column as dates
     x_train_data = load_csv(
         config['x_train_file'],
-        headers=config['headers'],
-        parse_first_column_as_date=False  # Do not parse first column as dates
+        headers=config['headers']
     )
     print(f"Data loaded with shape: {x_train_data.shape}")
 
@@ -28,8 +27,7 @@ def process_data(config):
         print(f"Loading y_train data from CSV file: {y_train_file}")
         y_train_data = load_csv(
             y_train_file,
-            headers=config['headers'],
-            parse_first_column_as_date=False  # Ensure consistency
+            headers=config['headers']
         )
         print(f"y_train data loaded with shape: {y_train_data.shape}")
     elif isinstance(y_train_file, int):
@@ -44,33 +42,30 @@ def process_data(config):
     # Apply input offset and time horizon
     offset = config['input_offset']
     print(f"Applying input offset: {offset}")
-    x_train_data = x_train_data[offset:]
-    y_train_data = y_train_data[offset:]  # Uncommented to ensure proper slicing
+    x_train_data = x_train_data.iloc[offset:]
+    y_train_data = y_train_data.iloc[offset:]
     print(f"Data shape after applying offset: {x_train_data.shape}, {y_train_data.shape}")
-
-    # Ensure input data is numeric (already handled in load_csv)
-    # No need to separate date column since it's tick numbers
 
     # Verify matching lengths
     if len(x_train_data) != len(y_train_data):
-        raise ValueError("x_train_data (market observation) and y_train_data(data observation) data shapes do not match.")
+        raise ValueError("x_train_data (market observation) and y_train_data (data observation) data shapes do not match.")
 
     # Ensure the shapes match
     min_length = min(len(x_train_data), len(y_train_data))
-    x_train_data = x_train_data[:min_length]
-    y_train_data = y_train_data[:min_length]
+    x_train_data = x_train_data.iloc[:min_length]
+    y_train_data = y_train_data.iloc[:min_length]
 
     # Divide the data into three parts: training, pruning, and stabilization
     third_index = min_length // 3
 
-    x_train_data_split = x_train_data[:third_index]  # First third for training
-    y_train_data_split = y_train_data[:third_index]
+    x_train_data_split = x_train_data.iloc[:third_index]  # First third for training
+    y_train_data_split = y_train_data.iloc[:third_index]
 
-    x_prunning_data = x_train_data[third_index:2*third_index]  # Second third for pruning
-    y_prunning_data = y_train_data[third_index:2*third_index]
+    x_prunning_data = x_train_data.iloc[third_index:2*third_index]  # Second third for pruning
+    y_prunning_data = y_train_data.iloc[third_index:2*third_index]
 
-    x_stabilization_data = x_train_data[2*third_index:]  # Last third for stabilization
-    y_stabilization_data = y_train_data[2*third_index:]
+    x_stabilization_data = x_train_data.iloc[2*third_index:]  # Last third for stabilization
+    y_stabilization_data = y_train_data.iloc[2*third_index:]
 
     # Verify the sizes of each dataset after splitting
     print(f"Training data size: {len(x_train_data_split)}")
@@ -81,13 +76,11 @@ def process_data(config):
         print("Loading Validation data...")
         x_validation = load_csv(
             config['x_validation_file'],
-            headers=config['headers'],
-            parse_first_column_as_date=False  # Ensure consistency
+            headers=config['headers']
         )
         y_validation = load_csv(
             config['y_validation_file'],
-            headers=config['headers'],
-            parse_first_column_as_date=False  # Ensure consistency
+            headers=config['headers']
         )
 
         print(f"Validation market data loaded with shape: {x_validation.shape}")
@@ -102,9 +95,9 @@ def process_data(config):
         x_validation = x_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
 
         # Apply the input_offset to the x validation data
-        x_validation = x_validation[offset:]
-        y_validation = y_validation[offset:]
-        
+        x_validation = x_validation.iloc[offset:]
+        y_validation = y_validation.iloc[offset:]
+
         print(f"x_validation shape after applying offset: {x_validation.shape}")
         print(f"y_validation shape after applying offset: {y_validation.shape}")
 
@@ -118,15 +111,13 @@ def process_data(config):
     print(f"y_train_data shape after adjustments: {y_train_data_split.shape}")
     print(f"x_prunning_data shape: {x_prunning_data.shape}")
     print(f"y_prunning_data shape: {y_prunning_data.shape}")
-
     if config.get('x_validation_file') and config.get('y_validation_file'):
         print(f"x_validation_data shape after adjustments: {x_validation.shape}")
         print(f"y_validation_data shape after adjustments: {y_validation.shape}")
-
     print(f"x_stabilization_data shape: {x_stabilization_data.shape}")
     print(f"y_stabilization_data shape: {y_stabilization_data.shape}")
 
-    # if any of the data to be returned is zero, exit with error showing the exact dataset that have zero size
+    # If any of the data to be returned is zero, exit with error showing the exact dataset that have zero size
     if len(x_train_data_split) == 0:
         raise ValueError("x_train_data_split is empty.")
     if len(y_train_data_split) == 0:
@@ -147,26 +138,33 @@ def process_data(config):
 
     if config.get('x_validation_file') and config.get('y_validation_file'):
         return (
-            x_train_data_split.values,  # Convert to NumPy arrays
-            y_train_data_split.values,
-            x_prunning_data.values,
-            y_prunning_data.values,
-            x_validation.values,
-            y_validation.values,
-            x_stabilization_data.values,
-            y_stabilization_data.values
+            x_train_data_split,
+            y_train_data_split,
+            x_prunning_data,
+            y_prunning_data,
+            x_validation,
+            y_validation,
+            x_stabilization_data,
+            y_stabilization_data
         )
     else:
         return (
-            x_train_data_split.values,
-            y_train_data_split.values,
-            x_prunning_data.values,
-            y_prunning_data.values,
-            np.array([]).reshape(0, x_train_data_split.shape[1]),  # Empty array for x_validation
-            np.array([]),                                           # Empty array for y_validation
-            x_stabilization_data.values,
-            y_stabilization_data.values
+            x_train_data_split,
+            y_train_data_split,
+            x_prunning_data,
+            y_prunning_data,
+            pd.DataFrame(),  # Empty DataFrame for x_validation
+            pd.Series(),     # Empty Series for y_validation
+            x_stabilization_data,
+            y_stabilization_data
         )
+
+
+import numpy as np
+import pandas as pd
+import csv
+import pickle
+import time
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
     """
@@ -187,33 +185,6 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     # Load and process data
     x_train, y_train, x_prunning, y_prunning, x_validation, y_validation, x_stabilization, y_stabilization = process_data(config)
     print(f"Processed data received of type: {type(x_train)} and shape: {x_train.shape}")
-    
-    # Helper function to convert DataFrames/Series to NumPy arrays
-    def to_numpy(data):
-        if isinstance(data, (pd.DataFrame, pd.Series)):
-            return data.to_numpy()
-        return data
-    
-    # Convert all datasets to NumPy arrays
-    x_train = to_numpy(x_train)
-    y_train = to_numpy(y_train)
-    x_prunning = to_numpy(x_prunning)
-    y_prunning = to_numpy(y_prunning)
-    x_validation = to_numpy(x_validation)
-    y_validation = to_numpy(y_validation)
-    x_stabilization = to_numpy(x_stabilization)
-    y_stabilization = to_numpy(y_stabilization)
-    
-    # Debugging: Confirm data types and shapes after conversion
-    print(f"x_train type after conversion: {type(x_train)}, shape: {x_train.shape}")
-    print(f"y_train type after conversion: {type(y_train)}, shape: {y_train.shape}")
-    print(f"x_prunning type: {type(x_prunning)}, shape: {x_prunning.shape}")
-    print(f"y_prunning type: {type(y_prunning)}, shape: {y_prunning.shape}")
-    if config.get('x_validation_file') and config.get('y_validation_file'):
-        print(f"x_validation type: {type(x_validation)}, shape: {x_validation.shape}")
-        print(f"y_validation type: {type(y_validation)}, shape: {y_validation.shape}")
-    print(f"x_stabilization type: {type(x_stabilization)}, shape: {x_stabilization.shape}")
-    print(f"y_stabilization type: {type(y_stabilization)}, shape: {y_stabilization.shape}")
     
     # Plugin-specific parameters
     env_params = environment_plugin.plugin_params
@@ -257,9 +228,9 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         print(f"Model saved to {config['save_model']}")
 
     # Concatenate training, pruning, and stabilization datasets for final performance evaluation
-    # Using NumPy's vstack and concatenate for consistency
-    x_train_full = np.vstack([x_train, x_prunning, x_stabilization])
-    y_train_full = np.concatenate([y_train, y_prunning, y_stabilization])
+    # Using pandas' concat for DataFrames
+    x_train_full = pd.concat([x_train, x_prunning, x_stabilization], axis=0)
+    y_train_full = pd.concat([y_train, y_prunning, y_stabilization], axis=0)
     
     print(f"x_train_full shape: {x_train_full.shape}")
     print(f"y_train_full shape: {y_train_full.shape}")
@@ -413,6 +384,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
             print(f"Failed to remote log debug info: {e}")
     
     print(f"Execution time: {execution_time} seconds")
+
 
 def load_and_evaluate_model(config, agent_plugin):
     # Load the model
