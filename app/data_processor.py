@@ -14,14 +14,23 @@ import pandas as pd  # Ensure pandas is imported
 
 def process_data(config):
     print(f"Loading data from CSV file: {config['x_train_file']}")
-    x_train_data = load_csv(config['x_train_file'], headers=config['headers'])
+    # Assuming the first column is tick numbers, not dates
+    x_train_data = load_csv(
+        config['x_train_file'],
+        headers=config['headers'],
+        parse_first_column_as_date=False  # Do not parse first column as dates
+    )
     print(f"Data loaded with shape: {x_train_data.shape}")
 
     y_train_file = config['y_train_file']
 
     if isinstance(y_train_file, str):
         print(f"Loading y_train data from CSV file: {y_train_file}")
-        y_train_data = load_csv(y_train_file, headers=config['headers'])
+        y_train_data = load_csv(
+            y_train_file,
+            headers=config['headers'],
+            parse_first_column_as_date=False  # Ensure consistency
+        )
         print(f"y_train data loaded with shape: {y_train_data.shape}")
     elif isinstance(y_train_file, int):
         y_train_data = x_train_data.iloc[:, y_train_file]
@@ -36,14 +45,11 @@ def process_data(config):
     offset = config['input_offset']
     print(f"Applying input offset: {offset}")
     x_train_data = x_train_data[offset:]
+    y_train_data = y_train_data[offset:]  # Uncommented to ensure proper slicing
     print(f"Data shape after applying offset: {x_train_data.shape}, {y_train_data.shape}")
 
-    # Ensure input data is numeric except for the first column (date)
-    # Assuming the first column is at index 0
-    date_column = x_train_data.iloc[:, 0]
-    numeric_data = x_train_data.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(0)
-    x_train_data = pd.concat([date_column, numeric_data], axis=1)
-    print("Converted x_train_data to numeric, preserving the date column.")
+    # Ensure input data is numeric (already handled in load_csv)
+    # No need to separate date column since it's tick numbers
 
     # Verify matching lengths
     if len(x_train_data) != len(y_train_data):
@@ -73,8 +79,16 @@ def process_data(config):
 
     if config.get('x_validation_file') and config.get('y_validation_file'):
         print("Loading Validation data...")
-        x_validation = load_csv(config['x_validation_file'], headers=config['headers'])
-        y_validation = load_csv(config['y_validation_file'], headers=config['headers'])
+        x_validation = load_csv(
+            config['x_validation_file'],
+            headers=config['headers'],
+            parse_first_column_as_date=False  # Ensure consistency
+        )
+        y_validation = load_csv(
+            config['y_validation_file'],
+            headers=config['headers'],
+            parse_first_column_as_date=False  # Ensure consistency
+        )
 
         print(f"Validation market data loaded with shape: {x_validation.shape}")
         print(f"Validation processed data loaded with shape: {y_validation.shape}")
@@ -83,34 +97,32 @@ def process_data(config):
         if isinstance(x_validation, pd.Series):
             x_validation = x_validation.to_frame()
 
-        # Ensure input data is numeric except for the first column (date)
-        date_validation_column = x_validation.iloc[:, 0]
-        numeric_validation_data = x_validation.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(0)
-        x_validation = pd.concat([date_validation_column, numeric_validation_data], axis=1)
-        print("Converted x_validation to numeric, preserving the date column.")
+        # Ensure y_validation is numeric
+        y_validation = y_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
+        x_validation = x_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
 
         # Apply the input_offset to the x validation data
         x_validation = x_validation[offset:]
-        y_validation = y_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
-
-        print(f"x_validation shape: {x_validation.shape}")
-        print(f"y_validation shape: {y_validation.shape}")
+        y_validation = y_validation[offset:]
+        
+        print(f"x_validation shape after applying offset: {x_validation.shape}")
+        print(f"y_validation shape after applying offset: {y_validation.shape}")
 
         # Verify matching lengths
         if len(x_validation) != len(y_validation):
             raise ValueError("x_validation and y_validation data shapes do not match.")
 
     # Debugging messages to confirm types and shapes
-    print(f"Returning data of type: {type(x_train_data)}, {type(y_train_data)}")
+    print(f"Returning data of type: {type(x_train_data_split)}, {type(y_train_data_split)}")
     print(f"x_train_data shape after adjustments: {x_train_data_split.shape}")
     print(f"y_train_data shape after adjustments: {y_train_data_split.shape}")
     print(f"x_prunning_data shape: {x_prunning_data.shape}")
     print(f"y_prunning_data shape: {y_prunning_data.shape}")
-    
+
     if config.get('x_validation_file') and config.get('y_validation_file'):
         print(f"x_validation_data shape after adjustments: {x_validation.shape}")
         print(f"y_validation_data shape after adjustments: {y_validation.shape}")
-    
+
     print(f"x_stabilization_data shape: {x_stabilization_data.shape}")
     print(f"y_stabilization_data shape: {y_stabilization_data.shape}")
 
@@ -135,25 +147,25 @@ def process_data(config):
 
     if config.get('x_validation_file') and config.get('y_validation_file'):
         return (
-            x_train_data_split,
-            y_train_data_split,
-            x_prunning_data,
-            y_prunning_data,
-            x_validation,
-            y_validation,
-            x_stabilization_data,
-            y_stabilization_data
+            x_train_data_split.values,  # Convert to NumPy arrays
+            y_train_data_split.values,
+            x_prunning_data.values,
+            y_prunning_data.values,
+            x_validation.values,
+            y_validation.values,
+            x_stabilization_data.values,
+            y_stabilization_data.values
         )
     else:
         return (
-            x_train_data_split,
-            y_train_data_split,
-            x_prunning_data,
-            y_prunning_data,
-            pd.DataFrame(),  # Empty DataFrame for x_validation
-            pd.Series(),     # Empty Series for y_validation
-            x_stabilization_data,
-            y_stabilization_data
+            x_train_data_split.values,
+            y_train_data_split.values,
+            x_prunning_data.values,
+            y_prunning_data.values,
+            np.array([]).reshape(0, x_train_data_split.shape[1]),  # Empty array for x_validation
+            np.array([]),                                           # Empty array for y_validation
+            x_stabilization_data.values,
+            y_stabilization_data.values
         )
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
