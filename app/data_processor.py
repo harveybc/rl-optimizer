@@ -169,173 +169,221 @@ def process_data(config):
         )
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
+    """
+    Executes the prediction pipeline for the reinforcement learning system.
+
+    Parameters:
+    - config (dict): Configuration parameters.
+    - environment_plugin: Plugin managing the environment.
+    - agent_plugin: Plugin managing the agent.
+    - optimizer_plugin: Plugin managing the optimizer.
+
+    Returns:
+    - None
+    """
     start_time = time.time()
     
     print("Running process_data...")
+    # Load and process data
     x_train, y_train, x_prunning, y_prunning, x_validation, y_validation, x_stabilization, y_stabilization = process_data(config)
     print(f"Processed data received of type: {type(x_train)} and shape: {x_train.shape}")
-
+    
+    # Helper function to convert DataFrames/Series to NumPy arrays
+    def to_numpy(data):
+        if isinstance(data, (pd.DataFrame, pd.Series)):
+            return data.to_numpy()
+        return data
+    
+    # Convert all datasets to NumPy arrays
+    x_train = to_numpy(x_train)
+    y_train = to_numpy(y_train)
+    x_prunning = to_numpy(x_prunning)
+    y_prunning = to_numpy(y_prunning)
+    x_validation = to_numpy(x_validation)
+    y_validation = to_numpy(y_validation)
+    x_stabilization = to_numpy(x_stabilization)
+    y_stabilization = to_numpy(y_stabilization)
+    
+    # Debugging: Confirm data types and shapes after conversion
+    print(f"x_train type after conversion: {type(x_train)}, shape: {x_train.shape}")
+    print(f"y_train type after conversion: {type(y_train)}, shape: {y_train.shape}")
+    print(f"x_prunning type: {type(x_prunning)}, shape: {x_prunning.shape}")
+    print(f"y_prunning type: {type(y_prunning)}, shape: {y_prunning.shape}")
+    if config.get('x_validation_file') and config.get('y_validation_file'):
+        print(f"x_validation type: {type(x_validation)}, shape: {x_validation.shape}")
+        print(f"y_validation type: {type(y_validation)}, shape: {y_validation.shape}")
+    print(f"x_stabilization type: {type(x_stabilization)}, shape: {x_stabilization.shape}")
+    print(f"y_stabilization type: {type(y_stabilization)}, shape: {y_stabilization.shape}")
+    
     # Plugin-specific parameters
     env_params = environment_plugin.plugin_params
     agent_params = agent_plugin.plugin_params
     optimizer_params = optimizer_plugin.plugin_params
 
-    # Prepare environment
+    # Prepare the environment
     environment_plugin.set_params(**env_params)
-    # set the genome in the config variable
     config['genome'] = optimizer_plugin.current_genome 
     environment_plugin.build_environment(x_train, y_train, config)
 
-    # Prepare agent
+    # Prepare the agent
     agent_plugin.set_params(**agent_params)
 
-    # Prepare optimizer
+    # Prepare the optimizer
     optimizer_plugin.set_params(**optimizer_params)
     optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
     optimizer_plugin.set_agent(agent_plugin)
-    #print the config max steps
-
+    
     print(f"Max steps: {config['max_steps']}")
-    neat_config = optimizer_plugin.train(config['epochs'], x_train, y_train, x_stabilization, y_stabilization, x_prunning, y_prunning, x_validation,y_validation, config, environment_plugin)
+    
+    # Train the optimizer
+    neat_config = optimizer_plugin.train(
+        config['epochs'],
+        x_train,
+        y_train,
+        x_stabilization,
+        y_stabilization,
+        x_prunning,
+        y_prunning,
+        x_validation,
+        y_validation,
+        config,
+        environment_plugin
+    )
 
-
-    # Save the trained model
-    if config['save_model']:
+    # Save the trained model if specified
+    if config.get('save_model'):
         optimizer_plugin.save(config['save_model'])
         agent_plugin.load(config['save_model'])
         print(f"Model saved to {config['save_model']}")
 
-    # for the final training performance, concatenate (vertically) the training, prunning and stabilization datasets
-    x_train_full = pd.concat([x_train, x_prunning, x_stabilization], axis=0)
-    y_train_full = pd.concat([y_train, y_prunning, y_stabilization], axis=0)
+    # Concatenate training, pruning, and stabilization datasets for final performance evaluation
+    # Using NumPy's vstack and concatenate for consistency
+    x_train_full = np.vstack([x_train, x_prunning, x_stabilization])
+    y_train_full = np.concatenate([y_train, y_prunning, y_stabilization])
+    
+    print(f"x_train_full shape: {x_train_full.shape}")
+    print(f"y_train_full shape: {y_train_full.shape}")
 
-    # sets the environment data as the training data, since the optimizer changes it to the validation data for debugging 
+    # Update configuration for extended max_steps
     temp_config = config.copy()
     temp_config['max_steps'] = config['max_steps'] * 3
     environment_plugin.build_environment(x_train_full, y_train_full, temp_config)
     optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
 
-    # Show trades and calculate fitness for the best genome
+    # Evaluate the best genome on the training data
     fitness, info = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False)
     training_fitness = fitness
     training_outputs = optimizer_plugin.outputs
     training_node_values = optimizer_plugin.node_values
-    
-
 
     # Validate the model if validation data is provided
-    if config['x_validation_file'] and config['y_validation_file']:
+    if config.get('x_validation_file') and config.get('y_validation_file'):
         print("Validating model...")
         print(f"x_validation shape: {x_validation.shape}")
         print(f"y_validation shape: {y_validation.shape}")
-        # if sizes do not match, exit
+        
+        # Check if validation data shapes match
         if len(x_validation) != len(y_validation):
             raise ValueError("x_validation and y_validation data shapes do not match.")
 
-        # Set the model to use the best genome for evaluation
+        # Set the agent to use the best genome for evaluation
         agent_plugin.set_model(optimizer_plugin.best_genome, neat_config)
         
+        # Build the environment with validation data
         environment_plugin.build_environment(x_validation, y_validation, config)
         
+        # Reset the environment to start validation
         observation, info = environment_plugin.reset()
         done = False
-        # Initialize total_reward
-        total_reward = []
-
-        # Set the best genome for the agent
+        
+        # Reconfigure the agent and optimizer for validation
         agent_plugin.set_model(optimizer_plugin.best_genome, agent_plugin.config)
-
-        # Set the environment and agent for the optimizer
         optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
         optimizer_plugin.set_agent(agent_plugin)
 
-        # Calculate fitness for the best genome using the same method as in training
+        # Evaluate the best genome on the validation data
         validation_fitness, info = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
+        
         # Extract orders from the info dictionary
         orders = info.get('orders', [])
 
+        # Save orders to CSV if any exist
         if orders:
-            # Define the CSV file name
             csv_file = 'validation_trades.csv'
-            
-            # Get the headers from the first order dictionary
             headers = orders[0].keys()
-            
-            # Write orders to the CSV file
-            with open(csv_file, mode='w', newline='') as file:
-                writer = csv.DictWriter(file, fieldnames=headers)
-                writer.writeheader()
-                writer.writerows(orders)
-            
-            # Print confirmation message
-            print(f"Trades were saved to {csv_file}.")
+            try:
+                with open(csv_file, mode='w', newline='') as file:
+                    writer = csv.DictWriter(file, fieldnames=headers)
+                    writer.writeheader()
+                    writer.writerows(orders)
+                print(f"Trades were saved to {csv_file}.")
+            except Exception as e:
+                print(f"Failed to save trades to CSV: {e}")
         else:
             print("No orders to save.")
 
         validation_outputs = optimizer_plugin.outputs
         validation_node_values = optimizer_plugin.node_values
-        # validation_outputs is a list of lists (table of 4 columns), print the first 5 files
-        print(f"Validation outputs: {validation_outputs[:5]}")
+        print(f"Validation outputs: {validation_outputs[:5]}")  # Display first 5 validation outputs
 
-        # Print the final balance and fitness
+        # Display training and validation fitness
         print(f"*****************************************************************")
         print(f"TRAINING FITNESS: {training_fitness}")
         print(f"VALIDATION FITNESS: {validation_fitness}")
         print(f"*****************************************************************")
-        # Print complexity
+        
+        # Display genome complexity and other metrics
         kolmogorov_c = optimizer_plugin.kolmogorov_complexity(optimizer_plugin.best_genome)
         print(f"Kolmogorov Complexity (bits): {kolmogorov_c*8}")
-        # Print number of connections of the champion genome
+        
         num_connections = len(optimizer_plugin.best_genome.connections)
         print(f"Number of connections: {num_connections}")
-        # Print number of nodes of the champion genome
+        
         num_nodes = len(optimizer_plugin.best_genome.nodes)
         print(f"Number of nodes: {num_nodes}")
-        # Convert the genome to a string representation
+        
         genome_bytes = pickle.dumps(optimizer_plugin.best_genome)
-        # print the lenght of the genome
         print(f"Genome length (bits): {len(genome_bytes)*8}")
-        # Print the Shannon entropy of the weights
+        
         weights_entropy = calculate_weights_entropy(optimizer_plugin.best_genome)
         print(f"Weights entropy (bits): {weights_entropy}")
 
         print(f"*****************************************************************")
-        # Print training information for input and output
-        # calculate the total input training information y_train 
+        
+        # Calculate and display training information entropy
         training_input_information = shannon_hartley_information(y_train, config['periodicity_minutes'])
         print(f"Training Input Information (bits): {training_input_information}")
-        # calculate the total training_outputs information
+        
         training_output_information = shannon_hartley_information(training_outputs, config['periodicity_minutes'])
         print(f"Training Output Information (bits): {training_output_information}")
-        # calculate the total training_node_values_information
+        
         training_node_values_information = shannon_hartley_information(training_node_values, config['periodicity_minutes'])
         print(f"Total Training Node Values Information (bits): {training_node_values_information}")
-        # print the total training information as the entropy multiplied by the training_node_values_information
-        #veryfy for None o NoneType
+        
+        # Calculate total training information
         if training_node_values_information is None:
-            training_total_information = num_connections*weights_entropy
+            training_total_information = num_connections * weights_entropy
         else:
-            training_total_information = num_connections*weights_entropy + training_node_values_information
+            training_total_information = num_connections * weights_entropy + training_node_values_information
         print(f"Total Training Information (bits): {training_total_information}")
 
-
-
         print(f"*****************************************************************")
-        # Print validation information for input and output
-        # calculate the total input validation information y_validation
+        
+        # Calculate and display validation information entropy
         input_information_validation = shannon_hartley_information(y_validation, config['periodicity_minutes'])
         print(f"Validation Input Information (bits): {input_information_validation}")
-        # calculate total validation_outputs information
+        
         output_information_validation = shannon_hartley_information(validation_outputs, config['periodicity_minutes'])
         print(f"Validation Output Information (bits): {output_information_validation}")
-        # calculate total validation_node_values_information
+        
         node_values_information_validation = shannon_hartley_information(validation_node_values, config['periodicity_minutes'])
         print(f"Total Validation Node Values Information (bits): {node_values_information_validation}")
-        # print the total validation information as the entropy multiplied by the node_values_information
+        
+        # Calculate total validation information
         if node_values_information_validation is None:
-            validation_total_information = num_connections*weights_entropy
+            validation_total_information = num_connections * weights_entropy
         else:
-            validation_total_information = num_connections*weights_entropy + node_values_information_validation
+            validation_total_information = num_connections * weights_entropy + node_values_information_validation
         print(f"Total Validation Information (bits): {validation_total_information}")
         print(f"*****************************************************************")
         
@@ -348,17 +396,22 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
             'validation_fitness': float(validation_fitness)
         }
 
-    # Save debug info
+    # Save debug info if specified
     if config.get('save_log'):
-        save_debug_info(debug_info, config['save_log'])
-        print(f"Debug info saved to {config['save_log']}.")
-
-
-    # Remote log debug info and config
+        try:
+            save_debug_info(debug_info, config['save_log'])
+            print(f"Debug info saved to {config['save_log']}.")
+        except Exception as e:
+            print(f"Failed to save debug info: {e}")
+    
+    # Remote log debug info and config if specified
     if config.get('remote_log'):
-        remote_log(config, debug_info, config['remote_log'], config['username'], config['password'])
-        print(f"Debug info saved to {config['remote_log']}.")
-
+        try:
+            remote_log(config, debug_info, config['remote_log'], config['username'], config['password'])
+            print(f"Debug info saved to {config['remote_log']}.")
+        except Exception as e:
+            print(f"Failed to remote log debug info: {e}")
+    
     print(f"Execution time: {execution_time} seconds")
 
 def load_and_evaluate_model(config, agent_plugin):
