@@ -1,7 +1,7 @@
 import pandas as pd
 from app.reconstruction import unwindow_data
 
-idef load_csv(file_path, headers=False):
+def load_csv(file_path, headers=False):
     """
     Load CSV data where the first column represents dates.
 
