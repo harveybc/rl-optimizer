@@ -8,6 +8,7 @@ from app.config_handler import save_debug_info, remote_log
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 import pickle
 import zlib
+import csv
 
 def process_data(config):
     print(f"Loading data from CSV file: {config['x_train_file']}")
@@ -202,6 +203,27 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
 
         # Calculate fitness for the best genome using the same method as in training
         validation_fitness, info = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=True)
+        # Extract orders from the info dictionary
+        orders = info.get('orders', [])
+
+        if orders:
+            # Define the CSV file name
+            csv_file = 'validation_trades.csv'
+            
+            # Get the headers from the first order dictionary
+            headers = orders[0].keys()
+            
+            # Write orders to the CSV file
+            with open(csv_file, mode='w', newline='') as file:
+                writer = csv.DictWriter(file, fieldnames=headers)
+                writer.writeheader()
+                writer.writerows(orders)
+            
+            # Print confirmation message
+            print(f"Trades were saved to {csv_file}.")
+        else:
+            print("No orders to save.")
+
         validation_outputs = optimizer_plugin.outputs
         validation_node_values = optimizer_plugin.node_values
         # validation_outputs is a list of lists (table of 4 columns), print the first 5 files
