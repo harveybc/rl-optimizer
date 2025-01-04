@@ -10,6 +10,8 @@ import pickle
 import zlib
 import csv
 
+import pandas as pd  # Ensure pandas is imported
+
 def process_data(config):
     print(f"Loading data from CSV file: {config['x_train_file']}")
     x_train_data = load_csv(config['x_train_file'], headers=config['headers'])
@@ -25,18 +27,25 @@ def process_data(config):
         y_train_data = x_train_data.iloc[:, y_train_file]
         print(f"Using y_train data at column index: {y_train_file}")
     else:
-        raise ValueError("Either y_train_file  must be specified in the configuration.")
+        raise ValueError("Either y_train_file must be specified in the configuration.")
 
-    # Ensure input data is numeric except for the first column of x_train assumed to contain the date
+    # Ensure y_train_data is numeric
     y_train_data = y_train_data.apply(pd.to_numeric, errors='coerce').fillna(0)
-    
+
     # Apply input offset and time horizon
     offset = config['input_offset']
     print(f"Applying input offset: {offset}")
-    #y_train_data = y_train_data[offset:]
     x_train_data = x_train_data[offset:]
     print(f"Data shape after applying offset: {x_train_data.shape}, {y_train_data.shape}")
-    # if the first dimension of x_train and y_train do not match, exit
+
+    # Ensure input data is numeric except for the first column (date)
+    # Assuming the first column is at index 0
+    date_column = x_train_data.iloc[:, 0]
+    numeric_data = x_train_data.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(0)
+    x_train_data = pd.concat([date_column, numeric_data], axis=1)
+    print("Converted x_train_data to numeric, preserving the date column.")
+
+    # Verify matching lengths
     if len(x_train_data) != len(y_train_data):
         raise ValueError("x_train_data (market observation) and y_train_data(data observation) data shapes do not match.")
 
@@ -44,6 +53,7 @@ def process_data(config):
     min_length = min(len(x_train_data), len(y_train_data))
     x_train_data = x_train_data[:min_length]
     y_train_data = y_train_data[:min_length]
+
     # Divide the data into three parts: training, pruning, and stabilization
     third_index = min_length // 3
 
@@ -61,49 +71,54 @@ def process_data(config):
     print(f"Pruning data size: {len(x_prunning_data)}")
     print(f"Stabilization data size: {len(x_stabilization_data)}")
 
-    if config['x_validation_file'] and config['y_validation_file']:
-        print("loading Validation data...")
+    if config.get('x_validation_file') and config.get('y_validation_file'):
+        print("Loading Validation data...")
         x_validation = load_csv(config['x_validation_file'], headers=config['headers'])
         y_validation = load_csv(config['y_validation_file'], headers=config['headers'])
 
         print(f"Validation market data loaded with shape: {x_validation.shape}")
         print(f"Validation processed data loaded with shape: {y_validation.shape}")
-        
-        # Ensure x_validation is a 2D array
-        if x_validation.ndim == 1:
-            x_validation = x_validation.reshape(-1, 1)
-        
-        # Ensure input data is numeric except for the first column of x_train assumed to contain the date
-        y_validation = y_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
-        x_validation = x_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
 
-        # Apply the  input_offset to the x validation data
-        x_validation = x_validation[config['input_offset']:]
-        
+        # Ensure x_validation is a DataFrame
+        if isinstance(x_validation, pd.Series):
+            x_validation = x_validation.to_frame()
+
+        # Ensure input data is numeric except for the first column (date)
+        date_validation_column = x_validation.iloc[:, 0]
+        numeric_validation_data = x_validation.iloc[:, 1:].apply(pd.to_numeric, errors='coerce').fillna(0)
+        x_validation = pd.concat([date_validation_column, numeric_validation_data], axis=1)
+        print("Converted x_validation to numeric, preserving the date column.")
+
+        # Apply the input_offset to the x validation data
+        x_validation = x_validation[offset:]
+        y_validation = y_validation.apply(pd.to_numeric, errors='coerce').fillna(0)
+
         print(f"x_validation shape: {x_validation.shape}")
         print(f"y_validation shape: {y_validation.shape}")
-        # if sizes do not match, exit
+
+        # Verify matching lengths
         if len(x_validation) != len(y_validation):
             raise ValueError("x_validation and y_validation data shapes do not match.")
-
-    
 
     # Debugging messages to confirm types and shapes
     print(f"Returning data of type: {type(x_train_data)}, {type(y_train_data)}")
     print(f"x_train_data shape after adjustments: {x_train_data_split.shape}")
-    print(f"y_train_data shape after adjustments: {x_train_data_split.shape}")
+    print(f"y_train_data shape after adjustments: {y_train_data_split.shape}")
     print(f"x_prunning_data shape: {x_prunning_data.shape}")
     print(f"y_prunning_data shape: {y_prunning_data.shape}")
-    print(f"x_validation_data shape after adjustments: {x_validation.shape}")
-    print(f"y_validation_data shape after adjustments: {y_validation.shape}")
+    
+    if config.get('x_validation_file') and config.get('y_validation_file'):
+        print(f"x_validation_data shape after adjustments: {x_validation.shape}")
+        print(f"y_validation_data shape after adjustments: {y_validation.shape}")
+    
     print(f"x_stabilization_data shape: {x_stabilization_data.shape}")
     print(f"y_stabilization_data shape: {y_stabilization_data.shape}")
 
-    # if any of the data to be returned is zero, exit with erro showing the exact dataset that have zero size
-    if len(x_train_data) == 0:
-        raise ValueError("x_train_data is empty.")
-    if len(y_train_data) == 0:
-        raise ValueError("y_train_data is empty.")
+    # if any of the data to be returned is zero, exit with error showing the exact dataset that have zero size
+    if len(x_train_data_split) == 0:
+        raise ValueError("x_train_data_split is empty.")
+    if len(y_train_data_split) == 0:
+        raise ValueError("y_train_data_split is empty.")
     if len(x_prunning_data) == 0:
         raise ValueError("x_prunning_data is empty.")
     if len(y_prunning_data) == 0:
@@ -112,13 +127,34 @@ def process_data(config):
         raise ValueError("x_stabilization_data is empty.")
     if len(y_stabilization_data) == 0:
         raise ValueError("y_stabilization_data is empty.")
-    if config['x_validation_file'] and config['y_validation_file']:
+    if config.get('x_validation_file') and config.get('y_validation_file'):
         if len(x_validation) == 0:
             raise ValueError("x_validation is empty.")
         if len(y_validation) == 0:
             raise ValueError("y_validation is empty.")
-    
-    return x_train_data_split, y_train_data_split, x_prunning_data, y_prunning_data, x_validation, y_validation, x_stabilization_data, y_stabilization_data
+
+    if config.get('x_validation_file') and config.get('y_validation_file'):
+        return (
+            x_train_data_split,
+            y_train_data_split,
+            x_prunning_data,
+            y_prunning_data,
+            x_validation,
+            y_validation,
+            x_stabilization_data,
+            y_stabilization_data
+        )
+    else:
+        return (
+            x_train_data_split,
+            y_train_data_split,
+            x_prunning_data,
+            y_prunning_data,
+            pd.DataFrame(),  # Empty DataFrame for x_validation
+            pd.Series(),     # Empty Series for y_validation
+            x_stabilization_data,
+            y_stabilization_data
+        )
 
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
     start_time = time.time()
