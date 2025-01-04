@@ -183,8 +183,6 @@ def process_data(config):
         )
 
 
-
-
 def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_plugin):
     """
     Executes the prediction pipeline for the reinforcement learning system.
@@ -202,7 +200,20 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     
     print("Running process_data...")
     # Load and process data
-    x_train, y_train, x_prunning, y_prunning, x_validation, y_validation, x_stabilization, y_stabilization = process_data(config)
+    (
+        x_train,
+        y_train,
+        dates_train,
+        x_prunning,
+        y_prunning,
+        dates_prunning,
+        x_validation,
+        y_validation,
+        dates_validation,
+        x_stabilization,
+        y_stabilization,
+        dates_stabilization
+    ) = process_data(config)
     print(f"Processed data received of type: {type(x_train)} and shape: {x_train.shape}")
     
     # Plugin-specific parameters
@@ -213,8 +224,10 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     # Prepare the environment
     environment_plugin.set_params(**env_params)
     config['genome'] = optimizer_plugin.current_genome 
-    environment_plugin.build_environment(x_train, y_train, config)
-
+    # Pass both x_train and dates_train to the environment
+    environment_plugin.build_environment(x_train, y_train, dates_train, config)
+    # Ensure that the environment now has access to dates
+    
     # Prepare the agent
     agent_plugin.set_params(**agent_params)
 
@@ -250,14 +263,17 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
     # Using pandas' concat for DataFrames
     x_train_full = pd.concat([x_train, x_prunning, x_stabilization], axis=0)
     y_train_full = pd.concat([y_train, y_prunning, y_stabilization], axis=0)
-    
+    dates_train_full = np.concatenate([dates_train, dates_prunning, dates_stabilization])
+
     print(f"x_train_full shape: {x_train_full.shape}")
     print(f"y_train_full shape: {y_train_full.shape}")
+    print(f"dates_train_full length: {len(dates_train_full)}")
 
     # Update configuration for extended max_steps
     temp_config = config.copy()
     temp_config['max_steps'] = config['max_steps'] * 3
-    environment_plugin.build_environment(x_train_full, y_train_full, temp_config)
+    # Pass dates_train_full to build_environment
+    environment_plugin.build_environment(x_train_full, y_train_full, dates_train_full, temp_config)
     optimizer_plugin.set_environment(environment_plugin.env, config['num_hidden'])
 
     # Evaluate the best genome on the training data
@@ -271,16 +287,19 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
         print("Validating model...")
         print(f"x_validation shape: {x_validation.shape}")
         print(f"y_validation shape: {y_validation.shape}")
+        print(f"dates_validation length: {len(dates_validation)}")
         
         # Check if validation data shapes match
         if len(x_validation) != len(y_validation):
             raise ValueError("x_validation and y_validation data shapes do not match.")
+        if len(x_validation) != len(dates_validation):
+            raise ValueError("x_validation and dates_validation lengths do not match.")
 
         # Set the agent to use the best genome for evaluation
-        agent_plugin.set_model(optimizer_plugin.best_genome, neat_config)
+        agent_plugin.set_model(optimizer_plugin.best_genome, agent_plugin.config)
         
-        # Build the environment with validation data
-        environment_plugin.build_environment(x_validation, y_validation, config)
+        # Build the environment with validation data and dates
+        environment_plugin.build_environment(x_validation, y_validation, dates_validation, config)
         
         # Reset the environment to start validation
         observation, info = environment_plugin.reset()
@@ -403,6 +422,7 @@ def run_prediction_pipeline(config, environment_plugin, agent_plugin, optimizer_
             print(f"Failed to remote log debug info: {e}")
     
     print(f"Execution time: {execution_time} seconds")
+
 
 
 def load_and_evaluate_model(config, agent_plugin):
