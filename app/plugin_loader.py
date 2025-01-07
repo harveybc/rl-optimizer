@@ -1,24 +1,12 @@
-import logging
+# app/plugin_loader.py
+
 from importlib import metadata
-import sys
+import logging
+from app.logger import get_logger  # Import the centralized logger
 
-# Configure logger for the plugin loader
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)  # Set to DEBUG to capture all levels of log messages
+logger = get_logger(__name__)
 
-# Create console handler with a higher log level
-console_handler = logging.StreamHandler(sys.stdout)
-console_handler.setLevel(logging.DEBUG)
-
-# Create formatter and add it to the handlers
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-console_handler.setFormatter(formatter)
-
-# Add the handlers to the logger
-if not logger.handlers:
-    logger.addHandler(console_handler)
-
-def load_plugin(plugin_group, plugin_name):
+def load_plugin(plugin_group: str, plugin_name: str):
     """
     Dynamically loads a plugin class from the specified entry point group.
 
@@ -41,7 +29,7 @@ def load_plugin(plugin_group, plugin_name):
         If the plugin cannot be found or loaded.
     """
     logger.debug(f"Attempting to load plugin '{plugin_name}' from group '{plugin_group}'.")
-    
+
     try:
         # Retrieve all entry points for the specified group
         entry_points = metadata.entry_points()
@@ -75,7 +63,7 @@ def load_plugin(plugin_group, plugin_name):
         logger.exception(f"Unexpected error while loading plugin '{plugin_name}' from group '{plugin_group}': {e}")
         raise
 
-def load_environment_plugin(env_name):
+def load_environment_plugin(env_name: str):
     """
     Loads an environment plugin by name.
 
@@ -92,7 +80,7 @@ def load_environment_plugin(env_name):
     """
     return load_plugin('rl_optimizer.environments', env_name)
 
-def load_agent_plugin(agent_name):
+def load_agent_plugin(agent_name: str):
     """
     Loads an agent plugin by name.
 
@@ -109,7 +97,7 @@ def load_agent_plugin(agent_name):
     """
     return load_plugin('rl_optimizer.agents', agent_name)
 
-def load_optimizer_plugin(optimizer_name):
+def load_optimizer_plugin(optimizer_name: str):
     """
     Loads an optimizer plugin by name.
 
@@ -126,7 +114,7 @@ def load_optimizer_plugin(optimizer_name):
     """
     return load_plugin('rl_optimizer.optimizers', optimizer_name)
 
-def get_plugin_params(plugin_group, plugin_name):
+def get_plugin_params(plugin_group: str, plugin_name: str):
     """
     Retrieves the parameters of a specified plugin.
 
