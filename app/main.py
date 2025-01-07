@@ -1,6 +1,9 @@
+# app/main.py
+
 import sys
 import json
 import logging
+from app.logger import setup_logging, get_logger  # Import the centralized logger
 from app.config_handler import (
     load_config,
     save_config,
@@ -18,29 +21,26 @@ from app.config import DEFAULT_VALUES
 from app.plugin_loader import load_plugin
 from config_merger import merge_config, process_unknown_args
 
-# Configure logging
-logging.basicConfig(
-    level=logging.DEBUG,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler("app.log", mode='a')
-    ]
-)
-
-logger = logging.getLogger(__name__)
-
 def main():
     """
     Main entry point for the RL optimizer application.
 
     This function orchestrates the overall workflow:
+    - Sets up centralized logging.
     - Parses command-line arguments.
     - Loads and merges configurations from default, local, and remote sources.
     - Dynamically loads optimizer, environment, and agent plugins.
     - Executes the training or prediction pipeline based on the configuration.
     - Saves configurations locally or remotely if specified.
     """
+    # Initialize centralized logging
+    setup_logging(
+        log_level=logging.DEBUG,
+        log_file="rl_optimizer.log",
+        max_bytes=10*1024*1024,  # 10 MB
+        backup_count=5
+    )
+    logger = get_logger(__name__)
     logger.debug("Starting main application.")
 
     try:
@@ -83,7 +83,7 @@ def main():
             "rl_optimizer.optimizers", optimizer_plugin_name
         )
         optimizer_plugin = optimizer_class()
-        logger.debug(f"Loaded optimizer plugin: {optimizer_plugin}")
+        logger.debug(f"Loaded optimizer plugin '{optimizer_plugin_name}' from '{optimizer_module}'.")
 
         # Load and initialize environment plugin
         environment_plugin_name = config.get("environment_plugin")
@@ -92,7 +92,7 @@ def main():
             "rl_optimizer.environments", environment_plugin_name
         )
         environment_plugin = environment_class()
-        logger.debug(f"Loaded environment plugin: {environment_plugin}")
+        logger.debug(f"Loaded environment plugin '{environment_plugin_name}' from '{environment_module}'.")
 
         # Load and initialize agent plugin
         agent_plugin_name = config.get("agent_plugin")
@@ -101,11 +101,11 @@ def main():
             "rl_optimizer.agents", agent_plugin_name
         )
         agent_plugin = agent_class()
-        logger.debug(f"Loaded agent plugin: {agent_plugin}")
+        logger.debug(f"Loaded agent plugin '{agent_plugin_name}' from '{agent_module}'.")
 
         # Merge environment-specific parameters
         logger.info("Merging environment-specific parameters...")
-        environment_params = environment_plugin.plugin_params if hasattr(environment_plugin, 'plugin_params') else {}
+        environment_params = getattr(environment_plugin, 'plugin_params', {})
         config = merge_config(config, environment_params, file_config, cli_args, unknown_args_dict)
         logger.debug(f"Configuration after merging environment parameters: {config}")
 
