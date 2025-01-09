@@ -7,64 +7,8 @@ import logging
 import numpy as np
 import pandas as pd
 from app.logger import get_logger
-from typing import List, Dict, Any
 
 logger = get_logger(__name__)
-
-
-def process_unknown_args(unknown_args: List[str]) -> Dict[str, Any]:
-    """
-    Processes unknown command-line arguments into a configuration dictionary.
-
-    Parameters
-    ----------
-    unknown_args : List[str]
-        List of unknown command-line arguments.
-
-    Returns
-    -------
-    Dict[str, Any]
-        Dictionary of processed unknown arguments.
-    """
-    logger.debug("Processing unknown command-line arguments.")
-    config = {}
-    it = iter(unknown_args)
-    for arg in it:
-        if arg.startswith('--'):
-            key = arg.lstrip('--')
-            try:
-                value = next(it)
-                config[key] = value
-                logger.debug(f"Processed unknown arg: {key} = {value}")
-            except StopIteration:
-                logger.warning(f"No value provided for argument: {arg}")
-                config[key] = True  # Flag argument
-    logger.debug(f"Processed unknown arguments: {config}")
-    return config
-
-def convert_type(value: Any) -> Any:
-    """
-    Attempts to convert a value to int or float. Returns the original value if conversion fails.
-
-    Parameters
-    ----------
-    value : Any
-        The value to convert.
-
-    Returns
-    -------
-    Any
-        The converted value or the original value if conversion fails.
-    """
-    logger.debug(f"Converting type for value: {value}")
-    try:
-        return int(value)
-    except (ValueError, TypeError):
-        try:
-            return float(value)
-        except (ValueError, TypeError):
-            logger.debug(f"Value remains as string: {value}")
-            return value
 
 def kolmogorov_complexity(genome, compression_level: int = 9) -> int:
     """
