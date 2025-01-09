@@ -1,71 +1,151 @@
-import sys
-from app.config import DEFAULT_VALUES, ARGUMENT_MAPPING
+# app/config_merger.py
 
-def process_unknown_args(unknown_args):
+import sys
+from typing import List, Dict, Any, Optional
+from app.config import DEFAULT_VALUES, ARGUMENT_MAPPING
+from app.logger import get_logger
+
+logger = get_logger(__name__)
+
+def process_unknown_args(unknown_args: List[str]) -> Dict[str, Any]:
+    """
+    Processes unknown command-line arguments into a configuration dictionary.
+
+    Parameters
+    ----------
+    unknown_args : List[str]
+        List of unknown command-line arguments.
+
+    Returns
+    -------
+    Dict[str, Any]
+        Dictionary of processed unknown arguments.
+    """
+    logger.debug("Starting to process unknown command-line arguments.")
     processed_args = {}
     i = 0
     while i < len(unknown_args):
         key = unknown_args[i].lstrip('-')
         value = unknown_args[i + 1] if i + 1 < len(unknown_args) else None
+
         # Convert short-form to long-form using the mapping
         if key in ARGUMENT_MAPPING:
+            original_key = key
             key = ARGUMENT_MAPPING[key]
+            logger.debug(f"Converted short-form argument '{original_key}' to long-form '{key}'.")
+
         processed_args[key] = value
+        logger.debug(f"Processed argument: {key} = {value}")
         i += 2
+
+    logger.debug(f"Completed processing unknown arguments: {processed_args}")
     return processed_args
 
-def convert_type(value):
+def convert_type(value: Any) -> Any:
+    """
+    Attempts to convert a value to int or float. Returns the original value if conversion fails.
+
+    Parameters
+    ----------
+    value : Any
+        The value to convert.
+
+    Returns
+    -------
+    Any
+        The converted value or the original value if conversion fails.
+    """
+    logger.debug(f"Attempting to convert value: {value}")
+    if value is None:
+        logger.debug("Value is None; returning as is.")
+        return value
+
     try:
-        return int(value)
-    except ValueError:
+        converted = int(value)
+        logger.debug(f"Converted value to int: {converted}")
+        return converted
+    except (ValueError, TypeError):
         try:
-            return float(value)
-        except ValueError:
+            converted = float(value)
+            logger.debug(f"Converted value to float: {converted}")
+            return converted
+        except (ValueError, TypeError):
+            logger.debug(f"Value remains as string: {value}")
             return value
 
-def merge_config(defaults, plugin_params, config, cli_args, unknown_args):
+def merge_config(defaults: Dict[str, Any],
+                plugin_params: Dict[str, Any],
+                config: Dict[str, Any],
+                cli_args: Dict[str, Any],
+                unknown_args: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Merges configuration dictionaries with the following precedence:
+    CLI arguments > Unknown arguments > File configuration > Plugin parameters > Default configuration.
+
+    Parameters
+    ----------
+    defaults : Dict[str, Any]
+        The default configuration parameters.
+    plugin_params : Dict[str, Any]
+        Plugin-specific configuration parameters.
+    config : Dict[str, Any]
+        Configuration loaded from files (local or remote).
+    cli_args : Dict[str, Any]
+        Configuration parameters passed via command-line arguments.
+    unknown_args : Dict[str, Any]
+        Additional configuration parameters not recognized by the CLI.
+
+    Returns
+    -------
+    Dict[str, Any]
+        The merged configuration dictionary.
+    """
+    logger.debug("Starting configuration merge process.")
+
     # Step 1: Start with default values from config.py
     merged_config = defaults.copy()
-    print(f"Actual Step 1 Output: {merged_config}")
+    logger.debug(f"Step 1 - Defaults: {merged_config}")
 
     # Step 2: Merge with plugin default parameters
-    for k, v in plugin_params.items():
-        print(f"Step 2 merging: plugin_param {k} = {v}")
-        merged_config[k] = v
-    print(f"Actual Step 2 Output: {merged_config}")
+    for key, value in plugin_params.items():
+        logger.debug(f"Step 2 - Merging plugin_param '{key}' = {value}")
+        merged_config[key] = value
+    logger.debug(f"Step 2 Output: {merged_config}")
 
     # Step 3: Merge with file configuration
-    for k, v in config.items():
-        print(f"Step 3 merging from file config: {k} = {v}")
-        merged_config[k] = v
-    print(f"Actual Step 3 Output: {merged_config}")
+    for key, value in config.items():
+        logger.debug(f"Step 3 - Merging from file config: '{key}' = {value}")
+        merged_config[key] = value
+    logger.debug(f"Step 3 Output: {merged_config}")
 
-    # Step 4: Merge with CLI arguments (ensure CLI args always override)
+    # Step 4: Merge with CLI arguments (CLI args always override)
     cli_keys_single = [arg.lstrip('-') for arg in sys.argv if arg.startswith('-') and not arg.startswith('--')]
     cli_expanded = []
     for key in cli_keys_single:
         if key in ARGUMENT_MAPPING:
+            original_key = key
             key = ARGUMENT_MAPPING[key]
             cli_expanded.append(key)
+            logger.debug(f"Expanded CLI short-form argument '{original_key}' to '{key}'.")
 
     cli_keys_double = [arg.lstrip('--') for arg in sys.argv if arg.startswith('--')]
     cli_keys = cli_keys_double + cli_expanded
-    print(f"CLI keys: {cli_keys}")
+    logger.debug(f"CLI keys to merge: {cli_keys}")
 
     for key in cli_keys:
-        original_key = key
-        if original_key in cli_args:
-            print(f"Step 4 merging from CLI args: {key} = {cli_args[original_key]}")
-            merged_config[key] = cli_args[original_key]
-        elif original_key in unknown_args:
-            value = convert_type(unknown_args[original_key])
-            print(f"Step 4 merging from unknown args: {key} = {value}")
-            merged_config[key] = value
+        if key in cli_args and cli_args[key] is not None:
+            logger.debug(f"Step 4 - Merging from CLI args: '{key}' = {cli_args[key]}")
+            merged_config[key] = cli_args[key]
+        elif key in unknown_args and unknown_args[key] is not None:
+            converted_value = convert_type(unknown_args[key])
+            logger.debug(f"Step 4 - Merging from unknown args: '{key}' = {converted_value}")
+            merged_config[key] = converted_value
 
-    # Special handling for input_file
-    if len(sys.argv) > 1 and not sys.argv[1].startswith('-'):
-        merged_config['x_train_file'] = sys.argv[1]
+    # Special handling for input_file (positional argument)
+    positional_args = [arg for arg in sys.argv if not arg.startswith('-')]
+    if len(positional_args) > 0 and not positional_args[0].startswith('-'):
+        merged_config['x_train_file'] = positional_args[0]
+        logger.debug(f"Special handling - Set 'x_train_file' to positional argument: {positional_args[0]}")
 
-    print(f"Actual Step 4 Output: {merged_config}")
-
+    logger.debug(f"Final merged configuration: {merged_config}")
     return merged_config
