@@ -10,32 +10,34 @@ from app.logger import get_logger
 
 logger = get_logger(__name__)
 
-def kolmogorov_complexity(genome, compression_level: int = 9) -> int:
+def kolmogorov_complexity(genome_bytes: bytes, compression_level: int = 9) -> int:
     """
-    Estimate the Kolmogorov complexity of a NEAT genome by compressing its serialized form.
+    Estimates the Kolmogorov complexity of the given genome data by compressing it
+    and measuring the size of the compressed data.
 
     Parameters
     ----------
-    genome : object
-        The NEAT genome to calculate complexity for.
+    genome_bytes : bytes
+        The genome data in bytes.
     compression_level : int, optional
-        The compression level for zlib (1-9), where 9 is the highest level. Default is 9.
+        The compression level for zlib (default is 9, which is the highest compression).
 
     Returns
     -------
     int
-        The length of the compressed genome in bytes as an estimate of its Kolmogorov complexity.
+        The length of the compressed data, representing the estimated Kolmogorov complexity.
     """
-    logger.debug("Calculating Kolmogorov complexity for the genome.")
-    try:
-        genome_bytes = pickle.dumps(genome)
-        compressed_data = zlib.compress(genome_bytes, level=compression_level, wbits=-15)
-        complexity = len(compressed_data)
-        logger.debug(f"Kolmogorov complexity calculated: {complexity} bytes.")
-        return complexity
-    except Exception as e:
-        logger.error(f"Error calculating Kolmogorov complexity: {e}")
-        raise
+    logger = get_logger(__name__)
+    logger.debug(f"Calculating Kolmogorov complexity with compression_level={compression_level}")
+    
+    # Create a compressor object with the specified compression level and wbits
+    compressor = zlib.compressobj(level=compression_level, wbits=-15)
+    
+    # Compress the data
+    compressed_data = compressor.compress(genome_bytes) + compressor.flush()
+    logger.debug(f"Compressed data size: {len(compressed_data)} bytes")
+    
+    return len(compressed_data)
 
 def shannon_hartley_information(input_data, period_minutes: int) -> float:
     """
