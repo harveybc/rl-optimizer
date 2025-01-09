@@ -1,7 +1,7 @@
 # app/config_merger.py
 
 import sys
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from app.config import DEFAULT_VALUES, ARGUMENT_MAPPING
 from app.logger import get_logger
 
@@ -119,7 +119,8 @@ def merge_config(defaults: Dict[str, Any],
     logger.debug(f"Step 3 Output: {merged_config}")
 
     # Step 4: Merge with CLI arguments (CLI args always override)
-    cli_keys_single = [arg.lstrip('-') for arg in sys.argv if arg.startswith('-') and not arg.startswith('--')]
+    # Exclude sys.argv[0] to prevent script name from being treated as positional argument
+    cli_keys_single = [arg.lstrip('-') for arg in sys.argv[1:] if arg.startswith('-') and not arg.startswith('--')]
     cli_expanded = []
     for key in cli_keys_single:
         if key in ARGUMENT_MAPPING:
@@ -128,7 +129,7 @@ def merge_config(defaults: Dict[str, Any],
             cli_expanded.append(key)
             logger.debug(f"Expanded CLI short-form argument '{original_key}' to '{key}'.")
 
-    cli_keys_double = [arg.lstrip('--') for arg in sys.argv if arg.startswith('--')]
+    cli_keys_double = [arg.lstrip('--') for arg in sys.argv[1:] if arg.startswith('--')]
     cli_keys = cli_keys_double + cli_expanded
     logger.debug(f"CLI keys to merge: {cli_keys}")
 
@@ -142,7 +143,8 @@ def merge_config(defaults: Dict[str, Any],
             merged_config[key] = converted_value
 
     # Special handling for input_file (positional argument)
-    positional_args = [arg for arg in sys.argv if not arg.startswith('-')]
+    # Exclude sys.argv[0] and only consider additional positional arguments
+    positional_args = [arg for arg in sys.argv[1:] if not arg.startswith('-')]
     if len(positional_args) > 0 and not positional_args[0].startswith('-'):
         merged_config['x_train_file'] = positional_args[0]
         logger.debug(f"Special handling - Set 'x_train_file' to positional argument: {positional_args[0]}")
