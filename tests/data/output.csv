@@ -1,0 +1,7 @@
+Filename,Rows,Columns
+base_d1.csv,16949,5
+base_d2.csv,16949,5
+base_d3.csv,22599,5
+normalized_d1.csv,16949,37
+normalized_d2.csv,16949,37
+normalized_d3.csv,22599,37

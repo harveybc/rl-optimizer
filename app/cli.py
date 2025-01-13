@@ -2,7 +2,7 @@ import argparse
 
 def parse_args():
     parser = argparse.ArgumentParser(description="RL-Optimizer: A tool with optimizer, environment, and agent plugin support.")
-    parser.add_argument('x_train_file', type=str, help='Path to the input CSV file that is used for training the model (x_train).')
+    parser.add_argument('--x_train_file', type=str, help='Path to the input CSV file that is used for training the model (x_train).')
     parser.add_argument('-ytf', '--y_train_file', type=str, help='Path to the input CSV file that is used for training the model (y_train), IMPORTANT: it is not shifted, must coincide 1 to 1 with the training data.')
     parser.add_argument('-xvf', '--x_validation_file', type=str, help='Path to the input CSV file that is used for validation (x_validation).')
     parser.add_argument('-yvf', '--y_validation_file', type=str, help='Path to the input CSV file that is used for validation (y_validation), IMPORTANT: it is not shifted, must coincide 1 to 1 with the validation data.')
@@ -33,5 +33,7 @@ def parse_args():
     parser.add_argument('-th', '--time_horizon', type=int, help='Number of ticks ahead to predict.')
     parser.add_argument('--num_hidden', type=int, help='Number of hidden neurons.')
     parser.add_argument('--periodicity_minutes', type=int, help='Periodicity of timeseries in minutes.')
+    # number_of_segments
+    parser.add_argument('--number_of_segments', type=int, help='Number of segments to split the input data into (0 concatenates all training datsets for all stages).')
     
     return parser.parse_known_args()
