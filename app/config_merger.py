@@ -142,12 +142,27 @@ def merge_config(defaults: Dict[str, Any],
             logger.debug(f"Step 4 - Merging from unknown args: '{key}' = {converted_value}")
             merged_config[key] = converted_value
 
-    # Special handling for input_file (positional argument)
-    # Exclude sys.argv[0] and only consider additional positional arguments
+    # Step 5: Handle additional positional arguments
+    # We only consider them if they are non-numeric, and x_train_file wasn't explicitly set.
     positional_args = [arg for arg in sys.argv[1:] if not arg.startswith('-')]
-    if len(positional_args) > 0 and not positional_args[0].startswith('-'):
-        merged_config['x_train_file'] = positional_args[0]
-        logger.debug(f"Special handling - Set 'x_train_file' to positional argument: {positional_args[0]}")
+    leftover_non_numeric = []
+    for arg in positional_args:
+        # Attempt to see if it is purely numeric (could be "20" for --epochs)
+        try:
+            float(arg)
+            # It's numeric => skip
+            continue
+        except ValueError:
+            # It's a non-numeric leftover => candidate
+            leftover_non_numeric.append(arg)
+
+    # If x_train_file was never set or remains the default,
+    # we take the first leftover non-numeric argument (if any).
+    if 'x_train_file' not in merged_config or merged_config['x_train_file'] == defaults['x_train_file']:
+        if len(leftover_non_numeric) > 0:
+            merged_config['x_train_file'] = leftover_non_numeric[0]
+            logger.debug(f"Special handling - Set 'x_train_file' to positional argument: {leftover_non_numeric[0]}")
 
     logger.debug(f"Final merged configuration: {merged_config}")
     return merged_config
+
