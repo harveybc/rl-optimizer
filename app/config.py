@@ -28,14 +28,14 @@ DEFAULT_VALUES = {
     'headers': True,
     'max_steps': 6300,
     'batch_size': 32,
-    'epochs': 50,
+    'epochs': 150,
     'input_offset': 0,
     'mse_threshold': 0.001,
     'time_horizon': 0,
     'periodicity_minutes': 60,
     'num_hidden': 0,
     'stabilization_cycles': 0,
-    'number_of_segments': 0,
+    'number_of_segments': 1,
     'overfitting_threshold': 0.5
 
 }
