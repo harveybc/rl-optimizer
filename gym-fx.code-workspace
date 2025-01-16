@@ -1,0 +1,41 @@
+{
+	"folders": [
+		{
+			"path": "../gym-fx"
+		},
+		{
+			"path": "../data-logger"
+		},
+		{
+			"path": "../feature-extractor"
+		},
+		{
+			"path": "../predictor"
+		},
+		{
+			"path": "../feature-fusion"
+		},
+		{
+			"path": "../preprocessor"
+		},
+		{
+			"path": "."
+		},
+		{
+			"path": "../neat-test"
+		},
+		{
+			"path": "../feature-eng"
+		},
+		{
+			"path": "../logistic_regresion"
+		},
+		{
+			"path": "../trading-signal"
+		},
+		{
+			"path": "../causal-inference"
+		}
+	],
+	"settings": {}
+}
