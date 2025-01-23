@@ -323,7 +323,7 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
     # Evaluate the best genome
     logger.info("Evaluating the best genome on training data.")
     try:
-        fitness, info = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False)
+        fitness, info = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False, global_config=config)
         training_fitness = fitness
         training_outputs = optimizer_plugin.outputs
         training_node_values = optimizer_plugin.node_values
@@ -361,7 +361,8 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
                 optimizer_plugin.best_genome,
                 0,
                 agent_plugin.config,
-                verbose=True
+                verbose=True,
+                global_config=config
             )
             validation_outputs = optimizer_plugin.outputs
             validation_node_values = optimizer_plugin.node_values
