@@ -70,14 +70,13 @@ def main():
             file_config.update(local_config)
             logger.debug(f"Loaded local config: {local_config}")
 
-        logger.info("Merging configurations...")
+        logger.info("Merging configurations before plugin loading...")
         unknown_args_dict = process_unknown_args(unknown_args)
         logger.debug(f"Unknown arguments: {unknown_args_dict}")
-        config = merge_config(config, {}, file_config, cli_args, unknown_args_dict)
-        logger.debug(f"Merged configuration: {config}")
-
+        tmp_config = merge_config(config, {}, file_config, cli_args, unknown_args_dict)
+        
         # Load and initialize optimizer plugin
-        optimizer_plugin_name = config.get("optimizer_plugin")
+        optimizer_plugin_name = tmp_config.get("optimizer_plugin")
         logger.info(f"Loading optimizer plugin: {optimizer_plugin_name}")
         optimizer_class, optimizer_module = load_plugin(
             "rl_optimizer.optimizers", optimizer_plugin_name
@@ -86,7 +85,7 @@ def main():
         logger.debug(f"Loaded optimizer plugin '{optimizer_plugin_name}' from '{optimizer_module}'.")
 
         # Load and initialize environment plugin
-        environment_plugin_name = config.get("environment_plugin")
+        environment_plugin_name = tmp_config.get("environment_plugin")
         logger.info(f"Loading environment plugin: {environment_plugin_name}")
         environment_class, environment_module = load_plugin(
             "rl_optimizer.environments", environment_plugin_name
@@ -95,7 +94,7 @@ def main():
         logger.debug(f"Loaded environment plugin '{environment_plugin_name}' from '{environment_module}'.")
 
         # Load and initialize agent plugin
-        agent_plugin_name = config.get("agent_plugin")
+        agent_plugin_name = tmp_config.get("agent_plugin")
         logger.info(f"Loading agent plugin: {agent_plugin_name}")
         agent_class, agent_module = load_plugin(
             "rl_optimizer.agents", agent_plugin_name
@@ -103,15 +102,16 @@ def main():
         agent_plugin = agent_class()
         logger.debug(f"Loaded agent plugin '{agent_plugin_name}' from '{agent_module}'.")
 
-        # Merge environment-specific parameters
-        logger.info("Merging environment-specific parameters...")
+        # Merge plugin-specific parameters
+        logger.info("Merging plugin-specific parameters...")
         environment_params = getattr(environment_plugin, 'plugin_params', {})
         config = merge_config(config, environment_params, file_config, cli_args, unknown_args_dict)
+        agent_params = getattr(agent_plugin, 'plugin_params', {})
+        config = merge_config(config, agent_params, file_config, cli_args, unknown_args_dict)
+        optimizer_params = getattr(optimizer_plugin, 'plugin_params', {})
+        config = merge_config(config, optimizer_params, file_config, cli_args, unknown_args_dict)
+ 
         logger.debug(f"Configuration after merging environment parameters: {config}")
-
-        # Set parameters for the environment plugin
-        environment_plugin.set_params(**config)
-        logger.debug("Environment plugin parameters set.")
 
         # Determine whether to load an existing model or run the prediction pipeline
         if config.get("load_model"):

@@ -228,6 +228,9 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
     # Prepare environment
     logger.info("Setting environment plugin parameters.")
     try:
+        for key, value in env_params.items():
+            if key in config and config[key] != value:
+                env_params[key] = config[key]
         environment_plugin.set_params(**env_params)
     except Exception as e:
         logger.error(f"Error setting environment plugin parameters: {e}")
@@ -246,6 +249,9 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
     # Prepare agent
     logger.info("Setting agent plugin parameters.")
     try:
+        for key, value in agent_params.items():
+            if key in config and config[key] != value:
+                agent_params[key] = config[key]
         agent_plugin.set_params(**agent_params)
     except Exception as e:
         logger.error(f"Error setting agent plugin parameters: {e}")
@@ -254,6 +260,11 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
     # Prepare optimizer
     logger.info("Setting optimizer plugin parameters.")
     try:
+        optimizer_plugin.set_params(**optimizer_params)
+        # Update optimizer parameters with config values if they differ
+        for key, value in optimizer_params.items():
+            if key in config and config[key] != value:
+                optimizer_params[key] = config[key]
         optimizer_plugin.set_params(**optimizer_params)
         optimizer_plugin.set_environment(environment_plugin.env, config.get('num_hidden', 0))
         optimizer_plugin.set_agent(agent_plugin)
