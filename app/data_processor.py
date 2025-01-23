@@ -362,9 +362,6 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
             logger.info(f"VALIDATION FITNESS: {validation_fitness}")
             logger.info("*****************************************************************")
 
-            # Log complexity
-            kolmogorov_c = kolmogorov_complexity(optimizer_plugin.best_genome)
-            logger.info(f"Kolmogorov Complexity (bytes): {kolmogorov_c}")
             
             # Log number of connections of the champion genome
             num_connections = len(optimizer_plugin.best_genome.connections)
@@ -379,52 +376,10 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
             # Log the length of the genome
             logger.info(f"Genome length (bits): {len(genome_bytes) * 8}")
             
-            # Log the Shannon entropy of the weights
-            weights_entropy = calculate_weights_entropy(optimizer_plugin.best_genome)
-            logger.info(f"Weights entropy (bits): {weights_entropy}")
-
+            
             logger.info("*****************************************************************")
 
-            # Calculate training information
-            logger.info("Calculating training information.")
-            training_input_information = shannon_hartley_information(y_train, config.get('periodicity_minutes', 1))
-            logger.info(f"Training Input Information (bits): {training_input_information}")
             
-            training_output_information = shannon_hartley_information(training_outputs, config.get('periodicity_minutes', 1))
-            logger.info(f"Training Output Information (bits): {training_output_information}")
-            
-            training_node_values_information = shannon_hartley_information(training_node_values, config.get('periodicity_minutes', 1))
-            logger.info(f"Total Training Node Values Information (bits): {training_node_values_information}")
-            
-            # Calculate total training information
-            if training_node_values_information is None:
-                training_total_information = num_connections * weights_entropy
-            else:
-                training_total_information = num_connections * weights_entropy + training_node_values_information
-            logger.info(f"Total Training Information (bits): {training_total_information}")
-
-            logger.info("*****************************************************************")
-
-            # Calculate validation information
-            logger.info("Calculating validation information.")
-            input_information_validation = shannon_hartley_information(y_validation, config.get('periodicity_minutes', 1))
-            logger.info(f"Validation Input Information (bits): {input_information_validation}")
-            
-            output_information_validation = shannon_hartley_information(validation_outputs, config.get('periodicity_minutes', 1))
-            logger.info(f"Validation Output Information (bits): {output_information_validation}")
-            
-            node_values_information_validation = shannon_hartley_information(validation_node_values, config.get('periodicity_minutes', 1))
-            logger.info(f"Total Validation Node Values Information (bits): {node_values_information_validation}")
-            
-            # Calculate total validation information
-            if node_values_information_validation is None:
-                validation_total_information = num_connections * weights_entropy
-            else:
-                validation_total_information = num_connections * weights_entropy + node_values_information_validation
-            logger.info(f"Total Validation Information (bits): {validation_total_information}")
-
-            logger.info("*****************************************************************")
-
             # Save debug info
             end_time = time.time()
             execution_time = end_time - start_time
