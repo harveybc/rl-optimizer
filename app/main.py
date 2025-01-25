@@ -104,10 +104,16 @@ def main():
 
         # Merge plugin-specific parameters
         logger.info("Merging plugin-specific parameters...")
+        # override plugin parames with already configured params
+        environment_plugin.set_params(**config) 
         environment_params = getattr(environment_plugin, 'plugin_params', {})
         config = merge_config(config, environment_params, file_config, cli_args, unknown_args_dict)
+        # override plugin parames with already configured params
+        agent_plugin.set_params(**config)
         agent_params = getattr(agent_plugin, 'plugin_params', {})
         config = merge_config(config, agent_params, file_config, cli_args, unknown_args_dict)
+        # override plugin parames with already configured params
+        optimizer_plugin.set_params(**config)
         optimizer_params = getattr(optimizer_plugin, 'plugin_params', {})
         config = merge_config(config, optimizer_params, file_config, cli_args, unknown_args_dict)
  
