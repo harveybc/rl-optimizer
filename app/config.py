@@ -14,7 +14,7 @@ DEFAULT_VALUES = {
     'evaluate_file': 'model_eval.csv',
     'optimizer_plugin': 'neat_a_cs',
     'environment_plugin': 'gym_fx_env_nomc_o_volume',
-    'agent_plugin': 'neat_a_simple',
+    'agent_plugin': 'neat_a_volume',
     'remote_log': None,
     'remote_load_config': None,
     'remote_save_config': None,
