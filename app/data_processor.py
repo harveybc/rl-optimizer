@@ -7,6 +7,7 @@ import time
 import json
 import pickle
 from typing import Tuple, Optional
+import logging
 
 from app.data_handler import load_csv, write_csv
 from app.config_handler import save_debug_info, remote_log
@@ -393,6 +394,15 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
 
             # Generate a plot of the training_finess_list and validation_finess_list per epoch in the same plot , wht different colors, save it to a file
             import matplotlib.pyplot as plt
+            # disable debug log messages
+            # get the the logger with the name 'PIL'
+            pil_logger = logging.getLogger('PIL')  
+            # override the logger logging level to INFO
+            pil_logger.setLevel(logging.INFO)
+
+
+
+
             plt.plot(training_fitness_list, label='Training Fitness')
             plt.plot(validation_fitness_list, label='Validation Fitness')
             plt.xlabel('Epochs')
