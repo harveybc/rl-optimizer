@@ -400,6 +400,7 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
             plt.title('Training and Validation Fitness')
             plt.legend()
             plt.savefig('fitness_plot_'+config['epochs']+'.png')
+            plt.close('all')
             
             
 
