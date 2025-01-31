@@ -276,7 +276,7 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
     
     try:
         logger.info("Starting optimizer training.")
-        neat_config = optimizer_plugin.train(
+        neat_config, training_fitness_list, validation_fitness_list = optimizer_plugin.train(
             config.get('epochs', 0),
             x_train,
             y_train,
@@ -391,7 +391,19 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
             
             logger.info("*****************************************************************")
 
+            # Generate a plot of the training_finess_list and validation_finess_list per epoch in the same plot , wht different colors, save it to a file
+            import matplotlib.pyplot as plt
+            plt.plot(training_fitness_list, label='Training Fitness')
+            plt.plot(validation_fitness_list, label='Validation Fitness')
+            plt.xlabel('Epochs')
+            plt.ylabel('Fitness')
+            plt.title('Training and Validation Fitness')
+            plt.legend()
+            plt.savefig('fitness_plot_'+config['epochs']+'.png')
             
+            
+
+
             # Save debug info
             end_time = time.time()
             execution_time = end_time - start_time
