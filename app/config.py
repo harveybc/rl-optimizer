@@ -1,12 +1,12 @@
 # config.py
 
 DEFAULT_VALUES = {
-    'x_train_file': 'tests\\data\\phase_1_base_d2.csv',
+    'x_train_file': 'tests\\data\\base_d2.csv',
     #'y_train_file': 'tests\\data\\encoder_eval_d2.csv',
-    'y_train_file': 'tests\\data\\phase_1_normalized_d2.csv',
-    'x_validation_file': 'tests\\data\\phase_1_base_d3.csv',
+    'y_train_file': 'tests\\data\\\normalized_d2.csv',
+    'x_validation_file': 'tests\\data\\\base_d3.csv',
     #'y_validation_file': 'tests\\data\\encoder_eval_d3.csv',
-    'y_validation_file': 'tests\\data\\phase_1_normalized_d3.csv',
+    'y_validation_file': 'tests\\data\\normalized_d3.csv',
     'target_column': None,
     'output_file': 'csv_output.csv',
     'save_model': 'model.keras',
