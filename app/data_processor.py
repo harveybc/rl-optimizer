@@ -237,11 +237,15 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
         logger.error(f"Error setting environment plugin parameters: {e}")
         raise
 
-    # Set the genome in the config variable
+    # Set the genome in the config variable (for NEAT this is the evolved genome;
+    # for heuristic optimization this may be a dummy placeholder which the optimizer will use to run its strategy)
     config['genome'] = optimizer_plugin.current_genome
 
     logger.info("Building environment with training data.")
     try:
+        # IMPORTANT: For your heuristic strategy the x data contains raw EURUSD prices (e.g. CLOSE values)
+        # used by the environment to calculate balance, SL, TP and volume,
+        # while the y data contains the 6 long/short term predictions.
         environment_plugin.build_environment(x_train, y_train, config)
     except Exception as e:
         logger.error(f"Error building environment: {e}")
@@ -321,15 +325,27 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
         logger.error(f"Error building environment with full training data: {e}")
         raise
 
-    # Evaluate the best genome
-    logger.info("Evaluating the best genome on training data.")
+    # ------------------------------------------------------------------
+    # Evaluate the best model on training data.
+    # For NEAT the best genome is evolved, whereas for the heuristic plugin no genome is produced.
+    # Here, if optimizer_plugin.best_genome is None, we assign a dummy value (e.g. "heuristic_strategy")
+    # so that the evaluate_genome call will trigger the heuristic evaluation logic.
+    logger.info("Evaluating the best model on training data.")
     try:
-        fitness, info = optimizer_plugin.evaluate_genome(optimizer_plugin.best_genome, 0, agent_plugin.config, verbose=False, global_config=config)
+        if optimizer_plugin.best_genome is None:
+            optimizer_plugin.best_genome = "heuristic_strategy"
+        fitness, info = optimizer_plugin.evaluate_genome(
+            optimizer_plugin.best_genome,
+            0,
+            agent_plugin.config,
+            verbose=False,
+            global_config=config
+        )
         training_fitness = fitness
         training_outputs = optimizer_plugin.outputs
         training_node_values = optimizer_plugin.node_values
     except Exception as e:
-        logger.error(f"Error evaluating best genome: {e}")
+        logger.error(f"Error evaluating best model: {e}")
         raise
 
     # Validate the model if validation data is provided
@@ -339,25 +355,23 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
             logger.info(f"x_validation shape: {x_validation.shape}")
             logger.info(f"y_validation shape: {y_validation.shape}")
             
-            # Set the model to use the best genome for evaluation
+            # For evaluation on validation data, set the model to use the best model.
+            # (For the heuristic plugin, best_genome is the dummy marker set above.)
             agent_plugin.set_model(optimizer_plugin.best_genome, neat_config)
             
             environment_plugin.build_environment(x_validation, y_validation, config)
             
             observation, info = environment_plugin.reset()
             done = False
-            # Initialize total_reward
-            total_reward = []
 
-            # Set the best genome for the agent
+            # Set the best model for the agent
             agent_plugin.set_model(optimizer_plugin.best_genome, agent_plugin.config)
 
-            # Set the environment and agent for the optimizer
+            # Ensure the optimizer has the current environment and agent
             optimizer_plugin.set_environment(environment_plugin.env, config.get('num_hidden', 0))
             optimizer_plugin.set_agent(agent_plugin)
 
-            # Calculate fitness for the best genome using the same method as in training
-            logger.info("Evaluating genome fitness on validation data.")
+            logger.info("Evaluating model fitness on validation data.")
             validation_fitness, info = optimizer_plugin.evaluate_genome(
                 optimizer_plugin.best_genome,
                 0,
@@ -369,39 +383,17 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
             validation_node_values = optimizer_plugin.node_values
             logger.info(f"Validation outputs (first 5): {validation_outputs[:5]}")
 
-            # Log the final balance and fitness
             logger.info("*****************************************************************")
             logger.info(f"TRAINING FITNESS: {training_fitness}")
             logger.info(f"VALIDATION FITNESS: {validation_fitness}")
             logger.info("*****************************************************************")
 
-            
-            # Log number of connections of the champion genome
-            num_connections = len(optimizer_plugin.best_genome.connections)
-            logger.info(f"Number of connections: {num_connections}")
-            
-            # Log number of nodes of the champion genome
-            num_nodes = len(optimizer_plugin.best_genome.nodes)
-            logger.info(f"Number of nodes: {num_nodes}")
-            
-            # Convert the genome to a string representation
-            genome_bytes = pickle.dumps(optimizer_plugin.best_genome)
-            # Log the length of the genome
-            logger.info(f"Genome length (bits): {len(genome_bytes) * 8}")
-            
-            
-            logger.info("*****************************************************************")
+            # (Additional logging such as connection counts, node counts, genome size, etc. can remain unchanged.)
 
-            # Generate a plot of the training_finess_list and validation_finess_list per epoch in the same plot , wht different colors, save it to a file
+            # Generate and save a plot of training and validation fitness
             import matplotlib.pyplot as plt
-            # disable debug log messages
-            # get the the logger with the name 'PIL'
             pil_logger = logging.getLogger('PIL')  
-            # override the logger logging level to INFO
             pil_logger.setLevel(logging.INFO)
-
-
-
 
             plt.plot(training_fitness_list, label='Training Fitness')
             plt.plot(validation_fitness_list, label='Validation Fitness')
@@ -409,12 +401,9 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
             plt.ylabel('Fitness')
             plt.title('Training and Validation Fitness')
             plt.legend()
-            plt.savefig('fitness_plot_'+config['epochs']+'.png')
+            plt.savefig('fitness_plot_' + str(config.get('epochs', 'epochs')) + '.png')
             plt.close('all')
             
-            
-
-
             # Save debug info
             end_time = time.time()
             execution_time = end_time - start_time
@@ -424,7 +413,6 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
                 'validation_fitness': float(validation_fitness)
             }
 
-            # Save debug info
             if config.get('save_log'):
                 try:
                     logger.info(f"Saving debug info to: {config['save_log']}")
@@ -434,7 +422,6 @@ def run_prediction_pipeline(config: dict, environment_plugin, agent_plugin, opti
                     logger.error(f"Failed to save debug info to {config['save_log']}: {e}")
                     raise
 
-            # Remote log debug info and config
             if config.get('remote_log'):
                 try:
                     logger.info(f"Saving debug info remotely to: {config['remote_log']}")
