@@ -11,3 +11,4 @@ neat-python
 stable-baselines3
 scikit-learn
 gym
+deap
